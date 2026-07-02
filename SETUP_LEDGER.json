@@ -93,6 +93,36 @@
       "final_action": "WAIT / NO CHASE",
       "notes": "Very volatile. Do not chase above retest zone."
     },
+    "DOGEUSDT.P": {
+      "coin": "DOGEUSDT.P",
+      "exchange": "BYBIT",
+      "trade_type": "Scalp",
+      "proposed_type": "Proposed Wait / Conditional Long",
+      "bias": "Small bullish reaction inside a broader weak/down structure",
+      "btc_eth_filter": "Mildly aligned; BTC and ETH are green but not strongly impulsive",
+      "catalyst": "Unverified. TradingView news panel shows broad crypto liquidation news, not a DOGE-specific catalyst.",
+      "setup_type": "Reclaim + Retest / Standard Demand Retest",
+      "setup_rating": "Watch Only",
+      "setup_state": "WAIT RECLAIM",
+      "position_status": "NO POSITION",
+      "direction": "Long",
+      "entry": {
+        "low": 0.0718,
+        "high": 0.0721,
+        "basis": "Retest entry only after reclaim confirms",
+        "actual": null
+      },
+      "reclaim": 0.0726,
+      "sl": 0.0712,
+      "sl_quality": "Vulnerable",
+      "tp": [0.0732, 0.074, 0.075],
+      "invalidation": "Clean loss of 0.0712",
+      "nearest_liquidity": "Buy-side above 0.0732 then 0.0740; sell-side below 0.0718 then 0.0712",
+      "reclaim_status": "Needs 0.0726 reclaimed and held before entry is considered active",
+      "relative_strength": "Slightly weaker than ETH and similar to BTC on the visible watchlist",
+      "final_action": "WAIT / NO CHASE",
+      "notes": "Do not mark active unless price reclaims 0.0726 and then retests/holds the entry zone, or user confirms a live position."
+    },
     "FARTCOINUSDT.P": {
       "coin": "FARTCOINUSDT.P",
       "exchange": "BYBIT",
