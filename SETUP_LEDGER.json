@@ -123,6 +123,36 @@
       "final_action": "WAIT / NO CHASE",
       "notes": "Do not mark active unless price reclaims 0.07265 and then retests/holds 0.07190-0.07215, or user confirms a live position."
     },
+    "HYPEUSDT.P": {
+      "coin": "HYPEUSDT.P",
+      "exchange": "BYBIT",
+      "trade_type": "Scalp",
+      "proposed_type": "Proposed Wait / Conditional Long",
+      "bias": "Relative strength bounce inside a choppy local range",
+      "btc_eth_filter": "Aligned; HYPE is outperforming BTC and ETH on the visible watchlist",
+      "catalyst": "Unverified. TradingView shows a Hyperliquid trader headline, not a clear directional catalyst for HYPE.",
+      "setup_type": "Reclaim + Retest / Compression Bounce",
+      "setup_rating": "Watch Only",
+      "setup_state": "WAIT RECLAIM",
+      "position_status": "NO POSITION",
+      "direction": "Long",
+      "entry": {
+        "low": 62.95,
+        "high": 63.2,
+        "basis": "Pullback/retest entry after reclaim confirms",
+        "actual": null
+      },
+      "reclaim": 63.75,
+      "sl": 62.55,
+      "sl_quality": "Vulnerable",
+      "tp": [64.05, 64.55, 65.05],
+      "invalidation": "Clean loss of 62.55",
+      "nearest_liquidity": "Buy-side above 63.75 then 64.55-65.05; sell-side below 62.95 then 62.55",
+      "reclaim_status": "Needs 63.75 reclaimed and held; current price is mid-range, not an entry",
+      "relative_strength": "Stronger than BTC/ETH and most majors on the visible watchlist",
+      "final_action": "WAIT / NO CHASE",
+      "notes": "Do not mark active unless 63.75 reclaims and HYPE retests/holds the entry zone or forms a clean break-and-retest."
+    },
     "FARTCOINUSDT.P": {
       "coin": "FARTCOINUSDT.P",
       "exchange": "BYBIT",

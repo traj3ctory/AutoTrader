@@ -47,6 +47,34 @@ If TradingView fails to render the map, do not lose the setup. Keep the ledger u
 
 Do not treat TradingView Pine/drawings as persistent memory. If TradingView loses or hides a setup during symbol switching, redraw it from the ledger.
 
+## Ledger Validity Gate
+
+Before drawing any saved setup, compare the current TradingView chart to the coin's ledger record.
+
+Classify the setup lifecycle:
+
+- Valid / Waiting
+- Triggered But Not Entered
+- Active / Manage
+- TP Hit / Manage
+- SL Hit / Invalidated
+- Missed / No Chase
+- Failed Reclaim
+- Stale / Reanalyze
+- No Clean Setup
+
+Rules:
+
+- If the saved setup is still valid, draw or keep that coin's Pine slot.
+- If price has hit TP, update the ledger state to `TP HIT / MANAGE` before drawing.
+- If price has hit SL or invalidation, update the ledger state to `INVALIDATED`, remove/hide the setup, and journal only if useful.
+- If price moved too far without entry, update to `MISSED / NO CHASE`.
+- If reclaim failed, update to `FAILED RECLAIM` or `WAIT RECLAIM`.
+- If structure changed enough that old levels are no longer useful, reanalyze fresh and overwrite that coin's ledger record.
+- If no clean setup remains, update to `WAIT / NO TRADE` and keep the chart mostly clean.
+
+Never draw a ledger setup just because it exists. Draw it only after it passes this validity gate.
+
 ## Ledger Hygiene Rule
 
 Keep `SETUP_LEDGER.json` compact and current:
@@ -448,7 +476,7 @@ The desired behavior is per-coin persistence:
 - When switching away and later returning to a coin, that coin's own prior analysis should still be visible unless it has been updated, invalidated, or deliberately removed.
 - Analysis from one coin must not appear on another coin.
 
-Persistence comes from `SETUP_LEDGER.json`, not from TradingView. TradingView Pine indicators can follow the layout across symbols and may cache or render inconsistently while switching. Do not rely on Pine as per-coin memory.
+Persistence comes from `SETUP_LEDGER.json`, not from TradingView. Pine is only a renderer. The preferred display is one multi-symbol Codex map whose guarded slots are generated from the current active ledger records.
 
 For every `Analyze [coin]` request:
 
@@ -465,15 +493,16 @@ When leaving a completed analysis, the ledger entry must remain saved even if Tr
 
 ## Pine Indicator Rule
 
-Use Pine cautiously because a single Pine instance is layout-wide and can leak or hide levels across symbols.
+Use Pine cautiously because a single Pine instance is layout-wide. The safe pattern is one multi-symbol map with a strict symbol guard per coin slot.
 
 Preferred Pine workflow:
 
-1. Use `CODEX_TRADE_MAP_TEMPLATE.pine` as the reusable renderer.
-2. Update the indicator inputs/script for the current coin from `SETUP_LEDGER.json`.
-3. Show only the current coin's map.
-4. Do not rely on Pine to remember multiple coins.
-5. Do not create duplicate/conflicting Codex map indicators unless the user approves.
+1. Use `CODEX_TRADE_MAP_TEMPLATE.pine` as the reusable multi-symbol renderer.
+2. Generate or update Pine slots from the active records in `SETUP_LEDGER.json`.
+3. Each slot must have a strict `syminfo.ticker == coin` guard.
+4. When the chart is XRP, only the XRP slot should render; when AVAX, only AVAX; when DOGE, only DOGE.
+5. Reanalysis updates that coin's ledger record and that coin's Pine slot only.
+6. Do not create duplicate/conflicting Codex map indicators unless the user approves.
 
 Do not overwrite the ledger entry for another coin to analyze the current coin.
 
@@ -485,10 +514,10 @@ If old Pine levels from a previous coin are visible on the current coin, hide/re
 
 If the existing Pine map cannot render the current ledger entry, say that the display failed and keep the ledger as the source of truth.
 
-The Pine map should include a symbol guard when possible:
+The Pine map must include a symbol guard:
 
-- Compare the current chart symbol to the map coin input.
-- If they do not match, delete/hide all Codex lines and labels instead of showing old levels.
+- Compare the current chart symbol to each slot's coin.
+- If they do not match, that slot must not plot, label, or table.
 - Do not show a full old setup table on the wrong coin.
 - If a minimal warning is needed, show only `STALE MAP - UPDATE COIN`.
 

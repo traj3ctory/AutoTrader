@@ -149,7 +149,15 @@ If TradingView shows old/wrong coin levels:
 - Redraw from `SETUP_LEDGER.json`.
 - If cleanup is unsafe, final answer starts with `STALE MAP RISK`.
 
-Avoid duplicate Codex maps. Prefer one reusable map rendered from the ledger.
+Avoid duplicate Codex maps. Prefer one reusable multi-symbol map rendered from the ledger.
+
+The current display model is:
+
+```text
+SETUP_LEDGER.json -> scripts/buildTradeMap.mjs -> CODEX_TRADE_MAP_TEMPLATE.pine -> TradingView
+```
+
+Each active ledger coin gets one guarded Pine slot. Reanalyzing a coin updates that coin's ledger record, then rebuilds the Pine map. Switching charts should show only the matching symbol's slot.
 
 ## New Device Setup
 
@@ -198,10 +206,10 @@ TradingView has been inconsistent with Pine rendering when switching symbols:
 - SPORTFUN did not persist visually.
 - XRP/AVAX old maps can remain visible.
 
-This is why the ledger exists. The fix is not more Pine memory. The fix is:
+This is why the ledger exists. Pine is not the memory source; it is only a generated renderer. The fix is:
 
 ```text
-Ledger memory -> current chart renderer -> verification
+Ledger memory -> validity gate -> generated multi-symbol renderer -> verification
 ```
 
 ## Future Step 2 Readiness
@@ -212,4 +220,3 @@ Do not move to alerts or auto-trading until:
 - No repeated confusion between entry, reclaim, and active trade.
 - Setup outcomes are tracked as Win, Loss, Missed, No Trade, or Invalidated.
 - Alerts can be expressed as strict pass/fail rules.
-

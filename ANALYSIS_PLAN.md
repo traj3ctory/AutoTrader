@@ -63,6 +63,7 @@ Before drawing or summarizing:
 - Read `SETUP_LEDGER.json`.
 - Locate the requested coin entry if it exists.
 - Use the ledger to understand the prior setup state, position state, entry, SL, TP, reclaim, and notes.
+- Compare that prior setup to the current TradingView chart before drawing.
 - After live chart analysis, update the ledger before rendering the chart.
 - If TradingView fails to render, the ledger still remains the saved setup state.
 
@@ -76,6 +77,20 @@ Ledger hygiene:
 - Move completed, invalidated, stale, TP/SL-hit, or useful review items into `journal` only when they are worth learning from.
 - Keep journal entries short: coin, date, setup type, result, mistake tag, and one note.
 - Replace stale levels with the fresh chart setup instead of preserving old narrative.
+
+Ledger validity gate:
+
+- Valid / Waiting: draw or keep the coin's slot.
+- Triggered But Not Entered: update state and draw conditional management levels.
+- Active / Manage: draw only if an actual entry is known or user confirms position.
+- TP Hit / Manage: update state before drawing.
+- SL Hit / Invalidated: update state, hide/remove setup, and journal only if useful.
+- Missed / No Chase: update state and redraw as wait/no-chase or clear it.
+- Failed Reclaim: update to `FAILED RECLAIM` or `WAIT RECLAIM`.
+- Stale / Reanalyze: overwrite the coin's ledger record with a fresh setup.
+- No Clean Setup: update to `WAIT / NO TRADE` and keep chart mostly clean.
+
+Never draw a ledger setup just because it exists. It must pass this validity gate first.
 
 ## Gate 2: Catalyst / News Check
 
@@ -137,7 +152,7 @@ The desired behavior is per-coin persistence:
 - Returning to a coin should show that coin's own prior analysis unless it has been updated, invalidated, or deliberately removed.
 - One coin's analysis must not appear on another coin.
 
-TradingView Pine indicators can follow the layout across symbols and may cache or hide levels when switching. Persistent coin-specific analysis comes from `SETUP_LEDGER.json`, not from Pine.
+Persistent coin-specific analysis comes from `SETUP_LEDGER.json`, not from Pine. Pine is only the display renderer. The preferred display is one multi-symbol Codex map generated from the active ledger records.
 
 For every new `Analyze [coin]` request:
 
@@ -150,14 +165,14 @@ For every new `Analyze [coin]` request:
 
 If the map cannot be reset, updated, hidden, or removed, stop with `STALE MAP RISK`.
 
-When using Pine, include a symbol guard when possible:
+When using Pine, use guarded slots:
 
-- Compare the current chart symbol to the map coin input.
-- If they do not match, delete/hide all Codex lines and labels.
+- Compare the current chart symbol to each slot's coin.
+- If a slot does not match, it must not plot, label, or table.
 - Do not show a full old setup table on the wrong coin.
 - If a warning is needed, show only `STALE MAP - UPDATE COIN`.
 
-Do not rely on one layout-wide Pine instance for persistent multi-coin analysis. Use the ledger for persistence and redraw the current symbol as needed.
+Use one multi-symbol Pine instance for display, with one guarded slot per active ledger coin. Reanalysis updates the requested coin's ledger record and that coin's Pine slot only.
 
 ## Gate 5: Trade Type Check
 

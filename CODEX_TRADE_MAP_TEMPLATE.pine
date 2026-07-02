@@ -1,27 +1,28 @@
 //@version=5
 indicator("Codex Trade Map", overlay=true, max_lines_count=80, max_labels_count=80)
 
-// Update these inputs from SETUP_LEDGER.json for the current chart only.
-// Keep them hidden from the status line so the chart legend stays clean.
-coinInput = input.string("XRPUSDT.P", "Coin", display=display.none)
-tradeType = input.string("Scalp", "Trade Type", display=display.none)
-direction = input.string("WAIT / CONDITIONAL LONG", "Direction", display=display.none)
-rating = input.string("Watch Only", "Rating", display=display.none)
-setupState = input.string("WAIT RETEST", "Setup State", display=display.none)
-positionState = input.string("NO POSITION", "Position", display=display.none)
-mode = input.string("RETEST", "Mode", display=display.none)
-isLong = input.bool(true, "Long Setup", display=display.none)
+// Generated from SETUP_LEDGER.json. Do not hand-edit coin levels here.
+// Reanalyze updates one ledger record, then rebuilds this multi-symbol map.
 
-entryLow = input.float(1.048, "Entry Low", display=display.none)
-entryHigh = input.float(1.052, "Entry High", display=display.none)
-reclaim = input.float(1.05, "Reclaim / Trigger", display=display.none)
-sl = input.float(1.039, "SL / Invalid", display=display.none)
-tp1 = input.float(1.066, "TP1", display=display.none)
-tp2 = input.float(1.075, "TP2", display=display.none)
-tp3 = input.float(1.105, "TP3", display=display.none)
-actualEntry = input.float(0.0, "Actual Entry", display=display.none)
+showMap = syminfo.ticker == "XRPUSDT.P" or syminfo.ticker == "AVAXUSDT.P" or syminfo.ticker == "SPORTFUNUSDT.P" or syminfo.ticker == "DOGEUSDT.P" or syminfo.ticker == "HYPEUSDT.P" or syminfo.ticker == "FARTCOINUSDT.P"
 
-showMap = syminfo.ticker == coinInput
+coin = syminfo.ticker == "XRPUSDT.P" ? "XRPUSDT.P" : syminfo.ticker == "AVAXUSDT.P" ? "AVAXUSDT.P" : syminfo.ticker == "SPORTFUNUSDT.P" ? "SPORTFUNUSDT.P" : syminfo.ticker == "DOGEUSDT.P" ? "DOGEUSDT.P" : syminfo.ticker == "HYPEUSDT.P" ? "HYPEUSDT.P" : syminfo.ticker == "FARTCOINUSDT.P" ? "FARTCOINUSDT.P" : ""
+tradeType = syminfo.ticker == "XRPUSDT.P" ? "Scalp" : syminfo.ticker == "AVAXUSDT.P" ? "Scalp" : syminfo.ticker == "SPORTFUNUSDT.P" ? "Scalp" : syminfo.ticker == "DOGEUSDT.P" ? "Scalp" : syminfo.ticker == "HYPEUSDT.P" ? "Scalp" : syminfo.ticker == "FARTCOINUSDT.P" ? "Scalp" : ""
+direction = syminfo.ticker == "XRPUSDT.P" ? "Proposed Wait / Conditional Long" : syminfo.ticker == "AVAXUSDT.P" ? "Proposed Wait / Conditional Long" : syminfo.ticker == "SPORTFUNUSDT.P" ? "Proposed Wait / Conditional Long" : syminfo.ticker == "DOGEUSDT.P" ? "Proposed Wait / Conditional Long" : syminfo.ticker == "HYPEUSDT.P" ? "Proposed Wait / Conditional Long" : syminfo.ticker == "FARTCOINUSDT.P" ? "Proposed Wait / No Trade" : ""
+rating = syminfo.ticker == "XRPUSDT.P" ? "Watch Only" : syminfo.ticker == "AVAXUSDT.P" ? "Watch Only" : syminfo.ticker == "SPORTFUNUSDT.P" ? "Watch Only" : syminfo.ticker == "DOGEUSDT.P" ? "Watch Only" : syminfo.ticker == "HYPEUSDT.P" ? "Watch Only" : syminfo.ticker == "FARTCOINUSDT.P" ? "Watch Only" : ""
+setupState = syminfo.ticker == "XRPUSDT.P" ? "WAIT RETEST" : syminfo.ticker == "AVAXUSDT.P" ? "WAIT RECLAIM" : syminfo.ticker == "SPORTFUNUSDT.P" ? "WAIT RETEST" : syminfo.ticker == "DOGEUSDT.P" ? "WAIT RECLAIM" : syminfo.ticker == "HYPEUSDT.P" ? "WAIT RECLAIM" : syminfo.ticker == "FARTCOINUSDT.P" ? "WAIT REACTION" : ""
+positionState = syminfo.ticker == "XRPUSDT.P" ? "NO POSITION" : syminfo.ticker == "AVAXUSDT.P" ? "NO POSITION" : syminfo.ticker == "SPORTFUNUSDT.P" ? "NO POSITION" : syminfo.ticker == "DOGEUSDT.P" ? "NO POSITION" : syminfo.ticker == "HYPEUSDT.P" ? "NO POSITION" : syminfo.ticker == "FARTCOINUSDT.P" ? "NO POSITION" : ""
+mode = syminfo.ticker == "XRPUSDT.P" ? "RECLAIM 1.05" : syminfo.ticker == "AVAXUSDT.P" ? "RECLAIM 6.7" : syminfo.ticker == "SPORTFUNUSDT.P" ? "RECLAIM 0.0245" : syminfo.ticker == "DOGEUSDT.P" ? "RECLAIM 0.07265" : syminfo.ticker == "HYPEUSDT.P" ? "RECLAIM 63.75" : syminfo.ticker == "FARTCOINUSDT.P" ? "RECLAIM 0.1428" : ""
+isLong = syminfo.ticker == "XRPUSDT.P" ? true : syminfo.ticker == "AVAXUSDT.P" ? true : syminfo.ticker == "SPORTFUNUSDT.P" ? true : syminfo.ticker == "DOGEUSDT.P" ? true : syminfo.ticker == "HYPEUSDT.P" ? true : syminfo.ticker == "FARTCOINUSDT.P" ? false : true
+
+entryLow = syminfo.ticker == "XRPUSDT.P" ? 1.048 : syminfo.ticker == "AVAXUSDT.P" ? 6.62 : syminfo.ticker == "SPORTFUNUSDT.P" ? 0.0239 : syminfo.ticker == "DOGEUSDT.P" ? 0.0719 : syminfo.ticker == "HYPEUSDT.P" ? 62.95 : syminfo.ticker == "FARTCOINUSDT.P" ? 0.1428 : na
+entryHigh = syminfo.ticker == "XRPUSDT.P" ? 1.052 : syminfo.ticker == "AVAXUSDT.P" ? 6.66 : syminfo.ticker == "SPORTFUNUSDT.P" ? 0.0242 : syminfo.ticker == "DOGEUSDT.P" ? 0.07215 : syminfo.ticker == "HYPEUSDT.P" ? 63.2 : syminfo.ticker == "FARTCOINUSDT.P" ? 0.1437 : na
+reclaim = syminfo.ticker == "XRPUSDT.P" ? 1.05 : syminfo.ticker == "AVAXUSDT.P" ? 6.7 : syminfo.ticker == "SPORTFUNUSDT.P" ? 0.0245 : syminfo.ticker == "DOGEUSDT.P" ? 0.07265 : syminfo.ticker == "HYPEUSDT.P" ? 63.75 : syminfo.ticker == "FARTCOINUSDT.P" ? 0.1428 : na
+sl = syminfo.ticker == "XRPUSDT.P" ? 1.039 : syminfo.ticker == "AVAXUSDT.P" ? 6.54 : syminfo.ticker == "SPORTFUNUSDT.P" ? 0.0232 : syminfo.ticker == "DOGEUSDT.P" ? 0.07145 : syminfo.ticker == "HYPEUSDT.P" ? 62.55 : syminfo.ticker == "FARTCOINUSDT.P" ? 0.1468 : na
+tp1 = syminfo.ticker == "XRPUSDT.P" ? 1.066 : syminfo.ticker == "AVAXUSDT.P" ? 6.82 : syminfo.ticker == "SPORTFUNUSDT.P" ? 0.0252 : syminfo.ticker == "DOGEUSDT.P" ? 0.07325 : syminfo.ticker == "HYPEUSDT.P" ? 64.05 : syminfo.ticker == "FARTCOINUSDT.P" ? 0.1376 : na
+tp2 = syminfo.ticker == "XRPUSDT.P" ? 1.075 : syminfo.ticker == "AVAXUSDT.P" ? 6.95 : syminfo.ticker == "SPORTFUNUSDT.P" ? 0.026 : syminfo.ticker == "DOGEUSDT.P" ? 0.07375 : syminfo.ticker == "HYPEUSDT.P" ? 64.55 : syminfo.ticker == "FARTCOINUSDT.P" ? 0.1345 : na
+tp3 = syminfo.ticker == "XRPUSDT.P" ? 1.105 : syminfo.ticker == "AVAXUSDT.P" ? 7.1 : syminfo.ticker == "SPORTFUNUSDT.P" ? 0.0266 : syminfo.ticker == "DOGEUSDT.P" ? 0.0741 : syminfo.ticker == "HYPEUSDT.P" ? 65.05 : syminfo.ticker == "FARTCOINUSDT.P" ? 0.128 : na
+actualEntry = syminfo.ticker == "XRPUSDT.P" ? 0 : syminfo.ticker == "AVAXUSDT.P" ? 0 : syminfo.ticker == "SPORTFUNUSDT.P" ? 0 : syminfo.ticker == "DOGEUSDT.P" ? 0 : syminfo.ticker == "HYPEUSDT.P" ? 0 : syminfo.ticker == "FARTCOINUSDT.P" ? 0 : 0.0
 
 green = color.rgb(34, 197, 94)
 red = color.rgb(255, 82, 82)
@@ -54,7 +55,7 @@ var label lState = na
 makeLabel(label old, float y, string txt, color bg) =>
     if not na(old)
         label.delete(old)
-    label.new(bar_index + 3, y, txt, xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_left, color=bg, textcolor=color.white, size=size.small)
+    label.new(bar_index + 2, y, txt, xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_right, color=bg, textcolor=color.white, size=size.small)
 
 if barstate.islast
     if showMap
@@ -85,7 +86,7 @@ cell(int row, string left, string right, color bg) =>
 if barstate.islast
     table.clear(t, 0, 0, 1, 8)
     if showMap
-        cell(0, "Coin", coinInput, neutral)
+        cell(0, "Coin", coin, neutral)
         cell(1, "Trade Type", tradeType, blue)
         cell(2, "Direction", direction, str.contains(direction, "WAIT") ? orange : blue)
         cell(3, "Rating", rating, rating == "Clean Trade" ? green : rating == "Conditional Trade" ? orange : neutral)
