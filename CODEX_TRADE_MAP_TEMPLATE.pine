@@ -1,0 +1,95 @@
+//@version=5
+indicator("Codex Trade Map", overlay=true, max_lines_count=80, max_labels_count=80)
+
+// Update these inputs from SETUP_LEDGER.json for the current chart only.
+coinInput = input.string("XRPUSDT.P", "Coin")
+tradeType = input.string("Scalp", "Trade Type")
+direction = input.string("WAIT / CONDITIONAL LONG", "Direction")
+rating = input.string("Watch Only", "Rating")
+setupState = input.string("WAIT RETEST", "Setup State")
+positionState = input.string("NO POSITION", "Position")
+mode = input.string("RETEST", "Mode")
+isLong = input.bool(true, "Long Setup")
+
+entryLow = input.float(1.048, "Entry Low")
+entryHigh = input.float(1.052, "Entry High")
+reclaim = input.float(1.05, "Reclaim / Trigger")
+sl = input.float(1.039, "SL / Invalid")
+tp1 = input.float(1.066, "TP1")
+tp2 = input.float(1.075, "TP2")
+tp3 = input.float(1.105, "TP3")
+actualEntry = input.float(0.0, "Actual Entry")
+
+showMap = syminfo.ticker == coinInput
+
+green = color.rgb(34, 197, 94)
+red = color.rgb(255, 82, 82)
+blue = color.rgb(47, 128, 237)
+grey = color.rgb(140, 140, 140)
+orange = color.rgb(245, 158, 11)
+neutral = color.rgb(107, 114, 128)
+
+enteredLong = positionState == "ENTERED LONG" and actualEntry > 0
+enteredShort = positionState == "ENTERED SHORT" and actualEntry > 0
+plState = enteredLong ? (close >= actualEntry ? "UR PROFIT" : "UR LOSS") : enteredShort ? (close <= actualEntry ? "UR PROFIT" : "UR LOSS") : positionState
+statusText = setupState + " / " + plState
+
+plot(showMap ? entryLow : na, "Entry Bottom", color=green, linewidth=2)
+plot(showMap ? entryHigh : na, "Entry Top", color=green, linewidth=2)
+plot(showMap ? reclaim : na, "Reclaim", color=blue, linewidth=2)
+plot(showMap ? sl : na, "Invalid / SL", color=red, linewidth=2)
+plot(showMap ? tp1 : na, "TP1", color=isLong ? green : red, linewidth=2)
+plot(showMap ? tp2 : na, "TP2", color=isLong ? green : red, linewidth=2)
+plot(showMap and not na(tp3) ? tp3 : na, "TP3", color=grey, linewidth=2)
+
+var label lEntry = na
+var label lReclaim = na
+var label lSL = na
+var label lTP1 = na
+var label lTP2 = na
+var label lTP3 = na
+var label lState = na
+
+makeLabel(label old, float y, string txt, color bg) =>
+    if not na(old)
+        label.delete(old)
+    label.new(bar_index + 3, y, txt, xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_left, color=bg, textcolor=color.white, size=size.small)
+
+if barstate.islast
+    if showMap
+        lEntry := makeLabel(lEntry, (entryLow + entryHigh) / 2.0, "ENTRY " + str.tostring(entryLow) + "-" + str.tostring(entryHigh), green)
+        lReclaim := makeLabel(lReclaim, reclaim, "RECLAIM " + str.tostring(reclaim), blue)
+        lSL := makeLabel(lSL, sl, "INVALID " + str.tostring(sl), red)
+        lTP1 := makeLabel(lTP1, tp1, "TP1 " + str.tostring(tp1), isLong ? green : red)
+        lTP2 := makeLabel(lTP2, tp2, "TP2 " + str.tostring(tp2), isLong ? green : red)
+        if not na(tp3)
+            lTP3 := makeLabel(lTP3, tp3, "TP3 " + str.tostring(tp3), grey)
+        lState := makeLabel(lState, close, statusText, plState == "UR PROFIT" ? green : plState == "UR LOSS" ? red : orange)
+    else
+        if not na(lEntry)
+            label.delete(lEntry)
+            label.delete(lReclaim)
+            label.delete(lSL)
+            label.delete(lTP1)
+            label.delete(lTP2)
+            label.delete(lTP3)
+            label.delete(lState)
+
+var table t = table.new(position.top_right, 2, 9, border_width=1)
+
+cell(int row, string left, string right, color bg) =>
+    table.cell(t, 0, row, left, text_color=color.white, bgcolor=color.rgb(55, 65, 81))
+    table.cell(t, 1, row, right, text_color=color.white, bgcolor=bg)
+
+if barstate.islast
+    table.clear(t, 0, 0, 1, 8)
+    if showMap
+        cell(0, "Coin", coinInput, neutral)
+        cell(1, "Trade Type", tradeType, blue)
+        cell(2, "Direction", direction, str.contains(direction, "WAIT") ? orange : blue)
+        cell(3, "Rating", rating, rating == "Clean Trade" ? green : rating == "Conditional Trade" ? orange : neutral)
+        cell(4, "State", setupState, str.contains(setupState, "WAIT") ? orange : green)
+        cell(5, "Position", plState, plState == "UR PROFIT" ? green : plState == "UR LOSS" ? red : neutral)
+        cell(6, "Entry", str.tostring(entryLow) + "-" + str.tostring(entryHigh), green)
+        cell(7, "SL / TP", str.tostring(sl) + " / " + str.tostring(tp1) + " / " + str.tostring(tp2) + (na(tp3) ? "" : " / " + str.tostring(tp3)), isLong ? green : red)
+        cell(8, "Mode", mode, blue)
