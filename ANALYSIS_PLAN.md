@@ -68,6 +68,15 @@ Before drawing or summarizing:
 
 Never treat TradingView Pine/drawings as the memory source. They are only the display layer.
 
+Ledger hygiene:
+
+- Keep one active setup record per coin.
+- Update the existing coin record in place instead of appending duplicates.
+- Keep only the latest active/watch setup in `setups`.
+- Move completed, invalidated, stale, TP/SL-hit, or useful review items into `journal` only when they are worth learning from.
+- Keep journal entries short: coin, date, setup type, result, mistake tag, and one note.
+- Replace stale levels with the fresh chart setup instead of preserving old narrative.
+
 ## Gate 2: Catalyst / News Check
 
 Before analysis, check for scheduled or breaking catalysts that can override structure:

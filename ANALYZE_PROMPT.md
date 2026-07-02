@@ -13,6 +13,8 @@ The final answer is not complete unless one of these is true:
 
 Do not give a normal final trade summary while the chart is stale, unmarked, or showing conflicting old levels.
 
+The normal output format is allowed only after TradingView chart marking and verification succeed. If the chart is not marked or cannot be verified, do not present the setup as completed. You may still provide the setup, but it must be clearly labeled `SETUP ONLY - NOT DRAWN ON TRADINGVIEW`, include the drawing/verification issue, and offer to redraw from the ledger.
+
 ## Source Of Truth
 
 Use this source hierarchy:
@@ -44,6 +46,20 @@ The ledger must store coin, exchange, trade type, proposed type, bias, BTC/ETH f
 If TradingView fails to render the map, do not lose the setup. Keep the ledger updated and start final output with `CHART NOT MARKED` or `CHART VERIFICATION FAILED`.
 
 Do not treat TradingView Pine/drawings as persistent memory. If TradingView loses or hides a setup during symbol switching, redraw it from the ledger.
+
+## Ledger Hygiene Rule
+
+Keep `SETUP_LEDGER.json` compact and current:
+
+- Maintain one active setup record per coin symbol.
+- Update that coin's existing record in place when levels, state, or position status change.
+- Do not append duplicate records for repeated analyses of the same coin.
+- Keep only the latest active/watch setup in `setups`.
+- Move completed, invalidated, stale, TP/SL-hit, or learning-review items into `journal` only when they are worth reviewing.
+- Keep journal entries concise: coin, date, setup type, result, mistake tag, and one short note.
+- Do not store long narrative analysis inside the ledger.
+- If the ledger entry is older than the current chart structure, classify it as stale and overwrite it with the fresh setup.
+- If a setup is no longer useful and not worth journaling, replace it rather than preserving old levels.
 
 ## Pre-Analysis State Check
 
@@ -582,7 +598,9 @@ If chart marking fails:
 
 - Start final answer with `CHART NOT MARKED`.
 - Explain why marking failed.
-- Give levels in text only.
+- Do not give the normal trade-analysis output.
+- You may still give the setup levels, but label them `SETUP ONLY - NOT DRAWN ON TRADINGVIEW`.
+- Offer to redraw the setup from the ledger when chart control is available.
 - Do not imply the chart was updated.
 
 If cleanup fails:
@@ -595,7 +613,9 @@ If verification fails:
 
 - Start final answer with `CHART VERIFICATION FAILED`.
 - Explain what does not match.
-- Give corrected levels in text.
+- Do not give the normal trade-analysis output.
+- You may still give the setup levels, but label them `SETUP ONLY - NOT VERIFIED ON TRADINGVIEW`.
+- Offer to redraw the setup from the ledger when chart control is available.
 
 ## Trade Rules
 
@@ -680,4 +700,4 @@ Do not leave previous drawings or old coin levels on the chart.
 
 Clean chart first, summary second.
 
-If chart cleanup, marking, or verification fails, say so clearly before giving the text-only summary.
+If chart cleanup, marking, or verification fails, do not provide the normal final output format as completed work. Use the failure protocol, include the setup only if clearly labeled as not drawn/verified on TradingView, and offer to redraw from the ledger.
