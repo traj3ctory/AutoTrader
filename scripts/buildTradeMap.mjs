@@ -8,11 +8,13 @@ const setups = Object.values(ledger.setups || {});
 
 const q = (value) => JSON.stringify(String(value ?? ""));
 const n = (value) => (Number.isFinite(Number(value)) ? String(Number(value)) : "na");
+const matchExpr = (setup) =>
+  `(syminfo.prefix == ${q(setup.exchange || "BYBIT")} and syminfo.ticker == ${q(setup.coin)})`;
 
 const chain = (field, fallback, transform = (setup) => setup[field]) =>
   setups.reduceRight((acc, setup) => {
     const value = transform(setup);
-    return `syminfo.ticker == ${q(setup.coin)} ? ${value} : ${acc}`;
+    return `${matchExpr(setup)} ? ${value} : ${acc}`;
   }, fallback);
 
 const stringChain = (field, fallback = '""') =>
@@ -29,11 +31,12 @@ const tpChain = (index) =>
 
 const isLongChain = setups.reduceRight((acc, setup) => {
   const value = String(setup.direction || "").toLowerCase().includes("short") ? "false" : "true";
-  return `syminfo.ticker == ${q(setup.coin)} ? ${value} : ${acc}`;
+  return `${matchExpr(setup)} ? ${value} : ${acc}`;
 }, "true");
 
 const actualEntryChain = chain("entry", "0.0", (setup) => n(setup.entry?.actual ?? 0));
-const showMap = setups.map((setup) => `syminfo.ticker == ${q(setup.coin)}`).join(" or ") || "false";
+const showMap = setups.map((setup) => matchExpr(setup)).join(" or ") || "false";
+const labelOffset = 5;
 
 const pine = `//@version=5
 indicator("Codex Trade Map", overlay=true, max_lines_count=80, max_labels_count=80)
@@ -88,14 +91,34 @@ var label lTP1 = na
 var label lTP2 = na
 var label lTP3 = na
 var label lState = na
+var line gEntryLow = na
+var line gEntryHigh = na
+var line gReclaim = na
+var line gSL = na
+var line gTP1 = na
+var line gTP2 = na
+var line gTP3 = na
 
 makeLabel(label old, float y, string txt, color bg) =>
     if not na(old)
         label.delete(old)
-    label.new(bar_index + 2, y, txt, xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_right, color=bg, textcolor=color.white, size=size.small)
+    label.new(bar_index + ${labelOffset}, y, txt, xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_left, color=bg, textcolor=color.white, size=size.small)
+
+makeGuide(line old, float y, color c) =>
+    if not na(old)
+        line.delete(old)
+    line.new(bar_index, y, bar_index + ${labelOffset}, y, xloc=xloc.bar_index, extend=extend.none, color=c, width=2)
 
 if barstate.islast
     if showMap
+        gEntryLow := makeGuide(gEntryLow, entryLow, green)
+        gEntryHigh := makeGuide(gEntryHigh, entryHigh, green)
+        gReclaim := makeGuide(gReclaim, reclaim, blue)
+        gSL := makeGuide(gSL, sl, red)
+        gTP1 := makeGuide(gTP1, tp1, isLong ? green : red)
+        gTP2 := makeGuide(gTP2, tp2, isLong ? green : red)
+        if not na(tp3)
+            gTP3 := makeGuide(gTP3, tp3, grey)
         lEntry := makeLabel(lEntry, (entryLow + entryHigh) / 2.0, "ENTRY " + str.tostring(entryLow) + "-" + str.tostring(entryHigh), green)
         lReclaim := makeLabel(lReclaim, reclaim, "RECLAIM " + str.tostring(reclaim), blue)
         lSL := makeLabel(lSL, sl, "INVALID " + str.tostring(sl), red)
@@ -113,6 +136,13 @@ if barstate.islast
             label.delete(lTP2)
             label.delete(lTP3)
             label.delete(lState)
+            line.delete(gEntryLow)
+            line.delete(gEntryHigh)
+            line.delete(gReclaim)
+            line.delete(gSL)
+            line.delete(gTP1)
+            line.delete(gTP2)
+            line.delete(gTP3)
 
 var table t = table.new(position.top_right, 2, 9, border_width=1)
 

@@ -25,7 +25,11 @@
       "reclaim": 1.05,
       "sl": 1.039,
       "sl_quality": "Vulnerable",
-      "tp": [1.066, 1.075, 1.105],
+      "tp": [
+        1.066,
+        1.075,
+        1.105
+      ],
       "invalidation": "Clean loss of 1.039",
       "nearest_liquidity": "Buy-side 1.066 then 1.075; sell-side below 1.048 then 1.039",
       "reclaim_status": "Reclaimed 1.0500; waiting retest",
@@ -55,7 +59,11 @@
       "reclaim": 6.7,
       "sl": 6.54,
       "sl_quality": "Vulnerable",
-      "tp": [6.82, 6.95, 7.1],
+      "tp": [
+        6.82,
+        6.95,
+        7.1
+      ],
       "invalidation": "Clean loss of 6.54",
       "nearest_liquidity": "Buy-side above 6.82; sell-side below 6.62 then 6.54",
       "reclaim_status": "Needs 6.70 reclaimed and held",
@@ -85,7 +93,11 @@
       "reclaim": 0.0245,
       "sl": 0.0232,
       "sl_quality": "Vulnerable",
-      "tp": [0.0252, 0.026, 0.0266],
+      "tp": [
+        0.0252,
+        0.026,
+        0.0266
+      ],
       "invalidation": "Clean loss of 0.02320",
       "nearest_liquidity": "Buy-side above 0.02520 then 0.02600-0.02660; sell-side below 0.02390 then 0.02320",
       "reclaim_status": "Reclaimed local structure; waiting retest",
@@ -115,7 +127,11 @@
       "reclaim": 0.07265,
       "sl": 0.07145,
       "sl_quality": "Vulnerable",
-      "tp": [0.07325, 0.07375, 0.0741],
+      "tp": [
+        0.07325,
+        0.07375,
+        0.0741
+      ],
       "invalidation": "Clean loss of 0.07145",
       "nearest_liquidity": "Buy-side above 0.07325 then 0.07375; sell-side below 0.07190 then 0.07145",
       "reclaim_status": "Recent wick near 0.07265 did not confirm; needs reclaim and hold before entry is active",
@@ -145,7 +161,11 @@
       "reclaim": 63.75,
       "sl": 62.55,
       "sl_quality": "Vulnerable",
-      "tp": [64.05, 64.55, 65.05],
+      "tp": [
+        64.05,
+        64.55,
+        65.05
+      ],
       "invalidation": "Clean loss of 62.55",
       "nearest_liquidity": "Buy-side above 63.75 then 64.55-65.05; sell-side below 62.95 then 62.55",
       "reclaim_status": "Needs 63.75 reclaimed and held; current price is mid-range, not an entry",
@@ -175,13 +195,51 @@
       "reclaim": 0.1428,
       "sl": 0.1468,
       "sl_quality": "Vulnerable",
-      "tp": [0.1376, 0.1345, 0.128],
+      "tp": [
+        0.1376,
+        0.1345,
+        0.128
+      ],
       "invalidation": "Clean reclaim/acceptance above 0.1468",
       "nearest_liquidity": "Buy-side above 0.1468; sell-side below 0.1376",
       "reclaim_status": "Needs fresh review",
       "relative_strength": "Unverified",
       "final_action": "WAIT / NO TRADE",
       "notes": "Legacy setup. Refresh before trading."
+    },
+    "ETHUSDT.P": {
+      "coin": "ETHUSDT.P",
+      "exchange": "BYBIT",
+      "trade_type": "Scalp",
+      "proposed_type": "Proposed Wait / Conditional Long",
+      "bias": "Range chop on 15m; waiting for demand retest or supply break",
+      "btc_eth_filter": "Aligned (Asset is ETH)",
+      "catalyst": "Unverified",
+      "setup_type": "Standard Demand Retest / Liquidity Sweep",
+      "setup_rating": "Watch Only",
+      "setup_state": "WAIT RETEST",
+      "position_status": "NO POSITION",
+      "direction": "Long",
+      "entry": {
+        "low": 1592.0,
+        "high": 1598.0,
+        "basis": "Retest entry at local demand",
+        "actual": null
+      },
+      "reclaim": 1615.0,
+      "sl": 1584.0,
+      "sl_quality": "Safe",
+      "tp": [
+        1615.0,
+        1630.0,
+        1642.0
+      ],
+      "invalidation": "Clean loss of 1584.0",
+      "nearest_liquidity": "Buy-side above 1645; sell-side below 1615 and 1590",
+      "reclaim_status": "Bounced from 1615 local support; waiting for deeper entry",
+      "relative_strength": "N/A",
+      "final_action": "WAIT / NO CHASE",
+      "notes": "Do not chase middle of the range. Wait for 1595 demand retest."
     }
   },
   "journal": []
