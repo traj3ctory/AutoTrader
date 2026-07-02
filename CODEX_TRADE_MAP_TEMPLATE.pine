@@ -2,23 +2,24 @@
 indicator("Codex Trade Map", overlay=true, max_lines_count=80, max_labels_count=80)
 
 // Update these inputs from SETUP_LEDGER.json for the current chart only.
-coinInput = input.string("XRPUSDT.P", "Coin")
-tradeType = input.string("Scalp", "Trade Type")
-direction = input.string("WAIT / CONDITIONAL LONG", "Direction")
-rating = input.string("Watch Only", "Rating")
-setupState = input.string("WAIT RETEST", "Setup State")
-positionState = input.string("NO POSITION", "Position")
-mode = input.string("RETEST", "Mode")
-isLong = input.bool(true, "Long Setup")
+// Keep them hidden from the status line so the chart legend stays clean.
+coinInput = input.string("XRPUSDT.P", "Coin", display=display.none)
+tradeType = input.string("Scalp", "Trade Type", display=display.none)
+direction = input.string("WAIT / CONDITIONAL LONG", "Direction", display=display.none)
+rating = input.string("Watch Only", "Rating", display=display.none)
+setupState = input.string("WAIT RETEST", "Setup State", display=display.none)
+positionState = input.string("NO POSITION", "Position", display=display.none)
+mode = input.string("RETEST", "Mode", display=display.none)
+isLong = input.bool(true, "Long Setup", display=display.none)
 
-entryLow = input.float(1.048, "Entry Low")
-entryHigh = input.float(1.052, "Entry High")
-reclaim = input.float(1.05, "Reclaim / Trigger")
-sl = input.float(1.039, "SL / Invalid")
-tp1 = input.float(1.066, "TP1")
-tp2 = input.float(1.075, "TP2")
-tp3 = input.float(1.105, "TP3")
-actualEntry = input.float(0.0, "Actual Entry")
+entryLow = input.float(1.048, "Entry Low", display=display.none)
+entryHigh = input.float(1.052, "Entry High", display=display.none)
+reclaim = input.float(1.05, "Reclaim / Trigger", display=display.none)
+sl = input.float(1.039, "SL / Invalid", display=display.none)
+tp1 = input.float(1.066, "TP1", display=display.none)
+tp2 = input.float(1.075, "TP2", display=display.none)
+tp3 = input.float(1.105, "TP3", display=display.none)
+actualEntry = input.float(0.0, "Actual Entry", display=display.none)
 
 showMap = syminfo.ticker == coinInput
 
@@ -34,13 +35,13 @@ enteredShort = positionState == "ENTERED SHORT" and actualEntry > 0
 plState = enteredLong ? (close >= actualEntry ? "UR PROFIT" : "UR LOSS") : enteredShort ? (close <= actualEntry ? "UR PROFIT" : "UR LOSS") : positionState
 statusText = setupState + " / " + plState
 
-plot(showMap ? entryLow : na, "Entry Bottom", color=green, linewidth=2)
-plot(showMap ? entryHigh : na, "Entry Top", color=green, linewidth=2)
-plot(showMap ? reclaim : na, "Reclaim", color=blue, linewidth=2)
-plot(showMap ? sl : na, "Invalid / SL", color=red, linewidth=2)
-plot(showMap ? tp1 : na, "TP1", color=isLong ? green : red, linewidth=2)
-plot(showMap ? tp2 : na, "TP2", color=isLong ? green : red, linewidth=2)
-plot(showMap and not na(tp3) ? tp3 : na, "TP3", color=grey, linewidth=2)
+plot(showMap ? entryLow : na, "Entry Bottom", color=green, linewidth=2, display=display.all - display.status_line)
+plot(showMap ? entryHigh : na, "Entry Top", color=green, linewidth=2, display=display.all - display.status_line)
+plot(showMap ? reclaim : na, "Reclaim", color=blue, linewidth=2, display=display.all - display.status_line)
+plot(showMap ? sl : na, "Invalid / SL", color=red, linewidth=2, display=display.all - display.status_line)
+plot(showMap ? tp1 : na, "TP1", color=isLong ? green : red, linewidth=2, display=display.all - display.status_line)
+plot(showMap ? tp2 : na, "TP2", color=isLong ? green : red, linewidth=2, display=display.all - display.status_line)
+plot(showMap and not na(tp3) ? tp3 : na, "TP3", color=grey, linewidth=2, display=display.all - display.status_line)
 
 var label lEntry = na
 var label lReclaim = na
