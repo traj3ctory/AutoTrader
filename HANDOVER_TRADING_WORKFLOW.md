@@ -15,6 +15,9 @@ Move these files as a set:
 - `ANALYZE_PROMPT.md`
 - `ANALYSIS_PLAN.md`
 - `SETUP_LEDGER.json`
+- `SCORECARD.json`
+- `scripts/buildTradeMap.mjs`
+- `scripts/buildScorecard.mjs`
 - `CODEX_TRADE_MAP_TEMPLATE.pine`
 - `HANDOVER_TRADING_WORKFLOW.md`
 
@@ -57,19 +60,15 @@ chrome-analyze-epic-on-the-current/
 
 ## Current Ledger Entries
 
-The current ledger contains:
+Do not trust this file for coin lists or setup states; it goes stale. The current coin list, per-setup state, and `analyzed_at` timestamps live only in `SETUP_LEDGER.json` — read it directly.
 
-- `XRPUSDT.P`
-- `AVAXUSDT.P`
-- `SPORTFUNUSDT.P`
-- `FARTCOINUSDT.P`
+## Timeframe Stacks
 
-Current status pattern:
-
-- XRP: `WAIT RETEST`, `NO POSITION`
-- AVAX: `WAIT RECLAIM`, `NO POSITION`
-- SPORTFUN: `WAIT RETEST`, `NO POSITION`
-- FARTCOIN: `WAIT REACTION`, `NO POSITION`, legacy setup needing fresh review
+- Intraday: 1D -> 4H -> 1H, entry planned on 1H, trigger confirmation on 15m or 1H closes.
+- Scalp: 4H veto -> 1H -> 15m -> 5m, entry planned on 5m.
+- Scalps must check 4H supply/demand before mapping any levels. See the Timeframe Rules and R:R floors in `ANALYZE_PROMPT.md`.
+- R:R floors: Scalp TP1 >= 1.5R with TP2 in the 2.5-3.5R band; Intraday TP1 >= 2R with TP2 in the 3-4R band.
+- R:R is measured from the conservative entry-zone edge (entry high for longs, entry low for shorts), not the midpoint.
 
 ## Required Analyze Workflow
 
@@ -216,7 +215,7 @@ Ledger memory -> validity gate -> generated multi-symbol renderer -> verificatio
 
 Do not move to alerts or auto-trading until:
 
-- At least 30 reviewed setups are journaled.
+- At least 30 setups counted toward the gate: correct-thesis analyses plus user-confirmed taken trades (one record counts once).
 - No repeated confusion between entry, reclaim, and active trade.
 - Setup outcomes are tracked as Win, Loss, Missed, No Trade, or Invalidated.
 - Alerts can be expressed as strict pass/fail rules.

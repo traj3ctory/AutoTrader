@@ -1,0 +1,178 @@
+{
+  "version": 1,
+  "last_updated": "2026-07-07",
+  "principle": "Keep thesis result simple. Trade result only updates when the user confirms a trade was taken.",
+  "summary": {
+    "reviewed_setups": 6,
+    "correct_thesis": 1,
+    "invalidated_thesis": 5,
+    "trades_taken": 0,
+    "trade_wins": 0,
+    "trade_losses": 0
+  },
+  "rules": {
+    "correct_thesis": "Use only when the exact plan played out: reclaim/trigger, entry area, and TP.",
+    "invalidated_thesis": "Use when the planned trigger or entry was missed, never touched, or the setup failed before a valid entry.",
+    "trade_taken": "Only mark Yes when the user says they took the trade.",
+    "trade_result": "Only mark Win or Loss after the user confirms a trade was taken."
+  },
+  "records": [
+    {
+      "id": "2026-07-02-USUSDT.P-long-4h-supply",
+      "date": "2026-07-02",
+      "coin": "USUSDT.P",
+      "exchange": "BYBIT",
+      "trade_type": "Scalp",
+      "direction": "Long",
+      "setup_type": "Compression-to-Expansion Breakout / Demand Retest",
+      "setup_rating": "Watch Only",
+      "final_action": "WAIT / NO CHASE",
+      "planned_entry": "0.01575-0.01605 retest zone",
+      "planned_sl": 0.01525,
+      "planned_tp": [
+        0.01745,
+        0.018,
+        0.0188
+      ],
+      "trade_taken": false,
+      "trade_result": "Not Taken",
+      "outcome": "Invalidated Thesis",
+      "milestones": [
+        "4H Supply Miss",
+        "Invalidated Thesis"
+      ],
+      "review_note": "USUSDT analysis was inaccurate: price moved into the 4H supply zone, so the long/retest thesis should not receive correct-thesis credit."
+    },
+    {
+      "id": "2026-07-02-HYPEUSDT.P-long-reclaim",
+      "date": "2026-07-02",
+      "coin": "HYPEUSDT.P",
+      "exchange": "BYBIT",
+      "trade_type": "Scalp",
+      "direction": "Long",
+      "setup_type": "Reclaim + Retest / Compression Bounce",
+      "setup_rating": "Watch Only",
+      "final_action": "WAIT / NO CHASE",
+      "planned_entry": "62.95-63.20 retest zone",
+      "planned_sl": 62.55,
+      "planned_tp": [
+        64.05,
+        64.55,
+        65.05
+      ],
+      "trade_taken": false,
+      "trade_result": "Not Taken",
+      "outcome": "Invalidated Thesis",
+      "milestones": [
+        "No Entry Touch",
+        "No Reclaim"
+      ],
+      "review_note": "HYPE did not come back to the mapped 65.85-66.15 entry zone or complete the 67.20 reclaim condition. Do not count the move as a correct thesis just because price was strong."
+    },
+    {
+      "id": "2026-07-02-XRPUSDT.P-long-reclaim",
+      "date": "2026-07-02",
+      "coin": "XRPUSDT.P",
+      "exchange": "BYBIT",
+      "trade_type": "Scalp",
+      "direction": "Long",
+      "setup_type": "Reclaim + Retest / Standard Demand Retest",
+      "setup_rating": "Watch Only",
+      "final_action": "WAIT / NO CHASE",
+      "planned_entry": "1.048-1.052 retest zone",
+      "planned_sl": 1.039,
+      "planned_tp": [
+        1.066,
+        1.075,
+        1.105
+      ],
+      "trade_taken": false,
+      "trade_result": "Not Taken",
+      "outcome": "Invalidated Thesis",
+      "milestones": [
+        "Missed Entry"
+      ],
+      "review_note": "XRP moved after the valid entry trigger was missed. Do not count this as a correct thesis."
+    },
+    {
+      "id": "2026-07-02-BREVUSDT.P-short-extension",
+      "date": "2026-07-02",
+      "coin": "BREVUSDT.P",
+      "exchange": "BYBIT",
+      "trade_type": "Scalp",
+      "direction": "Short",
+      "setup_type": "Liquidity Sweep + Failed Reclaim / Supply Rejection",
+      "setup_rating": "Watch Only",
+      "final_action": "NO CHASE",
+      "planned_entry": "0.112-0.114 rejection zone",
+      "planned_sl": 0.1162,
+      "planned_tp": [
+        0.108,
+        0.1045,
+        0.1
+      ],
+      "trade_taken": false,
+      "trade_result": "Not Taken",
+      "outcome": "Correct Thesis",
+      "milestones": [
+        "100% Correct",
+        "Entry",
+        "TP"
+      ],
+      "review_note": "BREV short thesis worked through the planned entry/rejection idea and TP area. Trade result stays Not Taken until user confirms otherwise."
+    },
+    {
+      "id": "2026-07-02-SPORTFUNUSDT.P-long-reclaim",
+      "date": "2026-07-02",
+      "coin": "SPORTFUNUSDT.P",
+      "exchange": "BYBIT",
+      "trade_type": "Scalp",
+      "direction": "Long",
+      "setup_type": "Reclaim + Retest / Compression Bounce",
+      "setup_rating": "Watch Only",
+      "final_action": "WAIT / NO CHASE",
+      "planned_entry": "0.0239-0.0242 retest zone",
+      "planned_sl": 0.0232,
+      "planned_tp": [
+        0.0252,
+        0.026,
+        0.0266
+      ],
+      "trade_taken": false,
+      "trade_result": "Not Taken",
+      "outcome": "Invalidated Thesis",
+      "milestones": [
+        "Missed Entry",
+        "No Retest"
+      ],
+      "review_note": "Reclaimed 0.0245 and moved to the TP1 area without ever retesting the entry zone. Missed entry, not a correct thesis."
+    },
+    {
+      "id": "2026-07-07-USUSDT.P-long-deep-retest",
+      "date": "2026-07-07",
+      "coin": "USUSDT.P",
+      "exchange": "BYBIT",
+      "trade_type": "Intraday",
+      "direction": "Long",
+      "setup_type": "No Clean Intraday Setup / Deep Retest Watch",
+      "setup_rating": "Watch Only",
+      "final_action": "WAIT / NO CHASE",
+      "planned_entry": "0.0213-0.0217 deep retest zone",
+      "planned_sl": 0.0208,
+      "planned_tp": [
+        0.024,
+        0.025,
+        0.026
+      ],
+      "trade_taken": false,
+      "trade_result": "Not Taken",
+      "outcome": "Invalidated Thesis",
+      "milestones": [
+        "Entry Swept",
+        "SL Tagged",
+        "Full Pump Retrace"
+      ],
+      "review_note": "Unverified-catalyst pump retraced fully to the impulse origin. Long retest thesis wrong: sweep-fail signature at 0.0240 favored the short, and the zone had no base under it. No position, no loss."
+    }
+  ]
+}

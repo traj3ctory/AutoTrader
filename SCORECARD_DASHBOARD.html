@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Codex Scorecard</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 28px; background: #0a0e17; color: #e6e9f2;
+    font: 14px/1.5 -apple-system, "Segoe UI", sans-serif;
+  }
+  h1 { font-size: 21px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .sub { color: #7c8698; margin-bottom: 22px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .tile { background: #10141f; border: 1px solid #1c2333; border-radius: 10px; padding: 14px 16px; }
+  .tile .num { font-size: 26px; font-weight: 700; }
+  .tile .lbl { color: #7c8698; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+  .bar { background: #10141f; border: 1px solid #1c2333; border-radius: 10px; padding: 14px 16px; margin-bottom: 22px; }
+  .track { background: #1c2333; border-radius: 5px; height: 10px; overflow: hidden; margin-top: 10px; }
+  .fill { background: #3b82f6; height: 100%; }
+  h2 { font-size: 15px; font-weight: 700; margin: 26px 0 10px; }
+  .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .search-wrap { position: relative; flex: 1; max-width: 360px; }
+  .search-wrap input {
+    width: 100%; background: #10141f; border: 1px solid #1c2333; border-radius: 8px;
+    color: #e6e9f2; padding: 9px 12px 9px 32px; font-size: 13px; outline: none;
+  }
+  .search-wrap input:focus { border-color: #3b82f6; }
+  .search-wrap::before {
+    content: ""; position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+    width: 13px; height: 13px; border: 1.5px solid #7c8698; border-radius: 50%;
+  }
+  .search-wrap::after {
+    content: ""; position: absolute; left: 20px; top: 63%; width: 6px; height: 1.5px;
+    background: #7c8698; transform: rotate(45deg);
+  }
+  #resultCount { color: #7c8698; font-size: 12px; white-space: nowrap; }
+  .group { background: #10141f; border: 1px solid #1c2333; border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
+  .group-header {
+    width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+    background: transparent; border: none; color: #e6e9f2; cursor: pointer; text-align: left;
+    font: inherit;
+  }
+  .group-header:hover { background: #141a29; }
+  .chev { color: #5b8def; font-size: 18px; font-weight: 700; width: 12px; display: inline-block; transition: transform 0.15s; }
+  .chev.open { transform: rotate(90deg); }
+  .g-coin { font-weight: 700; min-width: 130px; }
+  .g-count { color: #7c8698; font-size: 12px; min-width: 90px; }
+  .g-date { color: #7c8698; font-size: 12px; margin-left: auto; }
+  .group-body { border-top: 1px solid #1c2333; padding: 4px 14px 10px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #1c2333; vertical-align: top; }
+  th { color: #7c8698; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  td.date { white-space: nowrap; color: #a7b0c0; }
+  .pill { border-radius: 6px; padding: 3px 9px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .k-correct { background: #22d67a1f; color: #22d67a; border: 1px solid #22d67a4d; }
+  .k-invalidated { background: #f5a5241f; color: #f5a524; border: 1px solid #f5a5244d; }
+  .k-other { background: #5b8def1f; color: #5b8def; border: 1px solid #5b8def4d; }
+  .note { color: #a7b0c0; font-size: 13px; max-width: 380px; }
+  .pagination { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+  .pagination button {
+    background: #10141f; border: 1px solid #1c2333; color: #e6e9f2; border-radius: 8px;
+    padding: 7px 14px; font-size: 13px; cursor: pointer;
+  }
+  .pagination button:hover:not(:disabled) { border-color: #3b82f6; color: #5b8def; }
+  .pagination button:disabled { opacity: 0.35; cursor: default; }
+  #pageInfo { color: #7c8698; font-size: 12px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag { background: #10141f; border: 1px solid #1c2333; border-radius: 8px; padding: 6px 10px; display: flex; gap: 8px; align-items: center; }
+  .tagname { font-family: ui-monospace, monospace; font-size: 12px; }
+  .tagcount { background: #3b82f633; color: #5b8def; border-radius: 99px; padding: 0 8px; font-size: 12px; font-weight: 700; }
+  .foot { color: #4b5566; font-size: 12px; margin-top: 22px; }
+  .empty { color: #7c8698; font-size: 13px; padding: 20px; text-align: center; background: #10141f; border: 1px solid #1c2333; border-radius: 10px; }
+  .green { color: #22d67a; } .amber { color: #f5a524; } .blue { color: #5b8def; }
+</style>
+</head>
+<body>
+<h1>Codex Scorecard</h1>
+<div class="sub">Keep thesis result simple. Trade result only updates when the user confirms a trade was taken.</div>
+
+<div class="tiles">
+  <div class="tile"><div class="num">6</div><div class="lbl">Reviewed setups</div></div>
+  <div class="tile"><div class="num green">1</div><div class="lbl">Correct thesis</div></div>
+  <div class="tile"><div class="num amber">5</div><div class="lbl">Invalidated thesis</div></div>
+  <div class="tile"><div class="num blue">17%</div><div class="lbl">Thesis accuracy</div></div>
+  <div class="tile"><div class="num">0</div><div class="lbl">Trades taken</div></div>
+  <div class="tile"><div class="num">0 / 0</div><div class="lbl">Trade wins / losses</div></div>
+</div>
+
+<div class="bar">
+  <strong>1 / 30</strong> toward the automation gate — correct analyses + taken trades (3%) · 6 reviewed in total
+  <div class="track"><div class="fill" style="width:3%"></div></div>
+</div>
+
+<h2>Records by coin</h2>
+<div class="toolbar">
+  <div class="search-wrap">
+    <input id="search" type="text" placeholder="Search coin, setup type, outcome..." oninput="applyFilter()">
+  </div>
+  <span id="resultCount"></span>
+</div>
+<div id="groups">
+<div class="group" data-search="ususdt.p no clean intraday setup / deep retest watch invalidated thesis not taken long compression-to-expansion breakout / demand retest invalidated thesis not taken long" data-idx="0">
+    <button class="group-header" type="button" onclick="toggleGroup(0)">
+      <span class="chev" id="chev-0">&rsaquo;</span>
+      <span class="g-coin">USUSDT.P</span>
+      <span class="g-count">2 analyses</span>
+      <span class="pill k-invalidated">Invalidated Thesis</span>
+      <span class="g-date">2026-07-07</span>
+    </button>
+    <div class="group-body" id="body-0" hidden>
+      <table>
+        <thead><tr><th>Date</th><th>Trade</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
+        <tbody>
+<tr>
+        <td class="date">2026-07-07</td>
+        <td>Intraday Long</td>
+        <td>No Clean Intraday Setup / Deep Retest Watch</td>
+        <td><span class="pill k-invalidated">Invalidated Thesis</span></td>
+        <td>Not Taken</td>
+        <td class="note">Unverified-catalyst pump retraced fully to the impulse origin. Long retest thesis wrong: sweep-fail signature at 0.0240 favored the short, and the zone had no base under it. No position, no loss.</td>
+      </tr>
+<tr>
+        <td class="date">2026-07-02</td>
+        <td>Scalp Long</td>
+        <td>Compression-to-Expansion Breakout / Demand Retest</td>
+        <td><span class="pill k-invalidated">Invalidated Thesis</span></td>
+        <td>Not Taken</td>
+        <td class="note">USUSDT analysis was inaccurate: price moved into the 4H supply zone, so the long/retest thesis should not receive correct-thesis credit.</td>
+      </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<div class="group" data-search="hypeusdt.p reclaim + retest / compression bounce invalidated thesis not taken long" data-idx="1">
+    <button class="group-header" type="button" onclick="toggleGroup(1)">
+      <span class="chev" id="chev-1">&rsaquo;</span>
+      <span class="g-coin">HYPEUSDT.P</span>
+      <span class="g-count">1 analysis</span>
+      <span class="pill k-invalidated">Invalidated Thesis</span>
+      <span class="g-date">2026-07-02</span>
+    </button>
+    <div class="group-body" id="body-1" hidden>
+      <table>
+        <thead><tr><th>Date</th><th>Trade</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
+        <tbody>
+<tr>
+        <td class="date">2026-07-02</td>
+        <td>Scalp Long</td>
+        <td>Reclaim + Retest / Compression Bounce</td>
+        <td><span class="pill k-invalidated">Invalidated Thesis</span></td>
+        <td>Not Taken</td>
+        <td class="note">HYPE did not come back to the mapped 65.85-66.15 entry zone or complete the 67.20 reclaim condition. Do not count the move as a correct thesis just because price was strong.</td>
+      </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<div class="group" data-search="xrpusdt.p reclaim + retest / standard demand retest invalidated thesis not taken long" data-idx="2">
+    <button class="group-header" type="button" onclick="toggleGroup(2)">
+      <span class="chev" id="chev-2">&rsaquo;</span>
+      <span class="g-coin">XRPUSDT.P</span>
+      <span class="g-count">1 analysis</span>
+      <span class="pill k-invalidated">Invalidated Thesis</span>
+      <span class="g-date">2026-07-02</span>
+    </button>
+    <div class="group-body" id="body-2" hidden>
+      <table>
+        <thead><tr><th>Date</th><th>Trade</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
+        <tbody>
+<tr>
+        <td class="date">2026-07-02</td>
+        <td>Scalp Long</td>
+        <td>Reclaim + Retest / Standard Demand Retest</td>
+        <td><span class="pill k-invalidated">Invalidated Thesis</span></td>
+        <td>Not Taken</td>
+        <td class="note">XRP moved after the valid entry trigger was missed. Do not count this as a correct thesis.</td>
+      </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<div class="group" data-search="brevusdt.p liquidity sweep + failed reclaim / supply rejection correct thesis not taken short" data-idx="3">
+    <button class="group-header" type="button" onclick="toggleGroup(3)">
+      <span class="chev" id="chev-3">&rsaquo;</span>
+      <span class="g-coin">BREVUSDT.P</span>
+      <span class="g-count">1 analysis</span>
+      <span class="pill k-correct">Correct Thesis</span>
+      <span class="g-date">2026-07-02</span>
+    </button>
+    <div class="group-body" id="body-3" hidden>
+      <table>
+        <thead><tr><th>Date</th><th>Trade</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
+        <tbody>
+<tr>
+        <td class="date">2026-07-02</td>
+        <td>Scalp Short</td>
+        <td>Liquidity Sweep + Failed Reclaim / Supply Rejection</td>
+        <td><span class="pill k-correct">Correct Thesis</span></td>
+        <td>Not Taken</td>
+        <td class="note">BREV short thesis worked through the planned entry/rejection idea and TP area. Trade result stays Not Taken until user confirms otherwise.</td>
+      </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<div class="group" data-search="sportfunusdt.p reclaim + retest / compression bounce invalidated thesis not taken long" data-idx="4">
+    <button class="group-header" type="button" onclick="toggleGroup(4)">
+      <span class="chev" id="chev-4">&rsaquo;</span>
+      <span class="g-coin">SPORTFUNUSDT.P</span>
+      <span class="g-count">1 analysis</span>
+      <span class="pill k-invalidated">Invalidated Thesis</span>
+      <span class="g-date">2026-07-02</span>
+    </button>
+    <div class="group-body" id="body-4" hidden>
+      <table>
+        <thead><tr><th>Date</th><th>Trade</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
+        <tbody>
+<tr>
+        <td class="date">2026-07-02</td>
+        <td>Scalp Long</td>
+        <td>Reclaim + Retest / Compression Bounce</td>
+        <td><span class="pill k-invalidated">Invalidated Thesis</span></td>
+        <td>Not Taken</td>
+        <td class="note">Reclaimed 0.0245 and moved to the TP1 area without ever retesting the entry zone. Missed entry, not a correct thesis.</td>
+      </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="pagination" id="pagination">
+  <button id="prevBtn" onclick="changePage(-1)">Prev</button>
+  <span id="pageInfo"></span>
+  <button id="nextBtn" onclick="changePage(1)">Next</button>
+</div>
+
+<h2>Mistake tags (from ledger journal)</h2>
+<div class="tags">
+<div class="tag"><span class="tagname">MISSED_ENTRY</span><span class="tagcount">2</span></div>
+<div class="tag"><span class="tagname">HTF_SUPPLY_MISREAD</span><span class="tagcount">1</span></div>
+<div class="tag"><span class="tagname">WRONG_COIN_ANALYZED</span><span class="tagcount">1</span></div>
+<div class="tag"><span class="tagname">NO_ENTRY_NO_RECLAIM</span><span class="tagcount">1</span></div>
+<div class="tag"><span class="tagname">NO_CHASE_WORKED</span><span class="tagcount">1</span></div>
+<div class="tag"><span class="tagname">SWEEP_FAIL_MISREAD</span><span class="tagcount">1</span></div>
+</div>
+
+<div class="foot">Generated 2026-07-07T05:47:57.587Z from SCORECARD.json and SETUP_LEDGER.json · regenerate with: node scripts/buildScorecard.mjs</div>
+
+<script>
+  const PAGE_SIZE = 5;
+  let page = 1;
+  const allGroups = Array.from(document.querySelectorAll('.group'));
+
+  function toggleGroup(i) {
+    const body = document.getElementById('body-' + i);
+    const chev = document.getElementById('chev-' + i);
+    const isHidden = body.hasAttribute('hidden');
+    if (isHidden) { body.removeAttribute('hidden'); chev.classList.add('open'); }
+    else { body.setAttribute('hidden', ''); chev.classList.remove('open'); }
+  }
+
+  function applyFilter() {
+    page = 1;
+    render();
+  }
+
+  function changePage(delta) {
+    page += delta;
+    render();
+  }
+
+  function render() {
+    const term = document.getElementById('search').value.trim().toLowerCase();
+    const matches = allGroups.filter((g) => !term || g.dataset.search.includes(term));
+    const totalPages = Math.max(1, Math.ceil(matches.length / PAGE_SIZE));
+    page = Math.min(Math.max(1, page), totalPages);
+    const start = (page - 1) * PAGE_SIZE;
+    const visible = new Set(matches.slice(start, start + PAGE_SIZE));
+
+    allGroups.forEach((g) => { g.style.display = visible.has(g) ? '' : 'none'; });
+
+    const countEl = document.getElementById('resultCount');
+    countEl.textContent = term
+      ? matches.length + ' match' + (matches.length === 1 ? '' : 'es')
+      : allGroups.length + ' coin' + (allGroups.length === 1 ? '' : 's');
+
+    document.getElementById('pageInfo').textContent = 'Page ' + page + ' of ' + totalPages;
+    document.getElementById('prevBtn').disabled = page <= 1;
+    document.getElementById('nextBtn').disabled = page >= totalPages;
+    document.getElementById('pagination').style.display = matches.length > PAGE_SIZE ? 'flex' : 'none';
+  }
+
+  render();
+</script>
+</body>
+</html>

@@ -29,16 +29,17 @@ When the user says `Analyze [coin]`, execute this flow:
 6. Check the catalyst/news gate; if a high-impact event or breaking headline is imminent, cap the action at Wait or No Chase.
 7. Choose trade type: Scalp, Intraday, or No Trade.
 8. Read required timeframes:
-   - Intraday: 1D -> 4H -> 1H.
-   - Scalp: 1H -> 15m -> 5m.
+   - Intraday: 1D -> 4H -> 1H, entry planned on 1H, trigger confirmation on 15m or 1H closes.
+   - Scalp: 4H (supply/demand veto only) -> 1H -> 15m -> 5m, entry planned on 5m.
+   - Scalps must mark 4H supply/demand before mapping any levels; a scalp into an opposing 4H zone is capped at Watch Only.
 9. Classify setup lifecycle.
 10. Select one primary setup type.
 11. Define entry activation basis.
 12. Define entry, SL, TP, liquidity, invalidation, R:R, and SL quality.
 13. Rate the setup.
 14. Decide final action.
-15. Update `SETUP_LEDGER.json`.
-16. Draw or update the current TradingView map from the ledger.
+15. Update `SETUP_LEDGER.json`, including `analyzed_at` (ISO timestamp), `activation_basis`, `rr_tp1`, and `rr_tp2`.
+16. Run `node scripts/buildTradeMap.mjs` to regenerate the Pine map, and heed its R:R warnings. If an outcome was journaled or a scorecard record added, also run `node scripts/buildScorecard.mjs`. Then draw or update the current TradingView map from the regenerated template.
 17. Verify chart map against the ledger and written levels.
 18. Close Pine Editor/panels and leave chart visible.
 19. Give final output in the required format.
@@ -226,9 +227,9 @@ Before finalizing levels:
 - Identify nearest sell-side liquidity.
 - Set SL beyond liquidity and full wick/base.
 - Classify SL as Safe, Vulnerable, or Too Tight.
-- Calculate R:R.
+- Calculate R:R from the conservative entry-zone edge (entry high for longs, entry low for shorts), never the midpoint.
 
-If proper SL makes R:R worse than 1:2, mark WAIT / SKIP.
+Floors: Scalp TP1 >= 1.5R with TP2 in the 2.5-3.5R band; Intraday TP1 >= 2R with TP2 in the 3-4R band. If proper SL puts TP1 below the floor, mark WAIT / SKIP. If TP2 has no structural level inside the band, the setup does not fit the template.
 
 ## Gate 9: Setup Rating Check
 
@@ -274,20 +275,14 @@ Avoid shaded boxes unless explicitly requested.
 
 ## Gate 11: Verification Check
 
-Before final answer, verify:
+Verification requires an observed re-check of the rendered chart, not a restatement of what was intended. After closing the Pine Editor:
 
-- Coin is correct.
-- Timeframe is correct.
-- Trade type is correct.
-- Direction matches output.
-- Entry matches output.
-- SL matches output.
-- TP matches output.
-- Trigger/reclaim matches output.
-- Setup state matches output.
-- No old conflicting levels are visible.
-- Pine Editor is closed.
-- Final view is the chart.
+1. Take a fresh screenshot or read of the chart as it now renders.
+2. Compare, field by field, against the ledger record just written: coin, trade type, direction, entry, SL, TP, trigger/reclaim, setup state, position status, R:R, analyzed timestamp.
+3. Confirm no old conflicting levels or wrong-coin drawings are visible.
+4. Confirm Pine Editor is closed and the final view is the chart.
+
+Do not mark this gate passed from memory of what was typed. If any observed field disagrees with the ledger, the gate fails.
 
 If verification fails, state `CHART VERIFICATION FAILED`.
 
@@ -337,7 +332,7 @@ Journal Tag:
 
 Before Step 2 automated alerts:
 
-- At least 30 reviewed setups are journaled.
+- At least 30 setups counted toward the gate: correct-thesis analyses plus user-confirmed taken trades (one record counts once). Track progress in `SCORECARD_DASHBOARD.html` via `node scripts/buildScorecard.mjs`.
 - No repeated confusion between reclaim and entry.
 - No repeated stale-map mistakes.
 - The catalyst/news gate was applied on each review.

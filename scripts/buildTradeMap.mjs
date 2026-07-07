@@ -6,54 +6,138 @@ const outputPath = new URL("../CODEX_TRADE_MAP_TEMPLATE.pine", import.meta.url);
 const ledger = JSON.parse(fs.readFileSync(ledgerPath, "utf8"));
 const setups = Object.values(ledger.setups || {});
 
+// R:R floors: TP1 is a hard floor (rating capped when missed); TP2 is a
+// structural placement band (warn only).
+const FLOORS = {
+  Scalp: { tp1: 1.5, band: [2.5, 3.5] },
+  Intraday: { tp1: 2.0, band: [3.0, 4.0] },
+};
+const STALE_MS = { Scalp: 12 * 3600 * 1000, Intraday: 24 * 3600 * 1000 };
+
 const q = (value) => JSON.stringify(String(value ?? ""));
 const n = (value) => (Number.isFinite(Number(value)) ? String(Number(value)) : "na");
 const matchExpr = (setup) =>
   `(syminfo.prefix == ${q(setup.exchange || "BYBIT")} and syminfo.ticker == ${q(setup.coin)})`;
 
-const chain = (field, fallback, transform = (setup) => setup[field]) =>
-  setups.reduceRight((acc, setup) => {
-    const value = transform(setup);
-    return `${matchExpr(setup)} ? ${value} : ${acc}`;
-  }, fallback);
+const chain = (fallback, transform) =>
+  setups.reduceRight(
+    (acc, setup) => `${matchExpr(setup)} ? ${transform(setup)} : ${acc}`,
+    fallback
+  );
 
-const stringChain = (field, fallback = '""') =>
-  chain(field, fallback, (setup) => q(setup[field]));
+const stringChain = (field, fallback = '""') => chain(fallback, (setup) => q(setup[field]));
+const numberChain = (field, fallback = "na") => chain(fallback, (setup) => n(setup[field]));
+const entryChain = (side) => chain("na", (setup) => n(setup.entry?.[side]));
+const tpChain = (index) => chain("na", (setup) => n(setup.tp?.[index]));
 
-const numberChain = (field, fallback = "na") =>
-  chain(field, fallback, (setup) => n(setup[field]));
+const shortDir = (proposed) => {
+  const s = String(proposed || "");
+  if (/no trade/i.test(s)) return "No Trade";
+  if (/conditional long/i.test(s)) return "Cond. Long";
+  if (/conditional short/i.test(s)) return "Cond. Short";
+  if (/short/i.test(s)) return "Short";
+  if (/long/i.test(s)) return "Long";
+  return s.replace(/^Proposed\s*/i, "") || "Wait";
+};
 
-const entryChain = (side) =>
-  chain("entry", "na", (setup) => n(setup.entry?.[side]));
+const derived = new Map();
+for (const setup of setups) {
+  const isShort = String(setup.direction || "").toLowerCase().includes("short");
+  // Conservative fill: confirmation entries fill at the zone edge nearest to
+  // price (entry high for longs, entry low for shorts), not the midpoint.
+  const edge = isShort ? Number(setup.entry?.low) : Number(setup.entry?.high);
+  const risk = Math.abs(edge - Number(setup.sl));
+  const rr = (tp) => (risk > 0 ? ((isShort ? edge - tp : tp - edge) / risk) : NaN);
+  const rr1 = rr(Number(setup.tp?.[0]));
+  const rr2 = rr(Number(setup.tp?.[1]));
+  const floors = FLOORS[setup.trade_type] || FLOORS.Intraday;
 
-const tpChain = (index) =>
-  chain("tp", "na", (setup) => n(setup.tp?.[index]));
+  const failTp1 = !(rr1 >= floors.tp1 - 1e-9);
+  const warnTp2 = !(rr2 >= floors.band[0] - 1e-9 && rr2 <= floors.band[1] + 1e-9);
+  const suffix = failTp1
+    ? ` · FAILS TP1 >= ${floors.tp1}`
+    : warnTp2
+      ? " · TP2 OUT OF BAND"
+      : "";
+  const rrText = `${rr1.toFixed(1)}R / ${rr2.toFixed(1)}R${suffix}`;
+  const rrColor = failTp1 ? "red" : warnTp2 ? "orange" : "green";
 
-const isLongChain = setups.reduceRight((acc, setup) => {
-  const value = String(setup.direction || "").toLowerCase().includes("short") ? "false" : "true";
-  return `${matchExpr(setup)} ? ${value} : ${acc}`;
-}, "true");
+  const rating = String(setup.setup_rating || "");
+  const effRating = failTp1 && !/skip/i.test(rating) ? "Watch Only" : rating;
+  if (failTp1) {
+    console.warn(
+      `[R:R] ${setup.coin}: TP1 ${rr1.toFixed(2)}R is below the ${setup.trade_type} floor ` +
+        `${floors.tp1}R — rating capped at Watch Only.`
+    );
+  } else if (warnTp2) {
+    console.warn(
+      `[R:R] ${setup.coin}: TP2 ${rr2.toFixed(2)}R is outside the ${setup.trade_type} band ` +
+        `${floors.band[0]}-${floors.band[1]}R — re-place TP2 at structure inside the band.`
+    );
+  }
+  for (const [field, computed] of [["rr_tp1", rr1], ["rr_tp2", rr2]]) {
+    const stored = Number(setup[field]);
+    if (Number.isFinite(stored) && Math.abs(stored - computed) > 0.05) {
+      console.warn(
+        `[R:R] ${setup.coin}: ledger ${field}=${stored} drifted from computed ` +
+          `${computed.toFixed(2)} — update the ledger record.`
+      );
+    }
+  }
 
-const actualEntryChain = chain("entry", "0.0", (setup) => n(setup.entry?.actual ?? 0));
+  const analyzedMs = Date.parse(setup.analyzed_at ?? "");
+  if (!Number.isFinite(analyzedMs)) {
+    console.warn(`[STALE] ${setup.coin}: missing/invalid analyzed_at — card will show UNKNOWN.`);
+  }
+
+  const planColor = /no trade/i.test(String(setup.proposed_type || ""))
+    ? "gray"
+    : effRating === "Clean Trade"
+      ? "green"
+      : "blue";
+
+  derived.set(setup.coin, {
+    planText: `${shortDir(setup.proposed_type)} · ${effRating}`,
+    planColor,
+    rrText,
+    rrColor,
+    analyzedMs: Number.isFinite(analyzedMs) ? String(analyzedMs) : "na",
+    needsReclaim: setup.activation_basis === "reclaim-entry" ? "true" : "false",
+  });
+}
+
+const d = (key, fallback) => chain(fallback, (setup) => {
+  const value = derived.get(setup.coin)?.[key];
+  return key === "analyzedMs" || key === "needsReclaim" ? value : q(value);
+});
+
+const isLongChain = chain("true", (setup) =>
+  String(setup.direction || "").toLowerCase().includes("short") ? "false" : "true"
+);
+const actualEntryChain = chain("0.0", (setup) => n(setup.entry?.actual ?? 0));
 const showMap = setups.map((setup) => matchExpr(setup)).join(" or ") || "false";
-const labelOffset = 5;
+const labelOffset = 80;
 
 const pine = `//@version=5
 indicator("Codex Trade Map", overlay=true, max_lines_count=80, max_labels_count=80)
 
 // Generated from SETUP_LEDGER.json. Do not hand-edit coin levels here.
 // Reanalyze updates one ledger record, then rebuilds this multi-symbol map.
+// Card shows ledger state; the Live row reports level tags since analyzed_at
+// and always means "reanalyze", never "the ledger changed by itself".
 
 showMap = ${showMap}
 
 coin = ${stringChain("coin")}
 tradeType = ${stringChain("trade_type")}
-direction = ${stringChain("proposed_type")}
-rating = ${stringChain("setup_rating")}
+planText = ${d("planText", '""')}
+planColorName = ${d("planColor", '"blue"')}
 setupState = ${stringChain("setup_state")}
 positionState = ${stringChain("position_status")}
-mode = ${chain("reclaim", '""', (setup) => q(`RECLAIM ${setup.reclaim ?? ""}`))}
+rrText = ${d("rrText", '""')}
+rrColorName = ${d("rrColor", '"green"')}
 isLong = ${isLongChain}
+needsReclaim = ${d("needsReclaim", "false")}
 
 entryLow = ${entryChain("low")}
 entryHigh = ${entryChain("high")}
@@ -63,6 +147,8 @@ tp1 = ${tpChain(0)}
 tp2 = ${tpChain(1)}
 tp3 = ${tpChain(2)}
 actualEntry = ${actualEntryChain}
+activeFrom = ${numberChain("active_from_unix")}
+analyzedAt = ${d("analyzedMs", "na")}
 
 green = color.rgb(34, 197, 94)
 red = color.rgb(255, 82, 82)
@@ -71,8 +157,95 @@ grey = color.rgb(140, 140, 140)
 orange = color.rgb(245, 158, 11)
 neutral = color.rgb(107, 114, 128)
 
+colorOf(string name) =>
+    name == "red" ? red : name == "orange" ? orange : name == "green" ? green : name == "gray" ? neutral : blue
+
 enteredLong = positionState == "ENTERED LONG" and actualEntry > 0
 enteredShort = positionState == "ENTERED SHORT" and actualEntry > 0
+
+entryEdge = isLong ? math.max(entryLow, entryHigh) : math.min(entryLow, entryHigh)
+riskSize = math.abs(entryEdge - sl)
+rr1v = riskSize > 0 and not na(tp1) ? (isLong ? tp1 - entryEdge : entryEdge - tp1) / riskSize : na
+rr2v = riskSize > 0 and not na(tp2) ? (isLong ? tp2 - entryEdge : entryEdge - tp2) / riskSize : na
+rr3v = riskSize > 0 and not na(tp3) ? (isLong ? tp3 - entryEdge : entryEdge - tp3) / riskSize : na
+
+anchorTime = na(activeFrom) or activeFrom <= 0 ? analyzedAt : activeFrom
+activeBar = showMap and not na(anchorTime) and time >= anchorTime
+reclaimSideOk = activeBar and not na(reclaim) and (isLong ? close >= reclaim : close <= reclaim)
+reclaimSideLost = activeBar and not na(reclaim) and (isLong ? close < reclaim : close > reclaim)
+entryTouchedNow = activeBar and not na(entryLow) and not na(entryHigh) and high >= math.min(entryLow, entryHigh) and low <= math.max(entryLow, entryHigh)
+tp1TouchedNow = activeBar and not na(tp1) and (isLong ? high >= tp1 : low <= tp1)
+tp2TouchedNow = activeBar and not na(tp2) and (isLong ? high >= tp2 : low <= tp2)
+tp3TouchedNow = activeBar and not na(tp3) and (isLong ? high >= tp3 : low <= tp3)
+slTouchedNow = activeBar and not na(sl) and (isLong ? low <= sl : high >= sl)
+
+var bool reclaimSeen = false
+var bool holdLostSeen = false
+var bool closedRightSeen = false
+var bool closedWrongSeen = false
+var bool entrySeen = false
+var bool tp1Seen = false
+var bool tp2Seen = false
+var bool tp3Seen = false
+var bool invalidSeen = false
+var int reclaimTime = na
+var int holdLostTime = na
+var int entryTime = na
+var int tp1Time = na
+var int tp2Time = na
+var int tp3Time = na
+var int slTime = na
+
+// Reclaim events are close-confirmed crossings, never wick touches, and only
+// count when price was on the other side of the line since the anchor.
+if showMap
+    if reclaimSideOk
+        if closedWrongSeen and not reclaimSeen
+            reclaimTime := time
+            reclaimSeen := true
+        closedRightSeen := true
+    if reclaimSideLost
+        if closedRightSeen and not holdLostSeen
+            holdLostTime := time
+            holdLostSeen := true
+        closedWrongSeen := true
+    entryOk = entryTouchedNow and (needsReclaim ? reclaimSeen : true)
+    if entryOk and not entrySeen
+        entryTime := time
+    entrySeen := entrySeen or entryOk
+    if tp1TouchedNow and not tp1Seen
+        tp1Time := time
+    tp1Seen := tp1Seen or tp1TouchedNow
+    if tp2TouchedNow and not tp2Seen
+        tp2Time := time
+    tp2Seen := tp2Seen or tp2TouchedNow
+    if tp3TouchedNow and not tp3Seen
+        tp3Time := time
+    tp3Seen := tp3Seen or tp3TouchedNow
+    if slTouchedNow and not invalidSeen
+        slTime := time
+    invalidSeen := invalidSeen or slTouchedNow
+else
+    reclaimSeen := false
+    holdLostSeen := false
+    closedRightSeen := false
+    closedWrongSeen := false
+    entrySeen := false
+    tp1Seen := false
+    tp2Seen := false
+    tp3Seen := false
+    invalidSeen := false
+    reclaimTime := na
+    holdLostTime := na
+    entryTime := na
+    tp1Time := na
+    tp2Time := na
+    tp3Time := na
+    slTime := na
+
+liveEvent = invalidSeen ? "SL TAGGED" : tp3Seen ? "TP3 TAGGED" : tp2Seen ? "TP2 TAGGED" : tp1Seen ? "TP1 TAGGED" : entrySeen ? "ENTRY TAGGED" : holdLostSeen ? "RECLAIM LOST" : reclaimSeen ? "RECLAIMED" : ""
+liveTime = invalidSeen ? slTime : tp3Seen ? tp3Time : tp2Seen ? tp2Time : tp1Seen ? tp1Time : entrySeen ? entryTime : holdLostSeen ? holdLostTime : reclaimTime
+
 plState = enteredLong ? (close >= actualEntry ? "UR PROFIT" : "UR LOSS") : enteredShort ? (close <= actualEntry ? "UR PROFIT" : "UR LOSS") : positionState
 statusText = setupState + " / " + plState
 
@@ -121,11 +294,11 @@ if barstate.islast
             gTP3 := makeGuide(gTP3, tp3, grey)
         lEntry := makeLabel(lEntry, (entryLow + entryHigh) / 2.0, "ENTRY " + str.tostring(entryLow) + "-" + str.tostring(entryHigh), green)
         lReclaim := makeLabel(lReclaim, reclaim, "RECLAIM " + str.tostring(reclaim), blue)
-        lSL := makeLabel(lSL, sl, "INVALID " + str.tostring(sl), red)
-        lTP1 := makeLabel(lTP1, tp1, "TP1 " + str.tostring(tp1), isLong ? green : red)
-        lTP2 := makeLabel(lTP2, tp2, "TP2 " + str.tostring(tp2), isLong ? green : red)
+        lSL := makeLabel(lSL, sl, "SL " + str.tostring(sl), red)
+        lTP1 := makeLabel(lTP1, tp1, "TP1 " + str.tostring(tp1) + " · " + str.tostring(rr1v, "#.#") + "R", isLong ? green : red)
+        lTP2 := makeLabel(lTP2, tp2, "TP2 " + str.tostring(tp2) + " · " + str.tostring(rr2v, "#.#") + "R", isLong ? green : red)
         if not na(tp3)
-            lTP3 := makeLabel(lTP3, tp3, "TP3 " + str.tostring(tp3), grey)
+            lTP3 := makeLabel(lTP3, tp3, "TP3 " + str.tostring(tp3) + " · " + str.tostring(rr3v, "#.#") + "R", grey)
         lState := makeLabel(lState, close, statusText, plState == "UR PROFIT" ? green : plState == "UR LOSS" ? red : orange)
     else
         if not na(lEntry)
@@ -144,24 +317,27 @@ if barstate.islast
             line.delete(gTP2)
             line.delete(gTP3)
 
-var table t = table.new(position.top_right, 2, 9, border_width=1)
+var table t = table.new(position.top_right, 2, 6, border_width=1)
 
-cell(int row, string left, string right, color bg) =>
-    table.cell(t, 0, row, left, text_color=color.white, bgcolor=color.rgb(55, 65, 81))
-    table.cell(t, 1, row, right, text_color=color.white, bgcolor=bg)
+cell(int row, string leftTxt, string rightTxt, color bg) =>
+    table.cell(t, 0, row, leftTxt, text_color=color.white, bgcolor=color.rgb(55, 65, 81))
+    table.cell(t, 1, row, rightTxt, text_color=color.white, bgcolor=bg)
 
 if barstate.islast
-    table.clear(t, 0, 0, 1, 8)
+    table.clear(t, 0, 0, 1, 5)
     if showMap
-        cell(0, "Coin", coin, neutral)
-        cell(1, "Trade Type", tradeType, blue)
-        cell(2, "Direction", direction, str.contains(direction, "WAIT") ? orange : blue)
-        cell(3, "Rating", rating, rating == "Clean Trade" ? green : rating == "Conditional Trade" ? orange : neutral)
-        cell(4, "State", setupState, str.contains(setupState, "WAIT") ? orange : green)
-        cell(5, "Position", plState, plState == "UR PROFIT" ? green : plState == "UR LOSS" ? red : neutral)
-        cell(6, "Entry", str.tostring(entryLow) + "-" + str.tostring(entryHigh), green)
-        cell(7, "SL / TP", str.tostring(sl) + " / " + str.tostring(tp1) + " / " + str.tostring(tp2) + (na(tp3) ? "" : " / " + str.tostring(tp3)), isLong ? green : red)
-        cell(8, "Mode", mode, blue)
+        staleMs = tradeType == "Scalp" ? ${STALE_MS.Scalp} : ${STALE_MS.Intraday}
+        ageMs = na(analyzedAt) ? staleMs * 2.0 : timenow - analyzedAt
+        updatedTxt = na(analyzedAt) ? "UNKNOWN" : str.format_time(int(analyzedAt), "MMM d · HH:mm", "GMT+1")
+        updatedColor = ageMs >= staleMs ? red : ageMs >= staleMs / 2 ? orange : neutral
+        stateColor = str.contains(setupState, "INVALID") or plState == "UR LOSS" ? red : plState == "UR PROFIT" or str.contains(setupState, "ACTIVE") ? green : orange
+        cell(0, "Coin", coin + " · " + tradeType, neutral)
+        cell(1, "Plan", planText, colorOf(planColorName))
+        cell(2, "State", setupState + " · " + plState, stateColor)
+        cell(3, "R:R", rrText, colorOf(rrColorName))
+        cell(4, "Updated", updatedTxt, updatedColor)
+        if liveEvent != ""
+            cell(5, "Live", liveEvent + " · " + str.format_time(liveTime, "MMM d HH:mm", "GMT+1") + " · REANALYZE", liveEvent == "SL TAGGED" ? red : orange)
 `;
 
 fs.writeFileSync(outputPath, pine);

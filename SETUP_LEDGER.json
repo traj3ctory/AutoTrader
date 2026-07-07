@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "last_updated": "2026-07-02",
+  "last_updated": "2026-07-07",
   "principle": "Codex remembers. TradingView displays.",
   "setups": {
     "XRPUSDT.P": {
@@ -8,34 +8,38 @@
       "exchange": "BYBIT",
       "trade_type": "Scalp",
       "proposed_type": "Proposed Wait / Conditional Long",
-      "bias": "Short-term bullish bounce, broader structure still weak",
-      "btc_eth_filter": "Aligned but XRP weaker than BTC/ETH",
-      "catalyst": "Unverified",
-      "setup_type": "Reclaim + Retest / Standard Demand Retest",
+      "bias": "Bullish reclaim already played into prior supply; waiting for fresh demand retest, no chase near 1.09",
+      "btc_eth_filter": "Aligned. BTC and ETH are risk-on, but XRP is lagging ETH/HYPE and is late after tagging 1.105 supply.",
+      "catalyst": "News Risk. TradingView shows XRP/ETF outflow headline context; check manually before sizing.",
+      "setup_type": "TP Hit / Fresh Demand Retest",
       "setup_rating": "Watch Only",
       "setup_state": "WAIT RETEST",
       "position_status": "NO POSITION",
       "direction": "Long",
       "entry": {
-        "low": 1.048,
-        "high": 1.052,
-        "basis": "Retest entry",
+        "low": 1.075,
+        "high": 1.082,
+        "basis": "Fresh pullback/retest entry after old 1.05 setup hit TP1/TP2",
         "actual": null
       },
-      "reclaim": 1.05,
-      "sl": 1.039,
+      "reclaim": 1.095,
+      "sl": 1.066,
       "sl_quality": "Vulnerable",
       "tp": [
-        1.066,
-        1.075,
-        1.105
+        1.105,
+        1.115,
+        1.125
       ],
-      "invalidation": "Clean loss of 1.039",
-      "nearest_liquidity": "Buy-side 1.066 then 1.075; sell-side below 1.048 then 1.039",
-      "reclaim_status": "Reclaimed 1.0500; waiting retest",
-      "relative_strength": "Weaker than BTC/ETH",
+      "invalidation": "Clean loss of 1.066 or failed retest that accepts below 1.075",
+      "nearest_liquidity": "Buy-side above 1.105 then 1.115; sell-side below 1.087 then 1.075 and 1.066",
+      "reclaim_status": "Old 1.050 reclaim played out; current price near 1.09 needs fresh retest or 1.095 reclaim before any new entry",
+      "relative_strength": "Positive, but weaker than ETH/HYPE and not leading the visible watchlist",
       "final_action": "WAIT / NO CHASE",
-      "notes": "Do not show UR PROFIT unless user confirms entry."
+      "notes": "2026-07-02 review: prior 1.048-1.052 conditional long trigger was missed before the move completed. Score as invalidated without entry, not a thesis win or active PnL.",
+      "analyzed_at": "2026-07-02T13:00:00Z",
+      "activation_basis": "entry-zone",
+      "rr_tp1": 1.44,
+      "rr_tp2": 2.06
     },
     "AVAXUSDT.P": {
       "coin": "AVAXUSDT.P",
@@ -69,7 +73,11 @@
       "reclaim_status": "Needs 6.70 reclaimed and held",
       "relative_strength": "Positive but not leading BTC/ETH/SOL",
       "final_action": "WAIT / NO CHASE",
-      "notes": "Do not mark active unless entry retest confirms or user confirms position."
+      "notes": "Do not mark active unless entry retest confirms or user confirms position.",
+      "analyzed_at": "2026-07-02T08:27:00Z",
+      "activation_basis": "reclaim-entry",
+      "rr_tp1": 1.33,
+      "rr_tp2": 2.42
     },
     "SPORTFUNUSDT.P": {
       "coin": "SPORTFUNUSDT.P",
@@ -81,7 +89,7 @@
       "catalyst": "Unverified",
       "setup_type": "Reclaim + Retest / Compression Bounce",
       "setup_rating": "Watch Only",
-      "setup_state": "WAIT RETEST",
+      "setup_state": "MISSED / NO CHASE",
       "position_status": "NO POSITION",
       "direction": "Long",
       "entry": {
@@ -100,10 +108,52 @@
       ],
       "invalidation": "Clean loss of 0.02320",
       "nearest_liquidity": "Buy-side above 0.02520 then 0.02600-0.02660; sell-side below 0.02390 then 0.02320",
-      "reclaim_status": "Reclaimed local structure; waiting retest",
+      "reclaim_status": "Reclaimed 0.0245 and ran to near TP1 (0.0252) without ever retesting the 0.0239-0.0242 entry zone; no confirmed entry taken.",
       "relative_strength": "Strong intraday, weak broader performance",
       "final_action": "WAIT / NO CHASE",
-      "notes": "Very volatile. Do not chase above retest zone."
+      "notes": "2026-07-02 ~14:00 UTC+1 review: live price ~0.0250, down ~1.7-1.9% on the day, sitting just under TP1 with no chart candle data available (thin liquidity, CHART NOT MARKED). Entry zone never retested; do not chase into TP1 air. Wait for a fresh pullback/retest structure or reanalyze once chart data loads.",
+      "analyzed_at": "2026-07-02T13:00:00Z",
+      "activation_basis": "reclaim-entry",
+      "rr_tp1": 1,
+      "rr_tp2": 1.8
+    },
+    "SOLUSDT.P": {
+      "coin": "SOLUSDT.P",
+      "exchange": "BYBIT",
+      "trade_type": "Scalp",
+      "proposed_type": "Proposed Wait / Conditional Long",
+      "bias": "Strong bullish continuation, but price is extended into local resistance",
+      "btc_eth_filter": "Aligned",
+      "catalyst": "Unverified. TradingView shows broad crypto/Solana news, not enough for a clear trade catalyst.",
+      "setup_type": "Reclaim + Retest / Breakout Pullback",
+      "setup_rating": "Watch Only",
+      "setup_state": "WAIT RETEST",
+      "position_status": "NO POSITION",
+      "direction": "Long",
+      "entry": {
+        "low": 78.2,
+        "high": 78.65,
+        "basis": "Pullback/retest entry after extended 5m breakout",
+        "actual": null
+      },
+      "reclaim": 79.5,
+      "sl": 77.55,
+      "sl_quality": "Vulnerable",
+      "tp": [
+        80.9,
+        81.8,
+        82.8
+      ],
+      "invalidation": "Clean loss of 77.55",
+      "nearest_liquidity": "Buy-side above 80.50 then 81.80-82.80; sell-side below 78.20 then 77.55",
+      "reclaim_status": "Price reclaimed 79.50 but is extended; wait for retest/reaction before entry is active",
+      "relative_strength": "Stronger than BTC/ETH and most majors on the visible watchlist",
+      "final_action": "WAIT / NO CHASE",
+      "notes": "Do not chase around 80.20. Conditional long only on pullback to 78.20-78.65 or clean break-and-retest above 80.50.",
+      "analyzed_at": "2026-07-02T08:27:00Z",
+      "activation_basis": "entry-zone",
+      "rr_tp1": 2.05,
+      "rr_tp2": 2.86
     },
     "DOGEUSDT.P": {
       "coin": "DOGEUSDT.P",
@@ -137,41 +187,50 @@
       "reclaim_status": "Recent wick near 0.07265 did not confirm; needs reclaim and hold before entry is active",
       "relative_strength": "Mildly positive, but not leading BTC/ETH/SOL or FARTCOIN on the visible watchlist",
       "final_action": "WAIT / NO CHASE",
-      "notes": "Do not mark active unless price reclaims 0.07265 and then retests/holds 0.07190-0.07215, or user confirms a live position."
+      "notes": "Do not mark active unless price reclaims 0.07265 and then retests/holds 0.07190-0.07215, or user confirms a live position.",
+      "analyzed_at": "2026-07-02T08:01:00Z",
+      "activation_basis": "reclaim-entry",
+      "rr_tp1": 1.57,
+      "rr_tp2": 2.29
     },
     "HYPEUSDT.P": {
       "coin": "HYPEUSDT.P",
       "exchange": "BYBIT",
-      "trade_type": "Scalp",
+      "trade_type": "Intraday",
       "proposed_type": "Proposed Wait / Conditional Long",
-      "bias": "Relative strength bounce inside a choppy local range",
-      "btc_eth_filter": "Aligned; HYPE is outperforming BTC and ETH on the visible watchlist",
-      "catalyst": "Unverified. TradingView shows a Hyperliquid trader headline, not a clear directional catalyst for HYPE.",
-      "setup_type": "Reclaim + Retest / Compression Bounce",
+      "bias": "Intraday long only if HYPE reclaims 70.80 and proves 70.80-71.10 as support. Avoid buying directly into 72.65 supply without a retest.",
+      "btc_eth_filter": "Mixed. BTC and ETH are stabilizing intraday, but the broader day remains defensive; size only after HYPE confirms its own reclaim.",
+      "catalyst": "News Risk / Unverified. TradingView shows a HyperEVM audit headline; not enough to override chart confirmation. BTC Mt. Gox headline risk remains a market filter.",
+      "setup_type": "Intraday Reclaim + Retest",
       "setup_rating": "Watch Only",
-      "setup_state": "WAIT RECLAIM",
+      "setup_state": "WAIT RETEST",
       "position_status": "NO POSITION",
       "direction": "Long",
       "entry": {
-        "low": 62.95,
-        "high": 63.2,
-        "basis": "Pullback/retest entry after reclaim confirms",
+        "low": 70.8,
+        "high": 71.1,
+        "basis": "Intraday reclaim retest zone. Need 70.80 to hold as support; do not chase into 72.65.",
         "actual": null
       },
-      "reclaim": 63.75,
-      "sl": 62.55,
-      "sl_quality": "Vulnerable",
+      "reclaim": 70.8,
+      "active_from_unix": 1783353000000,
+      "sl": 69.75,
+      "sl_quality": "Acceptable only after reclaim/retest confirms",
       "tp": [
-        64.05,
-        64.55,
-        65.05
+        72.65,
+        73.5,
+        75.5
       ],
-      "invalidation": "Clean loss of 62.55",
-      "nearest_liquidity": "Buy-side above 63.75 then 64.55-65.05; sell-side below 62.95 then 62.55",
-      "reclaim_status": "Needs 63.75 reclaimed and held; current price is mid-range, not an entry",
-      "relative_strength": "Stronger than BTC/ETH and most majors on the visible watchlist",
+      "invalidation": "Clean loss of 69.75 after entry, or reclaim failure that accepts back below 70.80.",
+      "nearest_liquidity": "Buy-side above 72.65 then 73.50/75.50; sell-side below 70.80, then 69.80 and 68.61.",
+      "reclaim_status": "Attempting/holding the 70.80 reclaim area; needs a clean retest hold before entry is active.",
+      "relative_strength": "Intraday recovery is constructive, but confirmation is still required because price is close to first resistance.",
       "final_action": "WAIT / NO CHASE",
-      "notes": "Do not mark active unless 63.75 reclaims and HYPE retests/holds the entry zone or forms a clean break-and-retest."
+      "notes": "2026-07-06 intraday redraw: remove scalp map. Use 70.80-71.10 as the reclaim retest/entry decision area, 69.75 as intraday invalidation, and 72.65 / 73.50 / 75.50 as upside targets. No position unless user confirms entry. R:R check 2026-07-06: TP1 1.4R fails the intraday floor (TP1 >= 2R); SL 69.75 is scalp-width for an intraday label. Re-derive invalidation from 1H structure or relabel Scalp on next analyze.",
+      "analyzed_at": "2026-07-06T15:50:00Z",
+      "activation_basis": "reclaim-entry",
+      "rr_tp1": 1.15,
+      "rr_tp2": 1.78
     },
     "FARTCOINUSDT.P": {
       "coin": "FARTCOINUSDT.P",
@@ -183,7 +242,7 @@
       "catalyst": "Unverified",
       "setup_type": "Failed Reclaim / Retest",
       "setup_rating": "Watch Only",
-      "setup_state": "WAIT REACTION",
+      "setup_state": "MISSED / NO CHASE",
       "position_status": "NO POSITION",
       "direction": "Short",
       "entry": {
@@ -205,7 +264,49 @@
       "reclaim_status": "Needs fresh review",
       "relative_strength": "Unverified",
       "final_action": "WAIT / NO TRADE",
-      "notes": "Legacy setup. Refresh before trading."
+      "notes": "Legacy setup. Refresh before trading.",
+      "analyzed_at": "2026-07-02T06:39:00Z",
+      "activation_basis": "entry-zone",
+      "rr_tp1": 1.3,
+      "rr_tp2": 2.07
+    },
+    "BREVUSDT.P": {
+      "coin": "BREVUSDT.P",
+      "exchange": "BYBIT",
+      "trade_type": "Scalp",
+      "proposed_type": "Proposed Wait / Conditional Short",
+      "bias": "Parabolic extension with fresh upside sweep risk; short only on confirmed rejection, not a blind fade",
+      "btc_eth_filter": "Mixed. BTC/ETH are risk-on, which reduces short confidence, but BREV is extremely extended and vulnerable to mean reversion if rejection confirms.",
+      "catalyst": "Unverified. Visible TradingView news does not confirm a fresh BREV-specific catalyst.",
+      "setup_type": "Liquidity Sweep + Failed Reclaim / Supply Rejection",
+      "setup_rating": "Watch Only",
+      "setup_state": "MISSED / NO CHASE",
+      "position_status": "NO POSITION",
+      "direction": "Short",
+      "entry": {
+        "low": 0.112,
+        "high": 0.114,
+        "basis": "Rejection candle after sweep into local supply; no blind short while momentum candle is green",
+        "actual": null
+      },
+      "reclaim": 0.11,
+      "sl": 0.1162,
+      "sl_quality": "Vulnerable if entered before rejection; acceptable only after failed reclaim confirms",
+      "tp": [
+        0.108,
+        0.1045,
+        0.1
+      ],
+      "invalidation": "Clean acceptance above 0.1162",
+      "nearest_liquidity": "Buy-side above 0.1140-0.1162; sell-side below 0.1080 then 0.1045 and 0.1000",
+      "reclaim_status": "Price swept 0.1120-0.1140 supply and rejected before a confirmed user entry. Current price is already near/down through TP1, so wait for a fresh retest.",
+      "relative_strength": "Very strong recent outperformance, but extended and vulnerable to mean reversion",
+      "final_action": "NO CHASE",
+      "notes": "Short trigger already reacted without confirmed entry. Do not mark active; wait for fresh retest or new structure.",
+      "analyzed_at": "2026-07-02T13:00:00Z",
+      "activation_basis": "entry-zone",
+      "rr_tp1": 0.95,
+      "rr_tp2": 1.79
     },
     "ETHUSDT.P": {
       "coin": "ETHUSDT.P",
@@ -221,26 +322,125 @@
       "position_status": "NO POSITION",
       "direction": "Long",
       "entry": {
-        "low": 1592.0,
-        "high": 1598.0,
+        "low": 1592,
+        "high": 1598,
         "basis": "Retest entry at local demand",
         "actual": null
       },
-      "reclaim": 1615.0,
-      "sl": 1584.0,
+      "reclaim": 1615,
+      "sl": 1584,
       "sl_quality": "Safe",
       "tp": [
-        1615.0,
-        1630.0,
-        1642.0
+        1615,
+        1630,
+        1642
       ],
       "invalidation": "Clean loss of 1584.0",
       "nearest_liquidity": "Buy-side above 1645; sell-side below 1615 and 1590",
       "reclaim_status": "Bounced from 1615 local support; waiting for deeper entry",
       "relative_strength": "N/A",
       "final_action": "WAIT / NO CHASE",
-      "notes": "Do not chase middle of the range. Wait for 1595 demand retest."
+      "notes": "Do not chase middle of the range. Wait for 1595 demand retest.",
+      "analyzed_at": "2026-07-02T06:39:00Z",
+      "activation_basis": "entry-zone",
+      "rr_tp1": 1.21,
+      "rr_tp2": 2.29
+    },
+    "USUSDT.P": {
+      "coin": "USUSDT.P",
+      "exchange": "BYBIT",
+      "trade_type": "Intraday",
+      "proposed_type": "Proposed Wait / Conditional Long",
+      "bias": "Post pump-and-dump. Full retrace complete; price is entering the impulse origin base (0.0164-0.0176). Only a confirmed base reaction is tradable; falling-knife limits are forbidden.",
+      "btc_eth_filter": "Mildly conflicting. BTC -1.6% and ETH -2.1%; risk-off day reduces long confidence.",
+      "catalyst": "Unverified. Whatever drove the pump is unconfirmed and it fully retraced; check manually before sizing.",
+      "setup_type": "Standard Supply/Demand Retest / Impulse Origin Base",
+      "setup_rating": "Watch Only",
+      "setup_state": "WAIT REACTION",
+      "position_status": "NO POSITION",
+      "direction": "Long",
+      "entry": {
+        "low": 0.0164,
+        "high": 0.0172,
+        "basis": "Impulse origin base retest per Parabolic Spike Rule. Requires a 1H rejection/confirmation candle inside the base; no blind limit into the dump.",
+        "actual": null
+      },
+      "reclaim": 0.0182,
+      "sl": 0.0157,
+      "sl_quality": "Vulnerable",
+      "tp": [
+        0.0205,
+        0.0217,
+        0.024
+      ],
+      "invalidation": "1H acceptance below 0.0158 kills the base; below that, next demand is 0.0127-0.0140 and the long idea is dead.",
+      "nearest_liquidity": "Buy-side above 0.0182 bounce high, then 0.0205-0.0208 shelf and 0.0217; sell-side below 0.0170 overnight low, then 0.0158 and 0.0152 base wicks.",
+      "reclaim_status": "0.0182 is the strength trigger: a 1H close above it after a base hold confirms the reaction. Not reclaimed; price is fading into the base.",
+      "relative_strength": "Worst performer on the visible day (-26% vs BTC -1.6%); this is a mean-reversion base play, not a relative-strength long.",
+      "final_action": "WAIT / NO CHASE",
+      "notes": "2026-07-07 ~06:26 UTC+1 reanalysis after full pump retrace. Chart canvas failed to render in the automated tab; levels derived from the 06:11 UTC+1 1H capture, live tick (~0.0179), and ledger history. Spike rule applied: only the origin-base retest long is valid; overhead 0.0205-0.0217 is supply until reclaimed. CHART NOT MARKED - indicator re-paste required.",
+      "analyzed_at": "2026-07-07T05:26:00Z",
+      "activation_basis": "entry-zone",
+      "rr_tp1": 2.2,
+      "rr_tp2": 3
     }
   },
-  "journal": []
+  "journal": [
+    {
+      "coin": "USUSDT.P",
+      "date": "2026-07-02",
+      "setup_type": "Compression-to-Expansion Breakout / Demand Retest",
+      "result": "Invalidated thesis; analysis underweighted the 4H supply zone and the long map was inaccurate",
+      "mistake_tag": "HTF_SUPPLY_MISREAD",
+      "note": "Future USUSDT reviews must start from 4H supply/demand context before mapping scalp reclaim levels."
+    },
+    {
+      "coin": "SPORTFUNUSDT.P",
+      "date": "2026-07-02",
+      "setup_type": "Reclaim + Retest / Compression Bounce",
+      "result": "Analysis mistake caught and corrected: an earlier request to analyze this coin was mistakenly run against ESPORTSUSDT.P (Yooldo Games), a different token, before the ledger/handover files were consulted.",
+      "mistake_tag": "WRONG_COIN_ANALYZED",
+      "note": "SPORTFUNUSDT.P and ESPORTSUSDT.P are distinct Bybit symbols despite similar names. Always confirm exact ticker via ledger/symbol search before analyzing, especially for similarly-named small caps."
+    },
+    {
+      "coin": "HYPEUSDT.P",
+      "date": "2026-07-02",
+      "setup_type": "Reclaim + Retest / Compression Bounce",
+      "result": "Invalidated thesis; active map did not come to planned entry or complete reclaim condition",
+      "mistake_tag": "NO_ENTRY_NO_RECLAIM",
+      "note": "Do not score broad bullish continuation as a win unless the mapped trigger/entry path actually happens."
+    },
+    {
+      "coin": "XRPUSDT.P",
+      "date": "2026-07-02",
+      "setup_type": "Reclaim + Retest / Standard Demand Retest",
+      "result": "Invalid for scorecard credit; old long trigger was missed before the move completed",
+      "mistake_tag": "MISSED_ENTRY",
+      "note": "Refresh map to fresh 1.075-1.082 retest plan; do not count old setup as thesis correct or active."
+    },
+    {
+      "coin": "BREVUSDT.P",
+      "date": "2026-07-02",
+      "setup_type": "Liquidity Sweep + Failed Reclaim / Supply Rejection",
+      "result": "Thesis correct; short idea moved through TP1 area, no confirmed user entry",
+      "mistake_tag": "NO_CHASE_WORKED",
+      "note": "Parabolic extension rejected as expected; score as analysis win, not booked trade PnL."
+    },
+    {
+      "coin": "SPORTFUNUSDT.P",
+      "date": "2026-07-02",
+      "setup_type": "Reclaim + Retest / Compression Bounce",
+      "result": "Invalidated thesis; reclaimed 0.0245 and ran to TP1 without retesting the 0.0239-0.0242 entry zone, no entry taken",
+      "mistake_tag": "MISSED_ENTRY",
+      "note": "Entry zone mapped too deep for momentum conditions; map a break-and-retest activation alongside deep pullback zones."
+    },
+    {
+      "coin": "USUSDT.P",
+      "date": "2026-07-07",
+      "setup_type": "No Clean Intraday Setup / Deep Retest Watch",
+      "result": "Invalidated thesis; unverified-catalyst pump fully retraced through entry zone and SL to the impulse origin, no trade taken",
+      "mistake_tag": "SWEEP_FAIL_MISREAD",
+      "note": "Wick through 0.0240 + close far below was a sweep-fail (short-first per pattern priority), and the entry zone sat mid-impulse-candle where no base existed. Zones must sit at a visible base or the impulse origin, never inside a single candle's range."
+    }
+  ]
 }

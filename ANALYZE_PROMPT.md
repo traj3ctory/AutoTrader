@@ -41,7 +41,7 @@ Use `SETUP_LEDGER.json` as the source of truth for remembered per-coin analysis.
 5. Render only the current coin's setup from the ledger onto TradingView.
 6. Verify that the visible TradingView map matches the ledger entry.
 
-The ledger must store coin, exchange, trade type, proposed type, bias, BTC/ETH filter, catalyst, setup type, setup rating, setup state, position status, direction, entry, activation basis, actual entry if known, reclaim/trigger, SL, SL quality, TP, invalidation, liquidity, relative strength, final action, and notes.
+The ledger must store coin, exchange, trade type, proposed type, bias, BTC/ETH filter, catalyst, setup type, setup rating, setup state, position status, direction, entry, activation basis (`activation_basis`: entry-zone or reclaim-entry), actual entry if known, reclaim/trigger, SL, SL quality, TP, rr_tp1, rr_tp2, invalidation, liquidity, relative strength, final action, analyzed_at (ISO timestamp of the analysis), and notes.
 
 If TradingView fails to render the map, do not lose the setup. Keep the ledger updated and start final output with `CHART NOT MARKED` or `CHART VERIFICATION FAILED`.
 
@@ -106,8 +106,14 @@ If the chart has stale or conflicting drawings, mark the state as `Stale Map / N
 
 First decide the trade type:
 
-- Normal intraday/day trade: use 1D -> 4H -> 1H, with entry planned on 1H.
-- Scalp: use 1H -> 15m -> 5m, with entry planned on 5m.
+- Normal intraday/day trade: use 1D -> 4H -> 1H, with entry planned on 1H and trigger confirmation on 15m or 1H closes.
+- Scalp: use 4H -> 1H -> 15m -> 5m, with entry planned on 5m.
+
+Mandatory scalp HTF veto:
+
+- Before mapping any scalp, mark 4H supply/demand first.
+- A scalp long into overhead 4H supply, or a scalp short into 4H demand, is capped at Watch Only unless the setup is explicitly a reaction trade at that 4H zone.
+- Reclaims, retests, and confirmations are judged by candle closes on the entry timeframe, not wicks.
 
 If the user gives only a coin name, choose the trade type based on chart structure, volatility, distance to target, and setup quality.
 
@@ -220,14 +226,14 @@ Clean Trade:
 - Clean HTF zone.
 - Clear liquidity sweep or clean reclaim/retest structure.
 - SL is Safe.
-- R:R is at least 1:2.5.
+- TP1 meets the trade-type floor and TP2 sits inside the trade-type band.
 - BTC/ETH are aligned or not strongly conflicting.
 - Entry is not late.
 
 Conditional Trade:
 
 - Valid setup but one important weakness exists.
-- R:R is at least 1:2.
+- TP1 meets the trade-type floor.
 - SL is Safe or Vulnerable, not Too Tight.
 - Confidence is reduced, but setup can remain conditional.
 
@@ -241,7 +247,7 @@ Skip / No Trade:
 
 - No clean invalidation.
 - SL is Too Tight.
-- Proper structural SL makes R:R worse than 1:2.
+- Proper structural SL puts TP1 below the trade-type floor.
 - Price is late or chasing.
 - BTC/ETH strongly conflict and the coin has no clear relative strength.
 
@@ -298,7 +304,7 @@ FVG / Imbalance Retest:
 - Use only after an impulsive displacement candle or clear imbalance.
 - FVG is an entry refinement tool, not a standalone reason to trade.
 - Entry must still respect supply/demand, liquidity, invalidation, and R:R.
-- If FVG entry makes SL too tight or structural SL worsens R:R below 1:2, mark WAIT / SKIP.
+- If FVG entry makes SL too tight or structural SL puts TP1 below the trade-type floor, mark WAIT / SKIP.
 
 Breaker / Failed Supply-Demand Flip:
 
@@ -344,8 +350,10 @@ Before giving an entry:
 - For shorts, check the nearest buy-side liquidity above the entry zone.
 - SL must be beyond both the obvious liquidity and the full demand/supply wick/base.
 - Do not place SL on the first obvious local low/high if that level is likely to be swept.
-- If the proper structural SL makes R:R worse than 1:2, mark WAIT / SKIP.
+- If the proper structural SL puts TP1 below the trade-type floor, mark WAIT / SKIP.
 - Always classify SL Quality as Safe, Vulnerable, or Too Tight.
+- SL earns Safe only when it sits beyond both the nearest obvious liquidity and the full zone wick/base, with buffer for a sweep.
+- If the properly placed SL is still Vulnerable, widen the zone or skip; Vulnerable is a warning state, not an acceptable default rating.
 
 ## Extension And Chase Rules
 
@@ -354,6 +362,15 @@ Before giving an entry:
 - For extended coins, require a rejection candle, reclaim, or break-and-retest before entry.
 - If price has already rejected the trigger/reclaim level, downgrade the setup to WAIT until demand/supply confirms.
 - If setup is late, clearly label NO CHASE.
+
+Parabolic Spike Rule:
+
+After a single-candle (or near-single-candle) extension of roughly 20%+ with an Unverified catalyst:
+
+- Do not map pullback longs inside the impulse candle's own range. There is no demand mid-candle; entry zones must sit at a visible base/consolidation or at the impulse origin.
+- The valid patterns are: (a) liquidity sweep + failed reclaim SHORT per Pattern Priority, or (b) wait for the retest of the impulse origin base.
+- Any TP/supply level wick-swept during the spike is no longer virgin liquidity; treat first-touch magnets as consumed and take partials faster.
+- Reference: USUSDT.P 2026-07-07 journal entry, mistake tag SWEEP_FAIL_MISREAD.
 
 ## Setup State Lifecycle Rules
 
@@ -401,6 +418,8 @@ If price reclaims the trigger but never trades into the planned entry zone, use 
 Mark ACTIVE / MANAGE only when price has traded through the planned entry zone after the setup start, or when the analysis explicitly says the reclaim/break-and-retest is the entry.
 
 If both a pullback entry and reclaim entry are possible, state which one controls activation before drawing the map.
+
+If the coin is in active expansion/momentum, map BOTH a deep pullback zone and a break-and-retest activation at the reclaim level, and state which one is primary. Do not map only a deep limit zone in momentum conditions; that is how valid theses become missed entries.
 
 If price is above reclaim but entry was missed, do not convert the missed trade into active management. Refresh the setup as WAIT RETEST, NO CHASE, or a new breakout-retest setup.
 
@@ -607,19 +626,21 @@ Use compact labels only:
 
 ## Post-Drawing Verification Gate
 
-Before final answer, verify:
+Verification is an observed action, not a recollection. After saving/closing the Pine Editor:
 
-- Correct coin.
-- Correct timeframe.
-- Correct trade type.
-- Chart table trade type matches written trade type.
-- Chart direction matches written proposed type.
-- Chart labels match written entry, SL, TP, trigger/reclaim, and state.
-- No old conflicting levels are visible.
-- Pine Editor is closed.
-- Final view is the chart.
+1. Close the Pine Editor and bring the chart into full view.
+2. Take a fresh screenshot or read of the rendered chart. Do not rely on the values typed into the editor or the ledger record alone; read what is actually displayed.
+3. Read the rendered card/labels and compare each field, one by one, against the ledger record that was just written:
+   - Coin and trade type.
+   - Direction / proposed type.
+   - Setup state and position status.
+   - Entry, SL, TP levels (on-chart lines/labels).
+   - R:R values.
+   - Updated/analyzed timestamp.
+4. Confirm no old conflicting levels or wrong-coin drawings are visible.
+5. Only after this observed field-by-field match may the normal output format be presented as completed and verified.
 
-If verification fails, state `CHART VERIFICATION FAILED` and explain what failed.
+If any field does not match on the observed re-check, state `CHART VERIFICATION FAILED`, name the exact field(s) that disagree, and do not present the setup as completed.
 
 ## Failure Protocol
 
@@ -648,8 +669,12 @@ If verification fails:
 
 ## Trade Rules
 
-- Prefer at least 1:2 R:R.
-- Ideal setups are closer to 1:3.5 or 1:4 when structure supports it.
+- R:R is measured from the conservative edge of the entry zone (entry high for longs, entry low for shorts) to each TP against the SL. Confirmation fills happen at the edge, so midpoint math flatters the ratio; never use the midpoint for the floor check.
+- Scalp floor: TP1 at least 1:1.5, and TP2 placed at structure inside the 1:2.5 to 1:3.5 band.
+- Intraday floor: TP1 at least 1:2, and TP2 placed at structure inside the 1:3 to 1:4 band.
+- If TP1 is below the floor, cap the setup rating at Watch Only or Skip / No Trade.
+- If TP2 falls outside the band, re-place it at the nearest structural level inside the band; if no structural level exists there, the setup does not fit the template. Never move a TP into empty air to hit a ratio.
+- Store rr_tp1 and rr_tp2 in the ledger record for every setup.
 - Do not force a trade.
 - If no clean setup exists, say WAIT.
 - Even when saying WAIT, always state the proposed trade type:
