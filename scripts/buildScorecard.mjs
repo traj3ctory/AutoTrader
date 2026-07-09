@@ -111,7 +111,7 @@ const html = `<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Codex Scorecard</title>
+<title>AutoTrader Scorecard</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -186,7 +186,7 @@ const html = `<!DOCTYPE html>
 </style>
 </head>
 <body>
-<h1>Codex Scorecard</h1>
+<h1>AutoTrader Scorecard</h1>
 <div class="sub">${esc(sc.principle)}</div>
 
 <div class="tiles">

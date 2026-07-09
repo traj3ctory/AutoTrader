@@ -1,124 +1,4 @@
-import fs from "node:fs";
-
-const ledgerPath = new URL("../SETUP_LEDGER.json", import.meta.url);
-const outputPath = new URL("../AUTOTRADER_TRADE_MAP_TEMPLATE.pine", import.meta.url);
-
-const ledger = JSON.parse(fs.readFileSync(ledgerPath, "utf8"));
-const setups = Object.values(ledger.setups || {});
-
-// R:R floors: TP1 is a hard floor (rating capped when missed); TP2 is a
-// structural placement band (warn only).
-const FLOORS = {
-  Scalp: { tp1: 1.5, band: [2.5, 3.5] },
-  Intraday: { tp1: 2.0, band: [3.0, 4.0] },
-};
-const STALE_MS = { Scalp: 12 * 3600 * 1000, Intraday: 24 * 3600 * 1000 };
-
-const q = (value) => JSON.stringify(String(value ?? ""));
-const n = (value) => (Number.isFinite(Number(value)) ? String(Number(value)) : "na");
-const matchExpr = (setup) =>
-  `(syminfo.prefix == ${q(setup.exchange || "BYBIT")} and syminfo.ticker == ${q(setup.coin)})`;
-
-const chain = (fallback, transform) =>
-  setups.reduceRight(
-    (acc, setup) => `${matchExpr(setup)} ? ${transform(setup)} : ${acc}`,
-    fallback
-  );
-
-const stringChain = (field, fallback = '""') => chain(fallback, (setup) => q(setup[field]));
-const numberChain = (field, fallback = "na") => chain(fallback, (setup) => n(setup[field]));
-const entryChain = (side) => chain("na", (setup) => n(setup.entry?.[side]));
-const tpChain = (index) => chain("na", (setup) => n(setup.tp?.[index]));
-
-const shortDir = (proposed) => {
-  const s = String(proposed || "");
-  if (/no trade/i.test(s)) return "No Trade";
-  if (/conditional long/i.test(s)) return "Cond. Long";
-  if (/conditional short/i.test(s)) return "Cond. Short";
-  if (/short/i.test(s)) return "Short";
-  if (/long/i.test(s)) return "Long";
-  return s.replace(/^Proposed\s*/i, "") || "Wait";
-};
-
-const derived = new Map();
-for (const setup of setups) {
-  const isShort = String(setup.direction || "").toLowerCase().includes("short");
-  // Conservative fill: confirmation entries fill at the zone edge nearest to
-  // price (entry high for longs, entry low for shorts), not the midpoint.
-  const edge = isShort ? Number(setup.entry?.low) : Number(setup.entry?.high);
-  const risk = Math.abs(edge - Number(setup.sl));
-  const rr = (tp) => (risk > 0 ? ((isShort ? edge - tp : tp - edge) / risk) : NaN);
-  const rr1 = rr(Number(setup.tp?.[0]));
-  const rr2 = rr(Number(setup.tp?.[1]));
-  const floors = FLOORS[setup.trade_type] || FLOORS.Intraday;
-
-  const failTp1 = !(rr1 >= floors.tp1 - 1e-9);
-  const warnTp2 = !(rr2 >= floors.band[0] - 1e-9 && rr2 <= floors.band[1] + 1e-9);
-  const suffix = failTp1
-    ? ` · FAILS TP1 >= ${floors.tp1}`
-    : warnTp2
-      ? " · TP2 OUT OF BAND"
-      : "";
-  const rrText = `${rr1.toFixed(1)}R / ${rr2.toFixed(1)}R${suffix}`;
-  const rrColor = failTp1 ? "red" : warnTp2 ? "orange" : "green";
-
-  const rating = String(setup.setup_rating || "");
-  const effRating = failTp1 && !/skip/i.test(rating) ? "Watch Only" : rating;
-  if (failTp1) {
-    console.warn(
-      `[R:R] ${setup.coin}: TP1 ${rr1.toFixed(2)}R is below the ${setup.trade_type} floor ` +
-        `${floors.tp1}R — rating capped at Watch Only.`
-    );
-  } else if (warnTp2) {
-    console.warn(
-      `[R:R] ${setup.coin}: TP2 ${rr2.toFixed(2)}R is outside the ${setup.trade_type} band ` +
-        `${floors.band[0]}-${floors.band[1]}R — re-place TP2 at structure inside the band.`
-    );
-  }
-  for (const [field, computed] of [["rr_tp1", rr1], ["rr_tp2", rr2]]) {
-    const stored = Number(setup[field]);
-    if (Number.isFinite(stored) && Math.abs(stored - computed) > 0.05) {
-      console.warn(
-        `[R:R] ${setup.coin}: ledger ${field}=${stored} drifted from computed ` +
-          `${computed.toFixed(2)} — update the ledger record.`
-      );
-    }
-  }
-
-  const analyzedMs = Date.parse(setup.analyzed_at ?? "");
-  if (!Number.isFinite(analyzedMs)) {
-    console.warn(`[STALE] ${setup.coin}: missing/invalid analyzed_at — card will show UNKNOWN.`);
-  }
-
-  const planColor = /no trade/i.test(String(setup.proposed_type || ""))
-    ? "gray"
-    : effRating === "Clean Trade"
-      ? "green"
-      : "blue";
-
-  derived.set(setup.coin, {
-    planText: `${shortDir(setup.proposed_type)} · ${effRating}`,
-    planColor,
-    rrText,
-    rrColor,
-    analyzedMs: Number.isFinite(analyzedMs) ? String(analyzedMs) : "na",
-    needsReclaim: setup.activation_basis === "reclaim-entry" ? "true" : "false",
-  });
-}
-
-const d = (key, fallback) => chain(fallback, (setup) => {
-  const value = derived.get(setup.coin)?.[key];
-  return key === "analyzedMs" || key === "needsReclaim" ? value : q(value);
-});
-
-const isLongChain = chain("true", (setup) =>
-  String(setup.direction || "").toLowerCase().includes("short") ? "false" : "true"
-);
-const actualEntryChain = chain("0.0", (setup) => n(setup.entry?.actual ?? 0));
-const showMap = setups.map((setup) => matchExpr(setup)).join(" or ") || "false";
-const labelOffset = 80;
-
-const pine = `//@version=5
+//@version=5
 indicator("AutoTrader Trade Map", overlay=true, max_lines_count=80, max_labels_count=80)
 
 // Generated from SETUP_LEDGER.json. Do not hand-edit coin levels here.
@@ -126,29 +6,29 @@ indicator("AutoTrader Trade Map", overlay=true, max_lines_count=80, max_labels_c
 // Card shows ledger state; the Live row reports level tags since analyzed_at
 // and always means "reanalyze", never "the ledger changed by itself".
 
-showMap = ${showMap}
+showMap = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") or (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") or (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") or (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P")
 
-coin = ${stringChain("coin")}
-tradeType = ${stringChain("trade_type")}
-planText = ${d("planText", '""')}
-planColorName = ${d("planColor", '"blue"')}
-setupState = ${stringChain("setup_state")}
-positionState = ${stringChain("position_status")}
-rrText = ${d("rrText", '""')}
-rrColorName = ${d("rrColor", '"green"')}
-isLong = ${isLongChain}
-needsReclaim = ${d("needsReclaim", "false")}
+coin = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") ? "APEUSDT.P" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") ? "FARTCOINUSDT.P" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") ? "USUSDT.P" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P") ? "JTOUSDT.P" : ""
+tradeType = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") ? "Intraday" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") ? "Scalp" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") ? "Intraday" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P") ? "Intraday" : ""
+planText = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") ? "Cond. Long · Watch Only" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") ? "No Trade · Watch Only" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") ? "Cond. Long · Watch Only" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P") ? "Cond. Short · Watch Only" : ""
+planColorName = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") ? "blue" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") ? "gray" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") ? "blue" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P") ? "blue" : "blue"
+setupState = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") ? "WAIT REACTION" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") ? "MISSED / NO CHASE" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") ? "WAIT REACTION" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P") ? "WAIT REACTION" : ""
+positionState = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") ? "NO POSITION" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") ? "NO POSITION" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") ? "NO POSITION" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P") ? "NO POSITION" : ""
+rrText = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") ? "2.1R / 3.1R" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") ? "1.3R / 2.1R · FAILS TP1 >= 1.5" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") ? "2.2R / 3.0R" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P") ? "1.8R / 2.7R · FAILS TP1 >= 2" : ""
+rrColorName = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") ? "green" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") ? "red" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") ? "green" : (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P") ? "red" : "green"
+isLong = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") ? true : (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") ? false : (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") ? true : (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P") ? false : true
+needsReclaim = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") ? true : (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") ? false : (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") ? false : (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P") ? false : false
 
-entryLow = ${entryChain("low")}
-entryHigh = ${entryChain("high")}
-reclaim = ${numberChain("reclaim")}
-sl = ${numberChain("sl")}
-tp1 = ${tpChain(0)}
-tp2 = ${tpChain(1)}
-tp3 = ${tpChain(2)}
-actualEntry = ${actualEntryChain}
-activeFrom = ${numberChain("active_from_unix")}
-analyzedAt = ${d("analyzedMs", "na")}
+entryLow = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") ? 0.1345 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") ? 0.1428 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") ? 0.0164 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P") ? 0.65 : na
+entryHigh = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") ? 0.1375 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") ? 0.1437 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") ? 0.0172 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P") ? 0.68 : na
+reclaim = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") ? 0.152 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") ? 0.1428 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") ? 0.0182 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P") ? 0.68 : na
+sl = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") ? 0.1295 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") ? 0.1468 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") ? 0.0157 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P") ? 0.705 : na
+tp1 = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") ? 0.154 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") ? 0.1376 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") ? 0.0205 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P") ? 0.55 : na
+tp2 = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") ? 0.162 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") ? 0.1345 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") ? 0.0217 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P") ? 0.5 : na
+tp3 = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") ? 0.17 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") ? 0.128 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") ? 0.024 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P") ? 0.45 : na
+actualEntry = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") ? 0 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") ? 0 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") ? 0 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P") ? 0 : 0.0
+activeFrom = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") ? na : (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") ? na : (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") ? na : (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P") ? na : na
+analyzedAt = (syminfo.prefix == "BYBIT" and syminfo.ticker == "APEUSDT.P") ? 1783511220000 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "FARTCOINUSDT.P") ? 1782974340000 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "USUSDT.P") ? 1783401960000 : (syminfo.prefix == "BYBIT" and syminfo.ticker == "JTOUSDT.P") ? 1783522689881 : na
 
 green = color.rgb(34, 197, 94)
 red = color.rgb(255, 82, 82)
@@ -265,12 +145,12 @@ var line gTP3 = na
 makeLabel(label old, float y, string txt, color bg) =>
     if not na(old)
         label.delete(old)
-    label.new(bar_index + ${labelOffset}, y, txt, xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_left, color=bg, textcolor=color.white, size=size.small)
+    label.new(bar_index + 80, y, txt, xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_left, color=bg, textcolor=color.white, size=size.small)
 
 makeGuide(line old, float y, color c) =>
     if not na(old)
         line.delete(old)
-    line.new(bar_index, y, bar_index + ${labelOffset}, y, xloc=xloc.bar_index, extend=extend.none, color=c, width=2)
+    line.new(bar_index, y, bar_index + 80, y, xloc=xloc.bar_index, extend=extend.none, color=c, width=2)
 
 if barstate.islast
     if showMap
@@ -316,7 +196,7 @@ cell(int row, string leftTxt, string rightTxt, color bg) =>
 if barstate.islast
     table.clear(t, 0, 0, 1, 5)
     if showMap
-        staleMs = tradeType == "Scalp" ? ${STALE_MS.Scalp} : ${STALE_MS.Intraday}
+        staleMs = tradeType == "Scalp" ? 43200000 : 86400000
         ageMs = na(analyzedAt) ? staleMs * 2.0 : timenow - analyzedAt
         updatedTxt = na(analyzedAt) ? "UNKNOWN" : str.format_time(int(analyzedAt), "MMM d · HH:mm", "GMT+1")
         updatedColor = ageMs >= staleMs ? red : ageMs >= staleMs / 2 ? orange : neutral
@@ -328,7 +208,3 @@ if barstate.islast
         cell(4, "Updated", updatedTxt, updatedColor)
         if liveEvent != ""
             cell(5, "Live", liveEvent + " · " + str.format_time(liveTime, "MMM d HH:mm", "GMT+1") + " · REANALYZE", liveEvent == "SL TAGGED" ? red : orange)
-`;
-
-fs.writeFileSync(outputPath, pine);
-console.log(`Wrote ${setups.length} setup slots to ${outputPath.pathname}`);

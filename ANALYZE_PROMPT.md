@@ -9,11 +9,40 @@ This is Step 1 of the roadmap: make the analysis trade like the user, then bette
 The final answer is not complete unless one of these is true:
 
 - The TradingView chart has been cleaned, marked, verified, and left on the chart view.
+- The Pine script was regenerated and handed off for manual paste per the Chart Drawing Method rule below, and the final answer clearly starts with `SCRIPT READY - MANUAL PASTE REQUIRED`.
 - Chart marking failed, and the final answer clearly starts with `CHART NOT MARKED` and explains why.
 
 Do not give a normal final trade summary while the chart is stale, unmarked, or showing conflicting old levels.
 
-The normal output format is allowed only after TradingView chart marking and verification succeed. If the chart is not marked or cannot be verified, do not present the setup as completed. You may still provide the setup, but it must be clearly labeled `SETUP ONLY - NOT DRAWN ON TRADINGVIEW`, include the drawing/verification issue, and offer to redraw from the ledger.
+The normal output format is allowed only after TradingView chart marking and verification succeed, or after a manual-paste handoff per the rule below. If the chart is not marked or cannot be verified and no handoff was offered, do not present the setup as completed. You may still provide the setup, but it must be clearly labeled `SETUP ONLY - NOT DRAWN ON TRADINGVIEW`, include the drawing/verification issue, and offer to redraw from the ledger.
+
+## Chart Drawing Method
+
+Attempt automated drawing first, every time, using this exact method - not the fragile methods from earlier sessions.
+
+Session setup:
+
+- Use one persistent browser tab for the whole session. Do not close and reopen a fresh tab per coin; fresh navigations are the main trigger for the TradingView blank-canvas render bug. Switch symbols within the same tab (watchlist click or symbol search) instead of renavigating.
+
+Paste method - OS-level clipboard only, never a page-JS clipboard write:
+
+1. Update the ledger and run `node scripts/buildTradeMap.mjs` to regenerate `AUTOTRADER_TRADE_MAP_TEMPLATE.pine`.
+2. Load the script into the real OS clipboard via `pbcopy < AUTOTRADER_TRADE_MAP_TEMPLATE.pine` (Bash, outside the browser entirely). Never use `navigator.clipboard.writeText()` from page JS - it silently no-ops without document focus, which was the root cause of nearly every paste failure in prior sessions.
+3. In the Pine Editor: click into the editor, Cmd+A, Cmd+V (a real native paste, never a synthetic ClipboardEvent or `execCommand insertText` - both of those let Monaco's auto-indent corrupt nested indentation-sensitive blocks).
+4. Cmd+S to save, then use "Add to chart" if the script is not already attached to this chart.
+5. Run the observed Post-Drawing Verification Gate (fresh screenshot, read the rendered card, confirm every field against the ledger).
+
+One retry cap: if the paste or verification fails, retry the exact same method once. If it fails twice, stop automation and fall back to the manual handoff below - do not improvise a third method or debug-loop.
+
+Manual handoff (fallback only, after the retry cap is hit):
+
+1. Tell the user plainly the automated paste failed after retry, and point to the exact file path (reveal in Finder if useful).
+2. Start the final answer with `SCRIPT READY - MANUAL PASTE REQUIRED`.
+3. Give a compact analysis: Coin / Trade Type / Direction / Entry / SL / TP / R:R / Trigger-Reclaim / Setup State / Final Action / one-line bias - not the full field list.
+4. Render a visual trade-map (entry zone, SL, TP1-3, reclaim line, state) from the same ledger data as a fallback the user can look at immediately, independent of whether the live chart ever renders.
+5. When the user confirms they pasted it, run the observed Post-Drawing Verification Gate before calling the chart verified.
+
+The journal and scorecard update every time regardless of paste outcome - the record of what was analyzed does not depend on whether the chart shows it yet.
 
 ## Source Of Truth
 
@@ -30,7 +59,7 @@ Do not use old screenshots, old TradingView drawings, or old visible Pine levels
 
 ## Ledger Memory Rule
 
-Codex remembers. TradingView displays.
+AutoTrader remembers. TradingView displays.
 
 Use `SETUP_LEDGER.json` as the source of truth for remembered per-coin analysis. For every `Analyze [coin]` request:
 
@@ -471,7 +500,7 @@ If TP or SL has already been hit, prioritize TP HIT / MANAGE or INVALID over unr
 
 Before drawing:
 
-- Treat any visible Codex map whose table coin does not match the current chart symbol as stale by definition.
+- Treat any visible AutoTrader map whose table coin does not match the current chart symbol as stale by definition.
 - Preserve valid existing analysis that belongs to the current chart symbol.
 - Hide, remove, or update only drawings/maps that belong to another coin or that conflict with the current analysis.
 - Do not wipe a coin's own prior analysis just because a new coin is being analyzed elsewhere.
@@ -483,7 +512,7 @@ If an old same-coin direction conflicts with the new direction, update or replac
 
 If an old wrong-coin direction conflicts with the new chart and cannot be removed or hidden, do not draw a new map on top of it unless the user approves.
 
-If multiple Codex Trade Map indicators are visible and the stale one cannot be safely identified, stop and state `STALE MAP RISK`.
+If multiple AutoTrader Trade Map indicators are visible and the stale one cannot be safely identified, stop and state `STALE MAP RISK`.
 
 ## Per-Coin Persistence And Symbol-Safety Rule
 
@@ -495,12 +524,12 @@ The desired behavior is per-coin persistence:
 - When switching away and later returning to a coin, that coin's own prior analysis should still be visible unless it has been updated, invalidated, or deliberately removed.
 - Analysis from one coin must not appear on another coin.
 
-Persistence comes from `SETUP_LEDGER.json`, not from TradingView. Pine is only a renderer. The preferred display is one multi-symbol Codex map whose guarded slots are generated from the current active ledger records.
+Persistence comes from `SETUP_LEDGER.json`, not from TradingView. Pine is only a renderer. The preferred display is one multi-symbol AutoTrader map whose guarded slots are generated from the current active ledger records.
 
 For every `Analyze [coin]` request:
 
 1. Switch/open the requested symbol first.
-2. Immediately inspect visible Codex tables, labels, lines, and drawings.
+2. Immediately inspect visible AutoTrader tables, labels, lines, and drawings.
 3. Load the coin's ledger entry and decide whether it is still active, hit TP/SL, invalidated, missed, or needs an update.
 4. If the visible analysis belongs to a different coin, hide/remove/update that wrong-coin display before analyzing the current coin.
 5. Do not summarize the new coin while another coin's entry, SL, TP, trigger, or table is visible.
@@ -516,12 +545,12 @@ Use Pine cautiously because a single Pine instance is layout-wide. The safe patt
 
 Preferred Pine workflow:
 
-1. Use `CODEX_TRADE_MAP_TEMPLATE.pine` as the reusable multi-symbol renderer.
+1. Use `AUTOTRADER_TRADE_MAP_TEMPLATE.pine` as the reusable multi-symbol renderer.
 2. Generate or update Pine slots from the active records in `SETUP_LEDGER.json`.
 3. Each slot must have a strict `syminfo.ticker == coin` guard.
 4. When the chart is XRP, only the XRP slot should render; when AVAX, only AVAX; when DOGE, only DOGE.
 5. Reanalysis updates that coin's ledger record and that coin's Pine slot only.
-6. Do not create duplicate/conflicting Codex map indicators unless the user approves.
+6. Do not create duplicate/conflicting AutoTrader map indicators unless the user approves.
 
 Do not overwrite the ledger entry for another coin to analyze the current coin.
 
@@ -641,6 +670,20 @@ Verification is an observed action, not a recollection. After saving/closing the
 5. Only after this observed field-by-field match may the normal output format be presented as completed and verified.
 
 If any field does not match on the observed re-check, state `CHART VERIFICATION FAILED`, name the exact field(s) that disagree, and do not present the setup as completed.
+
+## Pine Script Corruption Recovery
+
+Symptom: the indicator legend shows a red warning icon with `Compilation error: Script could not be translated from: <garbage string>`, or the Pine Editor content itself is a short random string instead of real code. This is not a chart-side drawing failure; the script's saved source is corrupted. A page reload alone does not fix it, and saving a corrected script does not automatically reattach it to a chart if the broken instance was removed.
+
+Recovery sequence:
+
+1. Reload the chart tab. This flushes stale/ghost indicator renders that persist in the legend after removal but do not appear in the Object Tree - do not trust the legend alone as a sign an old instance still exists; check the Object Tree.
+2. Reopen the Pine Editor for the script. Confirm the corruption by inspecting the actual line content, not just the error banner.
+3. Select all and replace with the correct script using a real paste event: write the correct content to the OS clipboard and paste natively. If clipboard permission is unavailable in the automation context, dispatch a synthetic `ClipboardEvent('paste', ...)` on the editor's `.inputarea` element with a `DataTransfer` payload as a fallback - typing character-by-character risks Monaco auto-close corruption on a 200+ line ternary-heavy file.
+4. Save, then explicitly use the editor's "Add to chart" action. Saving a script does not reattach it if no instance is currently on the chart.
+5. Run the full Post-Drawing Verification Gate: fresh screenshot, read the rendered card, confirm every field against the ledger. Do not conclude success from the absence of an error icon alone; confirm the card and lines actually render with correct values.
+
+If any step cannot be completed, do not silently continue: state `STALE MAP RISK` or `CHART NOT MARKED` per the Failure Protocol below, and journal the incident with mistake tag `PINE_SCRIPT_CORRUPTED` - this is a technical incident, not a trading mistake, and should not count against thesis accuracy.
 
 ## Failure Protocol
 

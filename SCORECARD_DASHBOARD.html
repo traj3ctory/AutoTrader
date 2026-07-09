@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Codex Scorecard</title>
+<title>AutoTrader Scorecard</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -78,7 +78,7 @@
 </style>
 </head>
 <body>
-<h1>Codex Scorecard</h1>
+<h1>AutoTrader Scorecard</h1>
 <div class="sub">Keep thesis result simple. Trade result only updates when the user confirms a trade was taken.</div>
 
 <div class="tiles">
@@ -240,15 +240,17 @@
 
 <h2>Mistake tags (from ledger journal)</h2>
 <div class="tags">
-<div class="tag"><span class="tagname">MISSED_ENTRY</span><span class="tagcount">2</span></div>
+<div class="tag"><span class="tagname">MISSED_ENTRY</span><span class="tagcount">5</span></div>
+<div class="tag"><span class="tagname">SL_HIT_NO_ENTRY</span><span class="tagcount">4</span></div>
+<div class="tag"><span class="tagname">NO_CHASE_WORKED</span><span class="tagcount">2</span></div>
 <div class="tag"><span class="tagname">HTF_SUPPLY_MISREAD</span><span class="tagcount">1</span></div>
 <div class="tag"><span class="tagname">WRONG_COIN_ANALYZED</span><span class="tagcount">1</span></div>
 <div class="tag"><span class="tagname">NO_ENTRY_NO_RECLAIM</span><span class="tagcount">1</span></div>
-<div class="tag"><span class="tagname">NO_CHASE_WORKED</span><span class="tagcount">1</span></div>
 <div class="tag"><span class="tagname">SWEEP_FAIL_MISREAD</span><span class="tagcount">1</span></div>
+<div class="tag"><span class="tagname">PINE_SCRIPT_CORRUPTED</span><span class="tagcount">1</span></div>
 </div>
 
-<div class="foot">Generated 2026-07-07T05:47:57.587Z from SCORECARD.json and SETUP_LEDGER.json · regenerate with: node scripts/buildScorecard.mjs</div>
+<div class="foot">Generated 2026-07-09T06:37:27.050Z from SCORECARD.json and SETUP_LEDGER.json · regenerate with: node scripts/buildScorecard.mjs</div>
 
 <script>
   const PAGE_SIZE = 5;

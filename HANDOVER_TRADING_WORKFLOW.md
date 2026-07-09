@@ -1,10 +1,10 @@
 # Trading Workflow Handover
 
-This handover explains how to continue the TradingView analysis system on a new device or in a new Codex thread.
+This handover explains how to continue the TradingView analysis system on a new device or in a new AutoTrader thread.
 
 ## Core Principle
 
-Codex remembers. TradingView displays.
+AutoTrader remembers. TradingView displays.
 
 TradingView/Pine is not the source of truth because it can lose, hide, duplicate, or cache old maps when switching symbols. The source of truth is the local ledger file.
 
@@ -18,7 +18,7 @@ Move these files as a set:
 - `SCORECARD.json`
 - `scripts/buildTradeMap.mjs`
 - `scripts/buildScorecard.mjs`
-- `CODEX_TRADE_MAP_TEMPLATE.pine`
+- `AUTOTRADER_TRADE_MAP_TEMPLATE.pine`
 - `HANDOVER_TRADING_WORKFLOW.md`
 
 Recommended folder:
@@ -46,7 +46,7 @@ chrome-analyze-epic-on-the-current/
 - Keeps entries, SL, TP, reclaim, setup state, position status, catalyst state, and notes.
 - This replaces TradingView/Pine as memory.
 
-`CODEX_TRADE_MAP_TEMPLATE.pine`
+`AUTOTRADER_TRADE_MAP_TEMPLATE.pine`
 
 - The reusable TradingView renderer.
 - It should display only the current coin setup.
@@ -61,6 +61,10 @@ chrome-analyze-epic-on-the-current/
 ## Current Ledger Entries
 
 Do not trust this file for coin lists or setup states; it goes stale. The current coin list, per-setup state, and `analyzed_at` timestamps live only in `SETUP_LEDGER.json` — read it directly.
+
+## Ledger Size
+
+Keep active `setups` lean, target roughly 10-15 coins max. This is a scannable watchlist, not an archive. The moment a setup goes dead (SL tagged, TP tagged, missed, invalidated), journal it with a mistake tag and delete it from `setups` in the same pass — do not let dead entries accumulate. A bloated `setups` object makes every priority check slower and defeats the point of the ledger being glanceable. `Pine` script size scales with active-setup count (~2.3KB per coin in the ternary chains); this is not a near-term technical limit, but ledger hygiene matters well before script size would.
 
 ## Timeframe Stacks
 
@@ -86,7 +90,7 @@ Do this:
 4. Inspect the live TradingView chart.
 5. Decide if the old ledger setup is still valid, missed, invalidated, active, or needs refresh.
 6. Update `SETUP_LEDGER.json` before drawing.
-7. Render the current coin only using `CODEX_TRADE_MAP_TEMPLATE.pine` or a TradingView map.
+7. Render the current coin only using `AUTOTRADER_TRADE_MAP_TEMPLATE.pine` or a TradingView map.
 8. Verify chart map matches the ledger.
 9. Close Pine Editor/panels.
 10. Final answer uses the required output format.
@@ -148,12 +152,12 @@ If TradingView shows old/wrong coin levels:
 - Redraw from `SETUP_LEDGER.json`.
 - If cleanup is unsafe, final answer starts with `STALE MAP RISK`.
 
-Avoid duplicate Codex maps. Prefer one reusable multi-symbol map rendered from the ledger.
+Avoid duplicate AutoTrader maps. Prefer one reusable multi-symbol map rendered from the ledger.
 
 The current display model is:
 
 ```text
-SETUP_LEDGER.json -> scripts/buildTradeMap.mjs -> CODEX_TRADE_MAP_TEMPLATE.pine -> TradingView
+SETUP_LEDGER.json -> scripts/buildTradeMap.mjs -> AUTOTRADER_TRADE_MAP_TEMPLATE.pine -> TradingView
 ```
 
 Each active ledger coin gets one guarded Pine slot. Reanalyzing a coin updates that coin's ledger record, then rebuilds the Pine map. Switching charts should show only the matching symbol's slot.
@@ -168,8 +172,8 @@ On a new device:
 4. Confirm `SETUP_LEDGER.json` parses as valid JSON.
 5. Open TradingView and sign in.
 6. Open the Bybit perpetual chart.
-7. Clean duplicate/old Codex maps if visible.
-8. Install or update `CODEX_TRADE_MAP_TEMPLATE.pine`.
+7. Clean duplicate/old AutoTrader maps if visible.
+8. Install or update `AUTOTRADER_TRADE_MAP_TEMPLATE.pine`.
 9. Test one coin from the ledger, preferably XRP.
 10. Verify map levels match the ledger.
 

@@ -4,7 +4,7 @@ This plan controls every `Analyze [coin]` request. It is the operating procedure
 
 ## Objective
 
-Make discretionary Codex-assisted TradingView analysis consistent, clean, and reviewable before moving to alerts or auto-trading.
+Make discretionary AutoTrader-assisted TradingView analysis consistent, clean, and reviewable before moving to alerts or auto-trading.
 
 If switching devices or threads, read `HANDOVER_TRADING_WORKFLOW.md` before running any new analysis.
 
@@ -57,7 +57,7 @@ If source access is limited, state the limitation.
 
 ## Gate 1A: Ledger Check
 
-Codex remembers. TradingView displays.
+AutoTrader remembers. TradingView displays.
 
 Before drawing or summarizing:
 
@@ -130,7 +130,7 @@ If the prior map has already hit TP/SL or changed direction, refresh the map bef
 
 Before drawing:
 
-- Treat any visible Codex map whose table coin does not match the current chart symbol as stale by definition.
+- Treat any visible AutoTrader map whose table coin does not match the current chart symbol as stale by definition.
 - Preserve valid existing analysis that belongs to the current chart symbol.
 - Remove, hide, or update only wrong-coin maps or same-coin maps that are stale, invalidated, or conflicting.
 - Do not wipe another coin's valid analysis while analyzing the current coin.
@@ -153,12 +153,12 @@ The desired behavior is per-coin persistence:
 - Returning to a coin should show that coin's own prior analysis unless it has been updated, invalidated, or deliberately removed.
 - One coin's analysis must not appear on another coin.
 
-Persistent coin-specific analysis comes from `SETUP_LEDGER.json`, not from Pine. Pine is only the display renderer. The preferred display is one multi-symbol Codex map generated from the active ledger records.
+Persistent coin-specific analysis comes from `SETUP_LEDGER.json`, not from Pine. Pine is only the display renderer. The preferred display is one multi-symbol AutoTrader map generated from the active ledger records.
 
 For every new `Analyze [coin]` request:
 
 1. Switch/open the requested symbol first.
-2. Inspect visible Codex tables, labels, lines, and drawings.
+2. Inspect visible AutoTrader tables, labels, lines, and drawings.
 3. Read the coin's ledger entry and classify its lifecycle.
 4. If the visible analysis belongs to another coin, hide/remove/update that wrong-coin display before analysis.
 5. Never summarize a new coin while another coin's map is visible.
@@ -251,10 +251,11 @@ Rating must match action:
 
 Preferred order:
 
-1. Use `CODEX_TRADE_MAP_TEMPLATE.pine` as the renderer.
-2. Populate it from the current coin's `SETUP_LEDGER.json` entry.
-3. Update one visible current-coin map only.
-4. Add a new map only if no editable map exists and it will not create duplicate/conflicting levels.
+1. Use `AUTOTRADER_TRADE_MAP_TEMPLATE.pine` as the renderer.
+2. Populate it from the current coin's `SETUP_LEDGER.json` entry via `node scripts/buildTradeMap.mjs`.
+3. Attempt automated drawing first, in the one persistent session tab, using the OS-level `pbcopy` + native paste method in `ANALYZE_PROMPT.md`'s Chart Drawing Method section. One retry cap on failure, then fall back to the manual handoff (`SCRIPT READY - MANUAL PASTE REQUIRED` + compact analysis + visual).
+4. Update one visible current-coin map only.
+5. Add a new map only if no editable map exists and it will not create duplicate/conflicting levels.
 
 The map must include:
 
@@ -285,6 +286,10 @@ Verification requires an observed re-check of the rendered chart, not a restatem
 Do not mark this gate passed from memory of what was typed. If any observed field disagrees with the ledger, the gate fails.
 
 If verification fails, state `CHART VERIFICATION FAILED`.
+
+## Gate 11A: Pine Script Corruption Check
+
+If the indicator legend shows a compilation error referencing a short garbage string, the saved script source is corrupted, not just the chart drawing. See "Pine Script Corruption Recovery" in `ANALYZE_PROMPT.md` for the full recovery sequence: reload, verify corruption in the editor, replace via a real paste event (or synthetic ClipboardEvent fallback), save, explicitly Add to chart, then re-run Gate 11 in full. Journal the incident with mistake tag `PINE_SCRIPT_CORRUPTED` - technical, not a trading mistake.
 
 ## Gate 12: Failure Protocol
 
