@@ -18,6 +18,7 @@ Move these files as a set:
 - `SCORECARD.json`
 - `scripts/buildTradeMap.mjs`
 - `scripts/buildScorecard.mjs`
+- `scripts/scanMovers.mjs`
 - `AUTOTRADER_TRADE_MAP_TEMPLATE.pine`
 - `HANDOVER_TRADING_WORKFLOW.md`
 
@@ -61,6 +62,15 @@ chrome-analyze-epic-on-the-current/
 ## Current Ledger Entries
 
 Do not trust this file for coin lists or setup states; it goes stale. The current coin list, per-setup state, and `analyzed_at` timestamps live only in `SETUP_LEDGER.json` — read it directly.
+
+## Morning Scan (Scheduled Task)
+
+A scheduled task `daily-mover-scan` runs weekdays ~10:30 AM local (task file: `~/.claude/scheduled-tasks/daily-mover-scan/SKILL.md`, not part of this repo). It produces a pre-market triage report in chat - report only, no ledger writes, no Pine redraw.
+
+- `scripts/scanMovers.mjs` is the data source for the "outside movers" half of the scan: pulls Bybit's public perpetuals ticker feed (no auth), excludes BTC/ETH and thin-volume symbols (<$3M 24h turnover), ranks top 10 gainers/losers, flags anything already in `SETUP_LEDGER.json`, writes `MOVER_SCAN.md`.
+- The scheduled task itself does more than run that script: it also reads the active ledger/watchlist, applies the full `ANALYZE_PROMPT.md` ruleset (validity gate, no-chase, entry activation, SL quality, catalyst gate, R:R floors, Parabolic Spike Rule) to watchlist coins, and TradingView-verifies any outside mover before it's allowed into the ranked candidate list. Movers that can't be chart-verified go in a separate "Unverified Outside Movers" bucket, never the ranked list.
+- If TradingView/Chrome is inaccessible during a run, the task states that limitation and falls back to a source-limited scan from the ledger and Bybit data alone - it does not pretend chart verification happened.
+- To change the schedule or prompt, use the scheduled-tasks tools (`list_scheduled_tasks` / `update_scheduled_task`), not a manual edit of the SKILL.md file.
 
 ## Ledger Size
 
