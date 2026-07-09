@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "last_updated": "2026-07-08",
+  "last_updated": "2026-07-09",
   "principle": "AutoTrader remembers. TradingView displays.",
   "setups": {
     "APEUSDT.P": {
@@ -25,7 +25,11 @@
       "reclaim": 0.152,
       "sl": 0.1295,
       "sl_quality": "Safe",
-      "tp": [0.154, 0.162, 0.17],
+      "tp": [
+        0.154,
+        0.162,
+        0.17
+      ],
       "invalidation": "1H acceptance below 0.1295, or a failed reclaim that closes back below 0.1520 without ever holding.",
       "nearest_liquidity": "Buy-side above 0.1520 then 0.1580 (untested spike high) and 0.1620/0.1700; sell-side below 0.1345 then 0.1295 and the deeper 4H base near 0.1260.",
       "reclaim_status": "Price is testing 0.1520 (old range top) right now; not yet confirmed as reclaimed and held.",
@@ -59,7 +63,11 @@
       "reclaim": 0.1428,
       "sl": 0.1468,
       "sl_quality": "Vulnerable",
-      "tp": [0.1376, 0.1345, 0.128],
+      "tp": [
+        0.1376,
+        0.1345,
+        0.128
+      ],
       "invalidation": "Clean reclaim/acceptance above 0.1468",
       "nearest_liquidity": "Buy-side above 0.1468; sell-side below 0.1376",
       "reclaim_status": "Needs fresh review",
@@ -93,7 +101,11 @@
       "reclaim": 0.0182,
       "sl": 0.0157,
       "sl_quality": "Vulnerable",
-      "tp": [0.0205, 0.0217, 0.024],
+      "tp": [
+        0.0205,
+        0.0217,
+        0.024
+      ],
       "invalidation": "1H acceptance below 0.0158 kills the base; below that, next demand is 0.0127-0.0140 and the long idea is dead.",
       "nearest_liquidity": "Buy-side above 0.0182 bounce high, then 0.0205-0.0208 shelf and 0.0217; sell-side below 0.0170 overnight low, then 0.0158 and 0.0152 base wicks.",
       "reclaim_status": "0.0182 is the strength trigger: a 1H close above it after a base hold confirms the reaction. Not reclaimed; price is fading into the base.",
@@ -127,7 +139,11 @@
       "reclaim": 0.68,
       "sl": 0.705,
       "sl_quality": "Vulnerable",
-      "tp": [0.55, 0.5, 0.45],
+      "tp": [
+        0.55,
+        0.5,
+        0.45
+      ],
       "invalidation": "1H acceptance above 0.705 invalidates the breaker; a clean reclaim-and-hold above 0.68 would need a fresh continuation-long analysis instead.",
       "nearest_liquidity": "Buy-side above 0.65-0.68 shelf, then 0.72-0.74 prior range; sell-side below current price has no clean tested demand yet - next structural reference is the 0.45-0.48 zone from the April/May basing range.",
       "reclaim_status": "Not reclaimed. Price is well below the 0.65-0.68 zone and still declining; no retest has occurred.",
@@ -138,6 +154,44 @@
       "activation_basis": "rejection-candle",
       "rr_tp1": 1.82,
       "rr_tp2": 2.73
+    },
+    "KMNOUSDT.P": {
+      "coin": "KMNOUSDT.P",
+      "exchange": "BYBIT",
+      "trade_type": "Intraday",
+      "proposed_type": "Proposed Wait / Conditional Long",
+      "bias": "4H structure shows a genuine higher-low recovery since the May low (~0.0126 -> June low ~0.0140 -> current range floor ~0.0185), but price is mid-range right now (0.0205) between the 0.0185-0.0190 demand and 0.0220 resistance. No edge to chase mid-range; wait for the retest.",
+      "btc_eth_filter": "Mixed. BTC (+1.2%) and ETH (+0.9%) are green today while KMNO is red (-0.8%) intraday despite the 4H candle printing +1.7%; KMNO is lagging broader market strength, not leading it.",
+      "catalyst": "Unverified. Only visible news is a stale Jun 19 Upbit listing headline, 3 weeks old; not a fresh catalyst.",
+      "setup_type": "Standard Supply/Demand Retest",
+      "setup_rating": "Watch Only",
+      "setup_state": "WAIT RETEST",
+      "position_status": "NO POSITION",
+      "direction": "Long",
+      "entry": {
+        "low": 0.0185,
+        "high": 0.019,
+        "basis": "Retest of the proven 0.0185-0.0190 demand zone (held Jun 21, Jul 3, Jul 7-8). Requires a confirmation/rejection candle in the zone, not a blind limit.",
+        "actual": null
+      },
+      "reclaim": 0.0195,
+      "sl": 0.0178,
+      "sl_quality": "Vulnerable",
+      "tp": [
+        0.022,
+        0.023,
+        0.026
+      ],
+      "invalidation": "1H acceptance below 0.0178 breaks the higher-low structure and invalidates the recovery thesis.",
+      "nearest_liquidity": "Buy-side above 0.0220 range top, then 0.0230 (mid-June high) and 0.0260 (April supply); sell-side below 0.0185, then 0.0178 and the June 0.0140 swing low.",
+      "reclaim_status": "Not tested. Price is mid-range at 0.0205; has not returned to the 0.0185-0.0190 zone since the last hold.",
+      "relative_strength": "Lagging BTC/ETH today, but constructive on the higher-low 4H structure since the May capitulation low - medium-term basing, not immediate strength.",
+      "final_action": "WAIT / NO CHASE",
+      "notes": "2026-07-09 first analysis, read from live chart (4H 3-month + 1H 7-week views). Range-bound structure, not a spike scenario. SL quality read as Vulnerable rather than Safe since exact wick-low buffer wasn't pixel-verified from the chart read.",
+      "analyzed_at": "2026-07-09T07:28:00.202Z",
+      "activation_basis": "entry-zone",
+      "rr_tp1": 2.5,
+      "rr_tp2": 3.33
     }
   },
   "journal": [
