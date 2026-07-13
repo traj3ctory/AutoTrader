@@ -171,8 +171,10 @@ rr3v = riskSize > 0 and not na(tp3) ? (isLong ? tp3 - entryEdge : entryEdge - tp
 
 anchorTime = na(activeFrom) or activeFrom <= 0 ? analyzedAt : activeFrom
 activeBar = showMap and not na(anchorTime) and time >= anchorTime
-reclaimSideOk = activeBar and not na(reclaim) and (isLong ? close >= reclaim : close <= reclaim)
-reclaimSideLost = activeBar and not na(reclaim) and (isLong ? close < reclaim : close > reclaim)
+// The reclaim lifecycle is decided only by completed candles. A forming bar
+// can wick across the level, but must not change the Live row.
+reclaimSideOk = activeBar and barstate.isconfirmed and not na(reclaim) and (isLong ? close >= reclaim : close <= reclaim)
+reclaimSideLost = activeBar and barstate.isconfirmed and not na(reclaim) and (isLong ? close < reclaim : close > reclaim)
 entryTouchedNow = activeBar and not na(entryLow) and not na(entryHigh) and high >= math.min(entryLow, entryHigh) and low <= math.max(entryLow, entryHigh)
 tp1TouchedNow = activeBar and not na(tp1) and (isLong ? high >= tp1 : low <= tp1)
 tp2TouchedNow = activeBar and not na(tp2) and (isLong ? high >= tp2 : low <= tp2)
@@ -190,6 +192,8 @@ var bool tp3Seen = false
 var bool invalidSeen = false
 var int reclaimTime = na
 var int holdLostTime = na
+var int reclaimStatus = 0
+var int reclaimStatusTime = na
 var int entryTime = na
 var int tp1Time = na
 var int tp2Time = na
@@ -202,15 +206,17 @@ var int slTime = na
 // significant, and deeply nested if-blocks here have repeatedly been
 // corrupted by editor auto-indent during automated paste. Keep this section
 // free of nested if statements.
-reclaimJustCrossed = showMap and reclaimSideOk and closedWrongSeen and not reclaimSeen
+reclaimJustCrossed = showMap and reclaimSideOk and closedWrongSeen and not reclaimSideOk[1]
 reclaimTime := reclaimJustCrossed ? time : reclaimTime
-reclaimSeen := showMap and (reclaimSeen or reclaimSideOk)
+reclaimSeen := showMap and (reclaimSeen or reclaimJustCrossed)
 closedRightSeen := showMap and (closedRightSeen or reclaimSideOk)
 
-holdLostJustCrossed = showMap and reclaimSideLost and closedRightSeen and not holdLostSeen
+holdLostJustCrossed = showMap and reclaimSideLost and closedRightSeen and not reclaimSideLost[1]
 holdLostTime := holdLostJustCrossed ? time : holdLostTime
-holdLostSeen := showMap and (holdLostSeen or reclaimSideLost)
+holdLostSeen := showMap and (holdLostSeen or holdLostJustCrossed)
 closedWrongSeen := showMap and (closedWrongSeen or reclaimSideLost)
+reclaimStatus := reclaimJustCrossed ? 1 : holdLostJustCrossed ? -1 : reclaimStatus
+reclaimStatusTime := reclaimJustCrossed or holdLostJustCrossed ? time : reclaimStatusTime
 
 entryOk = showMap and entryTouchedNow and (needsReclaim ? reclaimSeen : true)
 entryJustSeen = entryOk and not entrySeen
@@ -233,8 +239,8 @@ slJustSeen = showMap and slTouchedNow and not invalidSeen
 slTime := slJustSeen ? time : slTime
 invalidSeen := showMap and (invalidSeen or slTouchedNow)
 
-liveEvent = invalidSeen ? "SL TAGGED" : tp3Seen ? "TP3 TAGGED" : tp2Seen ? "TP2 TAGGED" : tp1Seen ? "TP1 TAGGED" : entrySeen ? "ENTRY TAGGED" : holdLostSeen ? "RECLAIM LOST" : reclaimSeen ? "RECLAIMED" : ""
-liveTime = invalidSeen ? slTime : tp3Seen ? tp3Time : tp2Seen ? tp2Time : tp1Seen ? tp1Time : entrySeen ? entryTime : holdLostSeen ? holdLostTime : reclaimTime
+liveEvent = invalidSeen ? "SL TAGGED" : tp3Seen ? "TP3 TAGGED" : tp2Seen ? "TP2 TAGGED" : tp1Seen ? "TP1 TAGGED" : entrySeen ? "ENTRY TAGGED" : reclaimStatus == -1 ? "RECLAIM LOST" : reclaimStatus == 1 ? "RECLAIMED" : ""
+liveTime = invalidSeen ? slTime : tp3Seen ? tp3Time : tp2Seen ? tp2Time : tp1Seen ? tp1Time : entrySeen ? entryTime : reclaimStatusTime
 
 plState = enteredLong ? (close >= actualEntry ? "UR PROFIT" : "UR LOSS") : enteredShort ? (close <= actualEntry ? "UR PROFIT" : "UR LOSS") : positionState
 statusText = setupState + " / " + plState
@@ -326,7 +332,7 @@ if barstate.islast
         cell(2, "State", setupState + " · " + plState, stateColor)
         cell(3, "R:R", rrText, colorOf(rrColorName))
         cell(4, "Updated", updatedTxt, updatedColor)
-        if liveEvent != ""
+        if liveEvent != "" and not na(liveTime)
             cell(5, "Live", liveEvent + " · " + str.format_time(liveTime, "MMM d HH:mm", "GMT+1") + " · REANALYZE", liveEvent == "SL TAGGED" ? red : orange)
 `;
 

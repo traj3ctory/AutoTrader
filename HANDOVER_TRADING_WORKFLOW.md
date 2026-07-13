@@ -105,6 +105,31 @@ Do this:
 9. Close Pine Editor/panels.
 10. Final answer uses the required output format.
 
+## Current Pine Handoff Process
+
+The active operating process is:
+
+```text
+Codex analyzes -> Codex updates SETUP_LEDGER.json -> Codex rebuilds AUTOTRADER_TRADE_MAP_TEMPLATE.pine -> user pastes Pine into TradingView -> user says "confirm" -> Codex verifies the rendered TradingView chart
+```
+
+Do not call the job complete just because the Pine file was regenerated. Completion requires either chart verification or a clear manual-paste handoff.
+
+For manual paste handoff:
+
+1. Run `node scripts/buildTradeMap.mjs`.
+2. Confirm the generated Pine contains the expected setup state/timestamp using `rg`.
+3. Tell the user to paste `AUTOTRADER_TRADE_MAP_TEMPLATE.pine`.
+4. After the user says `confirm`, inspect the visible TradingView card and compare it to `SETUP_LEDGER.json`.
+
+If the TradingView card still shows old values after paste, the file may be correct while the old indicator instance is still cached. In that case, tell the user to remove the existing `AutoTrader Trade Map` indicator, save the Pine script, and add it back to the chart.
+
+As of the 2026-07-13 watchlist refresh:
+
+- `JTOUSDT.P` should show `Cond. Long · Watch Only`, `WAIT REACTION · NO POSITION`, `2.0R / 3.0R`, updated `Jul 13 · 12:18`.
+- `XRPUSDT.P` should show `Cond. Long · Watch Only`, `WAIT RECLAIM · NO POSITION`, `2.3R / 3.7R`, updated `Jul 13 · 12:18`.
+- If XRP shows `RECLAIMED / WAIT RETEST`, `Jul 10 · 09:25`, or `SL TAGGED · Jul 13 04:00`, TradingView is still running the stale indicator instance.
+
 ## Important State Rules
 
 Setup state and position state are separate.
@@ -218,6 +243,7 @@ TradingView has been inconsistent with Pine rendering when switching symbols:
 - AVAX sometimes appears only after refresh.
 - SPORTFUN did not persist visually.
 - XRP/AVAX old maps can remain visible.
+- XRP specifically cached an old `RECLAIMED / WAIT RETEST` card after the Pine file had already been rebuilt to `WAIT RECLAIM`.
 
 This is why the ledger exists. Pine is not the memory source; it is only a generated renderer. The fix is:
 
