@@ -110,7 +110,7 @@ Do this:
 The active operating process is:
 
 ```text
-Codex analyzes -> Codex updates SETUP_LEDGER.json -> Codex rebuilds AUTOTRADER_TRADE_MAP_TEMPLATE.pine -> user pastes Pine into TradingView -> user says "confirm" -> Codex verifies the rendered TradingView chart
+AutoTrader analyzes -> AutoTrader updates SETUP_LEDGER.json -> AutoTrader rebuilds AUTOTRADER_TRADE_MAP_TEMPLATE.pine -> user pastes Pine into TradingView -> user says "confirm" -> AutoTrader verifies the rendered TradingView chart
 ```
 
 Do not call the job complete just because the Pine file was regenerated. Completion requires either chart verification or a clear manual-paste handoff.

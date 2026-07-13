@@ -60,7 +60,13 @@ const groupHtml = groups
     const searchBlob = esc(
       [
         g.coin,
-        ...g.records.flatMap((r) => [r.setup_type, r.outcome, r.trade_result, r.direction]),
+        ...g.records.flatMap((r) => [
+          r.trade_type,
+          r.setup_type,
+          r.outcome,
+          r.trade_result,
+          r.direction,
+        ]),
       ]
         .join(" ")
         .toLowerCase()
@@ -68,9 +74,11 @@ const groupHtml = groups
     const rows = g.records
       .map((r) => {
         const k = outcomeKind(r.outcome);
+        const typeClass = String(r.trade_type || "").toLowerCase() === "intraday" ? "type-intraday" : "type-scalp";
         return `<tr>
         <td class="date">${esc(r.date)}</td>
-        <td>${esc(r.trade_type)} ${esc(r.direction)}</td>
+        <td><span class="type-badge ${typeClass}">${esc(r.trade_type)}</span></td>
+        <td>${esc(r.direction)}</td>
         <td>${esc(r.setup_type)}</td>
         <td><span class="pill k-${k}">${esc(r.outcome)}</span></td>
         <td>${esc(r.trade_result)}</td>
@@ -88,7 +96,7 @@ const groupHtml = groups
     </button>
     <div class="group-body" id="body-${i}" hidden>
       <table>
-        <thead><tr><th>Date</th><th>Trade</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
+        <thead><tr><th>Date</th><th>Type</th><th>Direction</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
         <tbody>
 ${rows}
         </tbody>
@@ -164,6 +172,9 @@ const html = `<!DOCTYPE html>
   tr:last-child td { border-bottom: none; }
   td.date { white-space: nowrap; color: #a7b0c0; }
   .pill { border-radius: 6px; padding: 3px 9px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .type-badge { border-radius: 6px; padding: 3px 9px; font-size: 12px; font-weight: 700; white-space: nowrap; border: 1px solid; }
+  .type-intraday { background: #5b8def1f; color: #8fb3ff; border-color: #5b8def4d; }
+  .type-scalp { background: #8b5cf61f; color: #c4b5fd; border-color: #8b5cf64d; }
   .k-correct { background: #22d67a1f; color: #22d67a; border: 1px solid #22d67a4d; }
   .k-invalidated { background: #f5a5241f; color: #f5a524; border: 1px solid #f5a5244d; }
   .k-other { background: #5b8def1f; color: #5b8def; border: 1px solid #5b8def4d; }

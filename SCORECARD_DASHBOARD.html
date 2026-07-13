@@ -56,6 +56,9 @@
   tr:last-child td { border-bottom: none; }
   td.date { white-space: nowrap; color: #a7b0c0; }
   .pill { border-radius: 6px; padding: 3px 9px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .type-badge { border-radius: 6px; padding: 3px 9px; font-size: 12px; font-weight: 700; white-space: nowrap; border: 1px solid; }
+  .type-intraday { background: #5b8def1f; color: #8fb3ff; border-color: #5b8def4d; }
+  .type-scalp { background: #8b5cf61f; color: #c4b5fd; border-color: #8b5cf64d; }
   .k-correct { background: #22d67a1f; color: #22d67a; border: 1px solid #22d67a4d; }
   .k-invalidated { background: #f5a5241f; color: #f5a524; border: 1px solid #f5a5244d; }
   .k-other { background: #5b8def1f; color: #5b8def; border: 1px solid #5b8def4d; }
@@ -103,7 +106,7 @@
   <span id="resultCount"></span>
 </div>
 <div id="groups">
-<div class="group" data-search="ususdt.p no clean intraday setup / deep retest watch invalidated thesis not taken long compression-to-expansion breakout / demand retest invalidated thesis not taken long" data-idx="0">
+<div class="group" data-search="ususdt.p intraday no clean intraday setup / deep retest watch invalidated thesis not taken long scalp compression-to-expansion breakout / demand retest invalidated thesis not taken long" data-idx="0">
     <button class="group-header" type="button" onclick="toggleGroup(0)">
       <span class="chev" id="chev-0">&rsaquo;</span>
       <span class="g-coin">USUSDT.P</span>
@@ -113,11 +116,12 @@
     </button>
     <div class="group-body" id="body-0" hidden>
       <table>
-        <thead><tr><th>Date</th><th>Trade</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
+        <thead><tr><th>Date</th><th>Type</th><th>Direction</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
         <tbody>
 <tr>
         <td class="date">2026-07-07</td>
-        <td>Intraday Long</td>
+        <td><span class="type-badge type-intraday">Intraday</span></td>
+        <td>Long</td>
         <td>No Clean Intraday Setup / Deep Retest Watch</td>
         <td><span class="pill k-invalidated">Invalidated Thesis</span></td>
         <td>Not Taken</td>
@@ -125,7 +129,8 @@
       </tr>
 <tr>
         <td class="date">2026-07-02</td>
-        <td>Scalp Long</td>
+        <td><span class="type-badge type-scalp">Scalp</span></td>
+        <td>Long</td>
         <td>Compression-to-Expansion Breakout / Demand Retest</td>
         <td><span class="pill k-invalidated">Invalidated Thesis</span></td>
         <td>Not Taken</td>
@@ -135,7 +140,7 @@
       </table>
     </div>
   </div>
-<div class="group" data-search="hypeusdt.p reclaim + retest / compression bounce invalidated thesis not taken long" data-idx="1">
+<div class="group" data-search="hypeusdt.p scalp reclaim + retest / compression bounce invalidated thesis not taken long" data-idx="1">
     <button class="group-header" type="button" onclick="toggleGroup(1)">
       <span class="chev" id="chev-1">&rsaquo;</span>
       <span class="g-coin">HYPEUSDT.P</span>
@@ -145,11 +150,12 @@
     </button>
     <div class="group-body" id="body-1" hidden>
       <table>
-        <thead><tr><th>Date</th><th>Trade</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
+        <thead><tr><th>Date</th><th>Type</th><th>Direction</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
         <tbody>
 <tr>
         <td class="date">2026-07-02</td>
-        <td>Scalp Long</td>
+        <td><span class="type-badge type-scalp">Scalp</span></td>
+        <td>Long</td>
         <td>Reclaim + Retest / Compression Bounce</td>
         <td><span class="pill k-invalidated">Invalidated Thesis</span></td>
         <td>Not Taken</td>
@@ -159,7 +165,7 @@
       </table>
     </div>
   </div>
-<div class="group" data-search="xrpusdt.p reclaim + retest / standard demand retest invalidated thesis not taken long" data-idx="2">
+<div class="group" data-search="xrpusdt.p scalp reclaim + retest / standard demand retest invalidated thesis not taken long" data-idx="2">
     <button class="group-header" type="button" onclick="toggleGroup(2)">
       <span class="chev" id="chev-2">&rsaquo;</span>
       <span class="g-coin">XRPUSDT.P</span>
@@ -169,11 +175,12 @@
     </button>
     <div class="group-body" id="body-2" hidden>
       <table>
-        <thead><tr><th>Date</th><th>Trade</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
+        <thead><tr><th>Date</th><th>Type</th><th>Direction</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
         <tbody>
 <tr>
         <td class="date">2026-07-02</td>
-        <td>Scalp Long</td>
+        <td><span class="type-badge type-scalp">Scalp</span></td>
+        <td>Long</td>
         <td>Reclaim + Retest / Standard Demand Retest</td>
         <td><span class="pill k-invalidated">Invalidated Thesis</span></td>
         <td>Not Taken</td>
@@ -183,7 +190,7 @@
       </table>
     </div>
   </div>
-<div class="group" data-search="brevusdt.p liquidity sweep + failed reclaim / supply rejection correct thesis not taken short" data-idx="3">
+<div class="group" data-search="brevusdt.p scalp liquidity sweep + failed reclaim / supply rejection correct thesis not taken short" data-idx="3">
     <button class="group-header" type="button" onclick="toggleGroup(3)">
       <span class="chev" id="chev-3">&rsaquo;</span>
       <span class="g-coin">BREVUSDT.P</span>
@@ -193,11 +200,12 @@
     </button>
     <div class="group-body" id="body-3" hidden>
       <table>
-        <thead><tr><th>Date</th><th>Trade</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
+        <thead><tr><th>Date</th><th>Type</th><th>Direction</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
         <tbody>
 <tr>
         <td class="date">2026-07-02</td>
-        <td>Scalp Short</td>
+        <td><span class="type-badge type-scalp">Scalp</span></td>
+        <td>Short</td>
         <td>Liquidity Sweep + Failed Reclaim / Supply Rejection</td>
         <td><span class="pill k-correct">Correct Thesis</span></td>
         <td>Not Taken</td>
@@ -207,7 +215,7 @@
       </table>
     </div>
   </div>
-<div class="group" data-search="sportfunusdt.p reclaim + retest / compression bounce invalidated thesis not taken long" data-idx="4">
+<div class="group" data-search="sportfunusdt.p scalp reclaim + retest / compression bounce invalidated thesis not taken long" data-idx="4">
     <button class="group-header" type="button" onclick="toggleGroup(4)">
       <span class="chev" id="chev-4">&rsaquo;</span>
       <span class="g-coin">SPORTFUNUSDT.P</span>
@@ -217,11 +225,12 @@
     </button>
     <div class="group-body" id="body-4" hidden>
       <table>
-        <thead><tr><th>Date</th><th>Trade</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
+        <thead><tr><th>Date</th><th>Type</th><th>Direction</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
         <tbody>
 <tr>
         <td class="date">2026-07-02</td>
-        <td>Scalp Long</td>
+        <td><span class="type-badge type-scalp">Scalp</span></td>
+        <td>Long</td>
         <td>Reclaim + Retest / Compression Bounce</td>
         <td><span class="pill k-invalidated">Invalidated Thesis</span></td>
         <td>Not Taken</td>
@@ -250,7 +259,7 @@
 <div class="tag"><span class="tagname">PINE_SCRIPT_CORRUPTED</span><span class="tagcount">1</span></div>
 </div>
 
-<div class="foot">Generated 2026-07-09T06:37:27.050Z from SCORECARD.json and SETUP_LEDGER.json · regenerate with: node scripts/buildScorecard.mjs</div>
+<div class="foot">Generated 2026-07-13T11:57:11.714Z from SCORECARD.json and SETUP_LEDGER.json · regenerate with: node scripts/buildScorecard.mjs</div>
 
 <script>
   const PAGE_SIZE = 5;

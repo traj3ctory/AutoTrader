@@ -1,28 +1,28 @@
-# Bybit mover scan — 2026-07-09T12:23:20.358Z
+# Bybit mover scan — 2026-07-13T11:53:25.072Z
 
 ## Top 10 gainers (24h)
-VINEUSDT.P       +45.77%  turnover $7.0M  price 0.0098
-THEUSDT.P        +29.75%  turnover $6.6M  price 0.06603
-1000TAGUSDT.P    +27.13%  turnover $7.8M  price 1.076
-SOXLUSDT.P       +26.80%  turnover $139.9M  price 197.73
-BASEDUSDT.P      +21.11%  turnover $5.8M  price 0.10241
-NBISUSDT.P       +19.92%  turnover $8.4M  price 226.82
-VANRYUSDT.P      +18.74%  turnover $29.0M  price 0.007762
-SKYAI1USDT.P     +17.52%  turnover $16.5M  price 0.03878
-SNDKUSDT.P       +17.42%  turnover $59.7M  price 1815.96
-SHAZUSDT.P       +15.72%  turnover $8.2M  price 81.35
+VELVETUSDT.P     +35.38%  turnover $28.3M  price 0.61975
+JCTUSDT.P        +29.02%  turnover $6.7M  price 0.0043185
+1000XECUSDT.P    +27.17%  turnover $11.4M  price 0.006552
+KITEUSDT.P       +23.60%  turnover $7.4M  price 0.14052
+CAPUSDT.P        +19.75%  turnover $4.1M  price 0.01892
+BILLUSDT.P       +18.05%  turnover $31.6M  price 0.0539
+JTOUSDT.P        +10.09%  turnover $10.7M  price 0.6558  [already in ledger]
+PUMPFUNUSDT.P    +7.32%  turnover $19.7M  price 0.0015099
+ALLOUSDT.P       +6.39%  turnover $7.3M  price 0.39263
+PYTHUSDT.P       +5.24%  turnover $4.1M  price 0.04945
 
 ## Top 10 losers (24h)
-LABUSDT.P        -65.07%  turnover $226.9M  price 0.888
-EVAAUSDT.P       -42.50%  turnover $69.1M  price 1.8477
-TRIAUSDT.P       -33.77%  turnover $7.5M  price 0.0121
-TACUSDT.P        -22.31%  turnover $12.0M  price 0.002587
-EDGEUSDT.P       -17.93%  turnover $64.8M  price 0.434
-KAITOUSDT.P      -17.19%  turnover $23.8M  price 0.6708
-CLOUSDT.P        -11.38%  turnover $8.6M  price 0.19688
-10000NEXUSDT.P   -11.29%  turnover $7.4M  price 0.02404
-MUSDT.P          -10.15%  turnover $5.5M  price 1.1956
-SLXUSDT.P        -9.84%  turnover $14.1M  price 0.1714
+EVAAUSDT.P       -48.02%  turnover $54.6M  price 0.7255
+LABUSDT.P        -28.42%  turnover $71.0M  price 0.345
+CLOUSDT.P        -25.87%  turnover $8.1M  price 0.21025
+MAGMAUSDT.P      -19.21%  turnover $19.6M  price 0.32947
+SKHYNIXUSDT.P    -14.21%  turnover $62.4M  price 1272.93
+SXTUSDT.P        -14.00%  turnover $13.6M  price 0.007682
+TUSDT.P          -13.64%  turnover $71.8M  price 0.004913
+TLMUSDT.P        -12.26%  turnover $6.0M  price 0.0018062
+VANRYUSDT.P      -11.75%  turnover $13.9M  price 0.005706
+GWEIUSDT.P       -11.38%  turnover $5.9M  price 0.05039
 
 Filters: USDT perps only, BTC/ETH excluded (market filters not candidates), min $3M 24h turnover.
 This is a candidate shortlist only. No analysis, ledger writes, or chart drawing happens here — run `Analyze [coin]` on whichever ones look worth a real read.
