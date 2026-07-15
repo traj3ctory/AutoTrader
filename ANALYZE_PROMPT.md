@@ -393,6 +393,13 @@ Before giving an entry:
 - SL earns Safe only when it sits beyond both the nearest obvious liquidity and the full zone wick/base, with buffer for a sweep.
 - If the properly placed SL is still Vulnerable, widen the zone or skip; Vulnerable is a warning state, not an acceptable default rating.
 
+## SL Buffer Calibration Rule
+
+- The buffer added beyond the structural level (wick high/low or cluster edge) must be derived from that specific coin's own realized volatility, never a flat percentage of price carried over from a different coin's analysis.
+- Method: pull recent 4H candle history and compute the average true range (high minus low) as a percentage of price. Set the buffer as a fraction (around 50%) of that average range, added beyond the technical level - not a round percentage picked because it "looks reasonable."
+- Do not reuse a buffer percentage just because a prior analysis in the same session used it. Different coins have meaningfully different volatility profiles - one session found JTO's average 4H range at ~3.5% of price, US's at ~8.5%, and PUMPFUN's at ~3.6%, despite all three initially being given nearly the same ~2.6-3% SL buffer, which was later confirmed to be an unexamined borrowed heuristic, not independent per-coin derivation.
+- Recheck this specifically whenever setting or widening an SL. It is exactly as easy to silently drift into a copied number here as it is to violate the TP Zone Validity Rule by skipping a zone - both come from reusing a prior answer instead of re-deriving it from the current coin's own data.
+
 ## TP Zone Validity Rule
 
 - Every TP in the ladder sits at the NEAR edge (the entry) of its zone - the zone top for a short, the zone bottom for a long - never inside it, never past its far edge. The near edge is the only level guaranteed reachable if the move works at all, because defenders react at the edge, not the middle.

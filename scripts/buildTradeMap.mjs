@@ -15,7 +15,11 @@ const FLOORS = {
 const STALE_MS = { Scalp: 12 * 3600 * 1000, Intraday: 24 * 3600 * 1000 };
 
 const q = (value) => JSON.stringify(String(value ?? ""));
-const n = (value) => (Number.isFinite(Number(value)) ? String(Number(value)) : "na");
+// value == null catches both null and undefined - Number(null) coerces to 0
+// and Number.isFinite(0) is true, so without this check every intentionally
+// blank field (no TP3, no SL yet, etc.) would silently render as the literal
+// price 0 instead of Pine's na.
+const n = (value) => (value != null && Number.isFinite(Number(value)) ? String(Number(value)) : "na");
 const matchExpr = (setup) =>
   `(syminfo.prefix == ${q(setup.exchange || "BYBIT")} and syminfo.ticker == ${q(setup.coin)})`;
 
@@ -47,14 +51,24 @@ for (const setup of setups) {
   // price (entry high for longs, entry low for shorts), not the midpoint.
   const edge = isShort ? Number(setup.entry?.low) : Number(setup.entry?.high);
   const risk = Math.abs(edge - Number(setup.sl));
-  const rr = (tp) => (risk > 0 ? ((isShort ? edge - tp : tp - edge) / risk) : NaN);
-  const rr1 = rr(Number(setup.tp?.[0]));
-  const rr2 = rr(Number(setup.tp?.[1]));
+  // tp may be null/undefined for a genuinely undefined target (e.g. only
+  // one TP defined) - Number(null) coerces to 0, which would silently
+  // compute a fake R:R against price zero, so guard on the raw value first.
+  const rr = (rawTp) => {
+    const tp = Number(rawTp);
+    return risk > 0 && rawTp != null && Number.isFinite(tp)
+      ? (isShort ? edge - tp : tp - edge) / risk
+      : NaN;
+  };
+  const rr1 = rr(setup.tp?.[0]);
+  const rr2 = rr(setup.tp?.[1]);
   const floors = FLOORS[setup.trade_type] || FLOORS.Intraday;
-  const hasEntry = Number.isFinite(edge) && Number.isFinite(Number(setup.sl));
+  const rawEntry = isShort ? setup.entry?.low : setup.entry?.high;
+  const hasEntry = rawEntry != null && setup.sl != null && Number.isFinite(edge) && Number.isFinite(Number(setup.sl));
 
   const failTp1 = !(rr1 >= floors.tp1 - 1e-9);
-  const warnTp2 = !(rr2 >= floors.band[0] - 1e-9 && rr2 <= floors.band[1] + 1e-9);
+  // TP2 being undefined is a valid single-target setup, not a band violation.
+  const warnTp2 = Number.isFinite(rr2) && !(rr2 >= floors.band[0] - 1e-9 && rr2 <= floors.band[1] + 1e-9);
   const suffix = failTp1
     ? ` · FAILS TP1 >= ${floors.tp1}`
     : warnTp2
@@ -62,7 +76,10 @@ for (const setup of setups) {
       : "";
   // No entry/SL defined yet (e.g. post-spike, waiting for a base) is a real,
   // valid state - show it plainly instead of formatting NaN into the card.
-  const rrText = hasEntry ? `${rr1.toFixed(1)}R / ${rr2.toFixed(1)}R${suffix}` : "N/A - no entry yet";
+  // TP2 is allowed to be genuinely undefined (single-target setups) - show
+  // that plainly too rather than a formatted NaN.
+  const rr2Text = Number.isFinite(rr2) ? `${rr2.toFixed(1)}R` : "no TP2";
+  const rrText = hasEntry ? `${rr1.toFixed(1)}R / ${rr2Text}${suffix}` : "N/A - no entry yet";
   const rrColor = !hasEntry ? "gray" : failTp1 ? "red" : warnTp2 ? "orange" : "green";
 
   const rating = String(setup.setup_rating || "");

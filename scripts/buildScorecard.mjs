@@ -8,15 +8,24 @@ const sc = JSON.parse(fs.readFileSync(scorecardPath, "utf8"));
 const ledger = JSON.parse(fs.readFileSync(ledgerPath, "utf8"));
 
 const GOAL = 30;
-const s = sc.summary;
-const reviewed = s.reviewed_setups || 0;
+// Derived directly from records, not from sc.summary - a hand-maintained
+// summary block silently goes stale the moment a record is added without
+// remembering to update it too (happened this session: JTO/PUMPFUN taken
+// trades were added but summary still said 7 reviewed/1 taken).
+const reviewed = sc.records.length;
+const correctThesis = sc.records.filter((r) => /correct/i.test(String(r.outcome))).length;
+const invalidatedThesis = sc.records.filter((r) => /invalidated/i.test(String(r.outcome))).length;
+const tradesTaken = sc.records.filter((r) => r.trade_taken === true).length;
+const tradeWins = sc.records.filter((r) => /^win$/i.test(String(r.trade_result))).length;
+const tradeLosses = sc.records.filter((r) => /^loss$/i.test(String(r.trade_result))).length;
+const s = { ...sc.summary, reviewed_setups: reviewed, correct_thesis: correctThesis, invalidated_thesis: invalidatedThesis, trades_taken: tradesTaken, trade_wins: tradeWins, trade_losses: tradeLosses };
 // Gate counts records that were a correct thesis OR a user-confirmed taken
 // trade (one record can only count once).
 const qualifying = sc.records.filter(
   (r) => /correct/i.test(String(r.outcome)) || r.trade_taken === true
 ).length;
 const pct = Math.min(100, Math.round((qualifying / GOAL) * 100));
-const accuracy = reviewed > 0 ? Math.round((s.correct_thesis / reviewed) * 100) : 0;
+const accuracy = reviewed > 0 ? Math.round((correctThesis / reviewed) * 100) : 0;
 
 const tagCounts = {};
 for (const j of ledger.journal || []) {
@@ -288,6 +297,16 @@ ${tags}
 `;
 
 fs.writeFileSync(outputPath, html);
+
+// Keep the raw JSON's summary block in sync too, not just the dashboard -
+// anyone reading SCORECARD.json directly should see accurate numbers.
+const nextSummary = { reviewed_setups: reviewed, correct_thesis: correctThesis, invalidated_thesis: invalidatedThesis, trades_taken: tradesTaken, trade_wins: tradeWins, trade_losses: tradeLosses };
+if (JSON.stringify(sc.summary) !== JSON.stringify(nextSummary)) {
+  sc.summary = nextSummary;
+  fs.writeFileSync(scorecardPath, JSON.stringify(sc, null, 2) + "\n");
+  console.log("[scorecard] summary block was stale - resynced in SCORECARD.json.");
+}
+
 console.log(
   `Scorecard dashboard: ${qualifying}/${GOAL} toward gate (correct + taken), ` +
     `${reviewed} reviewed, ${groups.length} coins grouped → ${outputPath.pathname}`
