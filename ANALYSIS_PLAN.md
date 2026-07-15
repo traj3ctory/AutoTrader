@@ -63,12 +63,12 @@ Before drawing or summarizing:
 
 - Read `SETUP_LEDGER.json`.
 - Locate the requested coin entry if it exists.
-- Use the ledger to understand the prior setup state, position state, entry, SL, TP, reclaim, and notes.
-- Compare that prior setup to the current TradingView chart before drawing.
+- Use the ledger to understand the prior setup state, position state, entry, SL, TP, reclaim, and notes - as context for what changed, never as the answer itself.
+- Compare that prior setup to the current TradingView chart before drawing. This comparison requires an actual chart read this turn, not a recollection of the ledger's last values.
 - After live chart analysis, update the ledger before rendering the chart.
-- If TradingView fails to render, the ledger still remains the saved setup state.
+- If TradingView fails to render, the ledger still remains the saved setup state, but say so explicitly - do not report old ledger values as if they were this turn's analysis.
 
-Never treat TradingView Pine/drawings as the memory source. They are only the display layer.
+Never treat TradingView Pine/drawings as the memory source. They are only the display layer. Likewise, never treat the ledger's last saved entry as a substitute for actually reading the chart on this turn's `Analyze [coin]` request, however recent that entry looks.
 
 Ledger hygiene:
 
@@ -93,6 +93,8 @@ Ledger validity gate:
 
 Never draw a ledger setup just because it exists. It must pass this validity gate first.
 
+This validity gate is also the lifecycle classification - there is only one state list, not two. If the prior map has already hit TP/SL or changed direction, refresh the map before final output.
+
 ## Gate 2: Catalyst / News Check
 
 Before analysis, check for scheduled or breaking catalysts that can override structure:
@@ -113,20 +115,7 @@ Rules:
 - If a high-impact event is imminent or unfolding, mark `News Risk` and cap Final Action at Wait or No Chase, unless the user explicitly says to trade the event.
 - If the catalyst cannot be verified, mark `Unverified` and say "catalyst unverified - check manually." Do not assume Clear.
 
-## Gate 3: Lifecycle Check
-
-Classify before analysis:
-
-- Fresh Setup
-- Existing Active Trade
-- Missed Setup
-- TP Hit / Manage
-- Invalidated Setup
-- Stale Map / Needs Cleanup
-
-If the prior map has already hit TP/SL or changed direction, refresh the map before final output.
-
-## Gate 4: Cleanup Check
+## Gate 3: Cleanup Check
 
 Before drawing:
 
@@ -143,7 +132,7 @@ If cleanup cannot be completed:
 - Explain what could not be removed.
 - Ask for approval before adding a duplicate/conflicting map.
 
-## Gate 4A: Per-Coin Persistence And Symbol-Safety Check
+## Gate 3A: Per-Coin Persistence And Symbol-Safety Check
 
 The desired behavior is per-coin persistence:
 
@@ -175,7 +164,7 @@ When using Pine, use guarded slots:
 
 Use one multi-symbol Pine instance for display, with one guarded slot per active ledger coin. Reanalysis updates the requested coin's ledger record and that coin's Pine slot only.
 
-## Gate 5: Trade Type Check
+## Gate 4: Trade Type Check
 
 Choose one:
 
@@ -185,7 +174,7 @@ Choose one:
 
 The chart table must match the written trade type exactly.
 
-## Gate 6: Setup Check
+## Gate 5: Setup Check
 
 Choose one primary setup:
 
@@ -199,7 +188,7 @@ Choose one primary setup:
 
 Optional secondary setup is allowed, but the primary setup controls entry.
 
-## Gate 7: Activation Check
+## Gate 6: Activation Check
 
 Choose one activation basis:
 
@@ -219,7 +208,7 @@ Separate setup activation from user position confirmation:
 - If no position is confirmed, Position Status must be `NO POSITION` or `N/A`, never `UR PROFIT` or `UR LOSS`.
 - If price moves away without confirmed entry, classify as `MISSED / NO CHASE` or define a new retest setup.
 
-## Gate 8: Risk Check
+## Gate 7: Risk Check
 
 Before finalizing levels:
 
@@ -227,11 +216,12 @@ Before finalizing levels:
 - Identify nearest sell-side liquidity.
 - Set SL beyond liquidity and full wick/base.
 - Classify SL as Safe, Vulnerable, or Too Tight.
+- Check every TP against the TP Zone Validity Rule in `ANALYZE_PROMPT.md`: no TP may span more than one demand/supply zone. Fix TP1 first if it's wrong - a TP that skips through an untested zone and lands in a second one is not a real target, no matter how good the resulting R:R looks.
 - Calculate R:R from the conservative entry-zone edge (entry high for longs, entry low for shorts), never the midpoint.
 
 Floors: Scalp TP1 >= 1.5R with TP2 in the 2.5-3.5R band; Intraday TP1 >= 2R with TP2 in the 3-4R band. If proper SL puts TP1 below the floor, mark WAIT / SKIP. If TP2 has no structural level inside the band, the setup does not fit the template.
 
-## Gate 9: Setup Rating Check
+## Gate 8: Setup Rating Check
 
 Assign one:
 
@@ -247,7 +237,7 @@ Rating must match action:
 - Watch Only -> Wait / monitor.
 - Skip / No Trade -> No trade.
 
-## Gate 10: Pine Map Check
+## Gate 9: Pine Map Check
 
 Preferred order:
 
@@ -274,7 +264,7 @@ The map must include:
 
 Avoid shaded boxes unless explicitly requested.
 
-## Gate 11: Verification Check
+## Gate 10: Verification Check
 
 Verification requires an observed re-check of the rendered chart, not a restatement of what was intended. After closing the Pine Editor:
 
@@ -287,11 +277,11 @@ Do not mark this gate passed from memory of what was typed. If any observed fiel
 
 If verification fails, state `CHART VERIFICATION FAILED`.
 
-## Gate 11A: Pine Script Corruption Check
+## Gate 10A: Pine Script Corruption Check
 
-If the indicator legend shows a compilation error referencing a short garbage string, the saved script source is corrupted, not just the chart drawing. See "Pine Script Corruption Recovery" in `ANALYZE_PROMPT.md` for the full recovery sequence: reload, verify corruption in the editor, replace via a real paste event (or synthetic ClipboardEvent fallback), save, explicitly Add to chart, then re-run Gate 11 in full. Journal the incident with mistake tag `PINE_SCRIPT_CORRUPTED` - technical, not a trading mistake.
+If the indicator legend shows a compilation error referencing a short garbage string, the saved script source is corrupted, not just the chart drawing. See "Pine Script Corruption Recovery" in `ANALYZE_PROMPT.md` for the full recovery sequence: reload, verify corruption in the editor, replace via a real paste event (or synthetic ClipboardEvent fallback), save, explicitly Add to chart, then re-run Gate 10 in full. Journal the incident with mistake tag `PINE_SCRIPT_CORRUPTED` - technical, not a trading mistake.
 
-## Gate 12: Failure Protocol
+## Gate 11: Failure Protocol
 
 Use these exact flags:
 

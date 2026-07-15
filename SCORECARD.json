@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "last_updated": "2026-07-07",
+  "last_updated": "2026-07-13",
   "principle": "Keep thesis result simple. Trade result only updates when the user confirms a trade was taken.",
   "summary": {
-    "reviewed_setups": 6,
+    "reviewed_setups": 7,
     "correct_thesis": 1,
     "invalidated_thesis": 5,
-    "trades_taken": 0,
+    "trades_taken": 1,
     "trade_wins": 0,
     "trade_losses": 0
   },
@@ -173,6 +173,35 @@
         "Full Pump Retrace"
       ],
       "review_note": "Unverified-catalyst pump retraced fully to the impulse origin. Long retest thesis wrong: sweep-fail signature at 0.0240 favored the short, and the zone had no base under it. No position, no loss."
+    },
+    {
+      "id": "2026-07-13-JTOUSDT.P-short-failed-reclaim",
+      "date": "2026-07-13",
+      "coin": "JTOUSDT.P",
+      "exchange": "BYBIT",
+      "trade_type": "Intraday",
+      "direction": "Short",
+      "setup_type": "Liquidity Sweep + Failed Reclaim / Deviation",
+      "setup_rating": "Watch Only",
+      "final_action": "WAIT / NO CHASE",
+      "planned_entry": "0.665-0.68 retest zone",
+      "planned_sl": 0.695,
+      "planned_tp": [
+        0.59,
+        0.56,
+        0.52
+      ],
+      "trade_taken": true,
+      "trade_result": "Open",
+      "outcome": "Pending / Trade Open",
+      "milestones": [
+        "Entry Placed Before Confirmation",
+        "Chop 15:15-16:30",
+        "Breakdown Confirmed 16:45+",
+        "TP Zone Validity Rule applied 07-15 - all three TPs recalculated to zone near-edges (0.6076 / 0.5934 / ~0.545), replacing the original 0.59/0.56/0.52",
+        "Corrected TP1 (0.6076) already tagged intraday during the 07-15 breakdown, before it was even relabeled as TP1 - original TP1 (0.59) still not hit as of this note"
+      ],
+      "review_note": "User placed a live 10x isolated limit short at 0.6650 with SL 0.695 and TP 0.59, matching the analyzed zone and levels exactly - but the entry preceded confirmation, not the reverse. Reconciled via 15m candles and the Pine card's own ENTRY TAGGED timestamp (both agree, no timezone gap - user confirmed TradingView is also UTC+1): the 15:00 local candle (O 0.6506, H 0.6884, C 0.6747) tagged the entry zone while still climbing and closed near its high - no rejection yet. The actual rejection/confirmation candle was the next one, 15:15 local (O 0.6747, L 0.6521, C 0.6592). So the limit filled roughly 15-30 min before any confirmation existed. Price then chopped 0.658-0.665 for about 75 minutes (adverse/flat, no edge) before a real breakdown candle at 16:45 local (O 0.6587, L 0.6374, C 0.6419) and follow-through, reaching ~1.5R unrealized as of 07-15. Thesis direction validated late; entry timing was premature - that finding stands. SEPARATE FINDING (07-15): the planned_tp above (0.59/0.56/0.52) was itself miscalibrated - it assumed price would clear a full demand zone (or two) with no evidence, a TP Zone Validity Rule violation caught and fixed in SETUP_LEDGER.json. Corrected targets are 0.6076/0.5934/~0.545 (each zone's near edge, TP2/TP3 conditional on the zone before them confirming broken). Price already traded through the corrected TP1 (0.6076) during the 07-15 breakdown before the relabel happened - so 'TP1 hit' is true against the corrected number and false against the original. trade_result stays Open: a TP zone being tagged is not the same as an exit, and no exit has been confirmed by the user. When this trade closes, grade Win/Loss against the corrected TP ladder (0.6076/0.5934/~0.545), not the original flawed one - do not penalize thesis quality for a targeting error that was ours, not the market's. Also revisit whether early entries like this should count toward correct-thesis credit even when profitable."
     }
   ]
 }

@@ -16,6 +16,15 @@ Do not give a normal final trade summary while the chart is stale, unmarked, or 
 
 The normal output format is allowed only after TradingView chart marking and verification succeed, or after a manual-paste handoff per the rule below. If the chart is not marked or cannot be verified and no handoff was offered, do not present the setup as completed. You may still provide the setup, but it must be clearly labeled `SETUP ONLY - NOT DRAWN ON TRADINGVIEW`, include the drawing/verification issue, and offer to redraw from the ledger.
 
+## Analyze Always Means A Fresh Read
+
+`Analyze [coin]` is never satisfied by reciting the ledger's last saved entry, no matter how recent it looks. Every request requires reading the live chart across the required timeframe stack this turn and re-deciding the setup from what is actually happening right now.
+
+- The ledger is a write-target and history/context source, not an answer. Read it first for prior setup state, journal history, and mistake tags - then perform the actual chart read before writing or reporting anything as the analysis.
+- If the chart genuinely cannot be read this turn (render failure, retry cap hit, no screenshot available), that is a `CHART NOT MARKED`-class limitation - say so explicitly. Do not paper over it by returning the last saved ledger values as if they were produced by this turn's analysis.
+- Record the reasoning, not just the numbers: for every entry/retest zone, state what structural evidence produced it (which swing high/low, which liquidity pool, which relative-strength signal, which candle behavior) directly in the ledger's `bias`/`notes`/`nearest_liquidity` fields, and repeat the key reasoning in the chat output. The "why" must survive without needing to be reconstructed later.
+- Always give TradingView a short pause to paint before reading it: after opening a chart, switching symbols, or changing timeframe/interval, wait a few seconds before the first screenshot or read. Do not screenshot immediately on navigation - the canvas is frequently still blank or showing the prior symbol's stale data at that instant, not a real render failure yet. Only treat it as a genuine render failure (subject to the one-retry-cap) if it is still blank/stale after that pause.
+
 ## Chart Drawing Method
 
 Attempt automated drawing first, every time, using this exact method - not the fragile methods from earlier sessions.
@@ -383,6 +392,17 @@ Before giving an entry:
 - Always classify SL Quality as Safe, Vulnerable, or Too Tight.
 - SL earns Safe only when it sits beyond both the nearest obvious liquidity and the full zone wick/base, with buffer for a sweep.
 - If the properly placed SL is still Vulnerable, widen the zone or skip; Vulnerable is a warning state, not an acceptable default rating.
+
+## TP Zone Validity Rule
+
+- Every TP in the ladder sits at the NEAR edge (the entry) of its zone - the zone top for a short, the zone bottom for a long - never inside it, never past its far edge. The near edge is the only level guaranteed reachable if the move works at all, because defenders react at the edge, not the middle.
+- TP1 = near edge of the first opposing zone. No precondition.
+- TP2 = near edge of the second zone, but only counts as a real (non-conditional) target once the first zone is confirmed broken (a close through it, holding). Until then it is a stretch target, not something to size the trade around.
+- TP3 (and beyond) = near edge of each subsequent zone, same conditional rule chained one zone deeper each time.
+- No TP may span more than one zone. This was the original form of the rule and still holds - it falls directly out of the near-edge rule above, since the near edge of zone N is always before zone N+1 begins.
+- If a TP's placement (round number, old note, arbitrary R multiple) turns out to land inside or beyond a second zone once real zone boundaries are mapped, correct it back to just outside the first zone - do not keep the deeper number for a better-looking R:R.
+- Deeper TPs (TP2, TP3) may target beyond further zones, but only as conditional/stretch targets: valid to display, not valid to lean on for the R:R floor check, unless the zone(s) between the current TP and that deeper one are confirmed broken (a close through, holding) as the trade develops.
+- Re-check this whenever new zone boundaries are drawn or the chart reveals structure that wasn't visible at initial analysis - it is as easy to violate silently as the SL-too-tight mistake, and gets caught the same way: go back and look at what is actually between entry and the target.
 
 ## Extension And Chase Rules
 

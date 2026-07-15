@@ -51,6 +51,7 @@ for (const setup of setups) {
   const rr1 = rr(Number(setup.tp?.[0]));
   const rr2 = rr(Number(setup.tp?.[1]));
   const floors = FLOORS[setup.trade_type] || FLOORS.Intraday;
+  const hasEntry = Number.isFinite(edge) && Number.isFinite(Number(setup.sl));
 
   const failTp1 = !(rr1 >= floors.tp1 - 1e-9);
   const warnTp2 = !(rr2 >= floors.band[0] - 1e-9 && rr2 <= floors.band[1] + 1e-9);
@@ -59,12 +60,17 @@ for (const setup of setups) {
     : warnTp2
       ? " · TP2 OUT OF BAND"
       : "";
-  const rrText = `${rr1.toFixed(1)}R / ${rr2.toFixed(1)}R${suffix}`;
-  const rrColor = failTp1 ? "red" : warnTp2 ? "orange" : "green";
+  // No entry/SL defined yet (e.g. post-spike, waiting for a base) is a real,
+  // valid state - show it plainly instead of formatting NaN into the card.
+  const rrText = hasEntry ? `${rr1.toFixed(1)}R / ${rr2.toFixed(1)}R${suffix}` : "N/A - no entry yet";
+  const rrColor = !hasEntry ? "gray" : failTp1 ? "red" : warnTp2 ? "orange" : "green";
 
   const rating = String(setup.setup_rating || "");
   const effRating = failTp1 && !/skip/i.test(rating) ? "Watch Only" : rating;
-  if (failTp1) {
+  if (!hasEntry) {
+    // No entry/SL defined yet is expected (e.g. post-spike, waiting for a
+    // base) - skip the R:R floor warnings entirely rather than log NaN.
+  } else if (failTp1) {
     console.warn(
       `[R:R] ${setup.coin}: TP1 ${rr1.toFixed(2)}R is below the ${setup.trade_type} floor ` +
         `${floors.tp1}R — rating capped at Watch Only.`
@@ -103,12 +109,19 @@ for (const setup of setups) {
     rrColor,
     analyzedMs: Number.isFinite(analyzedMs) ? String(analyzedMs) : "na",
     needsReclaim: setup.activation_basis === "reclaim-entry" ? "true" : "false",
+    // Rejection-candle and break-and-retest bases require a close-confirmed
+    // rejection of the entry zone, not a bare wick touch - same protection
+    // the reclaim line already gets. Entry-zone basis stays touch-only: it
+    // represents a plain limit sitting in the zone with no candle gate.
+    needsRejection: /^(rejection-candle|break-and-retest)$/.test(String(setup.activation_basis || ""))
+      ? "true"
+      : "false",
   });
 }
 
 const d = (key, fallback) => chain(fallback, (setup) => {
   const value = derived.get(setup.coin)?.[key];
-  return key === "analyzedMs" || key === "needsReclaim" ? value : q(value);
+  return key === "analyzedMs" || key === "needsReclaim" || key === "needsRejection" ? value : q(value);
 });
 
 const isLongChain = chain("true", (setup) =>
@@ -138,6 +151,7 @@ rrText = ${d("rrText", '""')}
 rrColorName = ${d("rrColor", '"green"')}
 isLong = ${isLongChain}
 needsReclaim = ${d("needsReclaim", "false")}
+needsRejection = ${d("needsRejection", "false")}
 
 entryLow = ${entryChain("low")}
 entryHigh = ${entryChain("high")}
@@ -182,6 +196,7 @@ tp3TouchedNow = activeBar and not na(tp3) and (isLong ? high >= tp3 : low <= tp3
 slTouchedNow = activeBar and not na(sl) and (isLong ? low <= sl : high >= sl)
 
 var bool reclaimSeen = false
+var bool zoneTouchedSeen = false
 var bool holdLostSeen = false
 var bool closedRightSeen = false
 var bool closedWrongSeen = false
@@ -218,7 +233,14 @@ closedWrongSeen := showMap and (closedWrongSeen or reclaimSideLost)
 reclaimStatus := reclaimJustCrossed ? 1 : holdLostJustCrossed ? -1 : reclaimStatus
 reclaimStatusTime := reclaimJustCrossed or holdLostJustCrossed ? time : reclaimStatusTime
 
-entryOk = showMap and entryTouchedNow and (needsReclaim ? reclaimSeen : true)
+// Rejection/break-and-retest bases must not tag "ENTRY TAGGED" off a bare
+// wick touch - a live limit fill is not the same as a confirmed reaction.
+// zoneTouchedSeen accumulates so the confirming close can land on the same
+// bar as the touch (a one-candle sweep-and-reject) or a later bar. Flat
+// ternary form on purpose, same reasoning as the reclaim block above.
+zoneTouchedSeen := showMap and (zoneTouchedSeen or entryTouchedNow)
+entryRejectionOk = showMap and activeBar and barstate.isconfirmed and zoneTouchedSeen and (isLong ? close > entryHigh : close < entryLow)
+entryOk = showMap and (needsReclaim ? (entryTouchedNow and reclaimSeen) : needsRejection ? entryRejectionOk : entryTouchedNow)
 entryJustSeen = entryOk and not entrySeen
 entryTime := entryJustSeen ? time : entryTime
 entrySeen := showMap and (entrySeen or entryOk)
