@@ -90,7 +90,7 @@
   <div class="tile"><div class="num amber">5</div><div class="lbl">Invalidated thesis</div></div>
   <div class="tile"><div class="num blue">13%</div><div class="lbl">Thesis accuracy</div></div>
   <div class="tile"><div class="num">2</div><div class="lbl">Trades taken</div></div>
-  <div class="tile"><div class="num">0 / 0</div><div class="lbl">Trade wins / losses</div></div>
+  <div class="tile"><div class="num">1 / 0</div><div class="lbl">Trade wins / losses</div></div>
 </div>
 
 <div class="bar">
@@ -165,12 +165,12 @@
       </table>
     </div>
   </div>
-<div class="group" data-search="jtousdt.p intraday liquidity sweep + failed reclaim / deviation pending / trade open open short" data-idx="2">
+<div class="group" data-search="jtousdt.p intraday liquidity sweep + failed reclaim / deviation closed manually at 0.6051, ~2.0r realized win short" data-idx="2">
     <button class="group-header" type="button" onclick="toggleGroup(2)">
       <span class="chev" id="chev-2">&rsaquo;</span>
       <span class="g-coin">JTOUSDT.P</span>
       <span class="g-count">1 analysis</span>
-      <span class="pill k-other">Pending / Trade Open</span>
+      <span class="pill k-other">Closed manually at 0.6051, ~2.0R realized</span>
       <span class="g-date">2026-07-13</span>
     </button>
     <div class="group-body" id="body-2" hidden>
@@ -182,9 +182,9 @@
         <td><span class="type-badge type-intraday">Intraday</span></td>
         <td>Short</td>
         <td>Liquidity Sweep + Failed Reclaim / Deviation</td>
-        <td><span class="pill k-other">Pending / Trade Open</span></td>
-        <td>Open</td>
-        <td class="note">User placed a live 10x isolated limit short at 0.6650 with SL 0.695 and TP 0.59, matching the analyzed zone and levels exactly - but the entry preceded confirmation, not the reverse. Reconciled via 15m candles and the Pine card&#39;s own ENTRY TAGGED timestamp (both agree, no timezone gap - user confirmed TradingView is also UTC+1): the 15:00 local candle (O 0.6506, H 0.6884, C 0.6747) tagged the entry zone while still climbing and closed near its high - no rejection yet. The actual rejection/confirmation candle was the next one, 15:15 local (O 0.6747, L 0.6521, C 0.6592). So the limit filled roughly 15-30 min before any confirmation existed. Price then chopped 0.658-0.665 for about 75 minutes (adverse/flat, no edge) before a real breakdown candle at 16:45 local (O 0.6587, L 0.6374, C 0.6419) and follow-through, reaching ~1.5R unrealized as of 07-15. Thesis direction validated late; entry timing was premature - that finding stands. SEPARATE FINDING (07-15): the planned_tp above (0.59/0.56/0.52) was itself miscalibrated - it assumed price would clear a full demand zone (or two) with no evidence, a TP Zone Validity Rule violation caught and fixed in SETUP_LEDGER.json. Corrected targets are 0.6076/0.5934/~0.545 (each zone&#39;s near edge, TP2/TP3 conditional on the zone before them confirming broken). Price already traded through the corrected TP1 (0.6076) during the 07-15 breakdown before the relabel happened - so &#39;TP1 hit&#39; is true against the corrected number and false against the original. trade_result stays Open: a TP zone being tagged is not the same as an exit, and no exit has been confirmed by the user. When this trade closes, grade Win/Loss against the corrected TP ladder (0.6076/0.5934/~0.545), not the original flawed one - do not penalize thesis quality for a targeting error that was ours, not the market&#39;s. Also revisit whether early entries like this should count toward correct-thesis credit even when profitable.</td>
+        <td><span class="pill k-other">Closed manually at 0.6051, ~2.0R realized</span></td>
+        <td>Win</td>
+        <td class="note">User placed a live 10x isolated limit short at 0.6650 with SL 0.695 and TP 0.59, matching the analyzed zone and levels exactly - but the entry preceded confirmation, not the reverse. Reconciled via 15m candles and the Pine card&#39;s own ENTRY TAGGED timestamp (both agree, no timezone gap - user confirmed TradingView is also UTC+1): the 15:00 local candle (O 0.6506, H 0.6884, C 0.6747) tagged the entry zone while still climbing and closed near its high - no rejection yet. The actual rejection/confirmation candle was the next one, 15:15 local (O 0.6747, L 0.6521, C 0.6592). So the limit filled roughly 15-30 min before any confirmation existed. Entry timing was premature - that finding stands regardless of outcome. SEPARATE FINDING (07-15): the planned_tp above (0.59/0.56/0.52) was itself miscalibrated - it assumed price would clear a full demand zone (or two) with no evidence, a TP Zone Validity Rule violation caught and fixed in SETUP_LEDGER.json. Corrected targets became 0.6076/0.5934/~0.545 (each zone&#39;s near edge). RESOLUTION (07-16): user closed the position manually at 0.6051, entry 0.665, SL 0.695 never touched - realized R = (0.665-0.6051)/0.03 = ~1.997, essentially exactly 2R. 0.6051 is a better exit than the corrected TP1 (0.6076), so this clears TP1 on the corrected ladder even though it was a discretionary close rather than a limit fill. Graded WIN. Held ~3 days through two separate zone tests (a wick-only reclaim sweep above 0.68, and a sweep-and-reclaim of the TP1 zone itself) without the thesis ever structurally invalidating. Per the standing note above: this win does not retroactively excuse the premature entry or the three TP recalibrations - those remain logged as real process gaps (see SETUP_LEDGER.json journal, mistake tag PREMATURE_ENTRY_STILL_WON). Process and outcome are graded separately on purpose.</td>
       </tr>
         </tbody>
       </table>
@@ -302,6 +302,7 @@
 <div class="tag"><span class="tagname">MISSED_ENTRY</span><span class="tagcount">6</span></div>
 <div class="tag"><span class="tagname">SL_HIT_NO_ENTRY</span><span class="tagcount">4</span></div>
 <div class="tag"><span class="tagname">NO_CHASE_WORKED</span><span class="tagcount">2</span></div>
+<div class="tag"><span class="tagname">PREMATURE_ENTRY_STILL_WON</span><span class="tagcount">1</span></div>
 <div class="tag"><span class="tagname">HTF_SUPPLY_MISREAD</span><span class="tagcount">1</span></div>
 <div class="tag"><span class="tagname">WRONG_COIN_ANALYZED</span><span class="tagcount">1</span></div>
 <div class="tag"><span class="tagname">NO_ENTRY_NO_RECLAIM</span><span class="tagcount">1</span></div>
@@ -309,7 +310,7 @@
 <div class="tag"><span class="tagname">PINE_SCRIPT_CORRUPTED</span><span class="tagcount">1</span></div>
 </div>
 
-<div class="foot">Generated 2026-07-15T14:26:34.525Z from SCORECARD.json and SETUP_LEDGER.json · regenerate with: node scripts/buildScorecard.mjs</div>
+<div class="foot">Generated 2026-07-16T06:44:02.859Z from SCORECARD.json and SETUP_LEDGER.json · regenerate with: node scripts/buildScorecard.mjs</div>
 
 <script>
   const PAGE_SIZE = 5;

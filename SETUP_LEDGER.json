@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "last_updated": "2026-07-14",
+  "last_updated": "2026-07-16",
   "principle": "AutoTrader remembers. TradingView displays.",
   "setups": {
     "PUMPFUNUSDT.P": {
@@ -223,44 +223,6 @@
       "rr_tp1": null,
       "rr_tp2": null
     },
-    "JTOUSDT.P": {
-      "coin": "JTOUSDT.P",
-      "exchange": "BYBIT",
-      "trade_type": "Intraday",
-      "proposed_type": "Active Short (entered)",
-      "bias": "Fresh 07-14 16:47 UTC+1 read (live TradingView, wall-clock verified): since the last check, price staged a SECOND test of the entry zone - rallied hard from the 0.6095 area, wicked slightly ABOVE 0.68 (the reclaim line) on one 1H candle, but that candle's body/close stayed below 0.68 - a wick-only sweep, not a confirmed reclaim. Price then rejected hard back down to a higher low (~0.615, above the original 0.6095 low) and has since climbed back to consolidate around 0.65. Net effect: the zone has now been tested and held TWICE (the original Jul 13 rejection, and this stronger above-0.68-wick rejection) - reassuring for the thesis, but per the mitigation discussion, a THIRD test would carry more doubt than the first two.",
-      "btc_eth_filter": "Not re-checked this read; prior context was aligned bearish (BTC/ETH both red alongside JTO's failed breakout).",
-      "catalyst": "Unverified.",
-      "setup_type": "Liquidity Sweep + Failed Reclaim / Deviation",
-      "setup_rating": "Watch Only",
-      "setup_state": "ACTIVE / MANAGE",
-      "position_status": "ENTERED SHORT",
-      "direction": "Short",
-      "entry": {
-        "low": 0.665,
-        "high": 0.68,
-        "basis": "Retest of the same 0.665-0.680 shelf that just failed as a reclaim, approached from below this time. This is the identical multi-touch level (repeatedly tested as resistance Jul 8-9, then swept and rejected Jul 13 11:00) - not a new lower zone. Requires a rejection/confirmation candle inside the zone, not a blind short into the current decline.",
-        "actual": 0.665
-      },
-      "reclaim": 0.68,
-      "sl": 0.695,
-      "sl_quality": "Vulnerable",
-      "tp": [
-        0.6076,
-        0.5934,
-        0.545
-      ],
-      "invalidation": "A 1H close back above 0.695 (clearing the 0.6772 sweep wick with real buffer, not just the bare zone edge) invalidates the failed-reclaim short.",
-      "nearest_liquidity": "Buy-side above 0.685, then the 0.6772 sweep high itself; sell-side: two distinct demand zones below current price, user-drawn and verified - Zone 1 0.6076 (top) to 0.5991 (bottom), Zone 2 0.5934 (top) to 0.5806 (bottom), plus a deeper base zone visually read (not user-verified) at roughly 0.545 (top) to 0.52 (bottom). Every TP now sits at its zone's NEAR edge per the fully-sharpened TP Zone Validity Rule: TP1 0.6076 (Zone 1 top, no precondition), TP2 0.5934 (Zone 2 top, real target only once Zone 1 confirms broken), TP3 ~0.545 (deeper base top, real target only once Zone 2 also confirms broken - and this boundary is approximate, needs a precise chart re-check).",
-      "reclaim_status": "TP1's zone (Zone 1, 0.5991-0.6076) has now been touched AND defended: the 08:00 UTC+1 candle swept down through it (low 0.5956, below Zone 1's own floor), then the very next hour (09:00) closed back above Zone 1's top (0.6076, close 0.6236) and price has continued climbing since, now ~0.628. This is a real reclaim of the first target zone, not a wick - buying interest showed up exactly where the thesis needed it not to. Not an invalidation (SL 0.695 untouched, price still well below entry), but TP2/TP3 remain unconfirmed conditional targets and this reaction argues against them arriving cleanly on this leg.",
-      "relative_strength": "Was strong (+10% vs red BTC/ETH) but the breakout attempt failed under its own weight; now declining in line with a red broader market, not against it. BTC/ETH not re-verified this specific pass.",
-      "final_action": "HOLD, downgraded confidence - still no structural reason to move SL to breakeven (SL untouched, price still well below entry, ~1.23R unrealized). But Zone 1 (0.5991-0.6076, TP1) was swept and reclaimed on 07-15, not confirmed broken - treat TP2 (0.5934) as less likely than before, not more. If price returns to retest Zone 1 a second time, that retest is the real tell: clean rejection restores the thesis, another reclaim would seriously weaken it. No partial recommended yet since the zone didn't hold as a clean rejection point to take profit at.",
-      "notes": "2026-07-13 fresh re-analysis, SL widened after review: 0.685 was too tight (only 0.0078 above the actual 0.6772 sweep wick, inside that single candle's own ~0.0227 range). Widened to 0.695 for real buffer against JTO's elevated realized volatility today. R:R recomputed at the wider SL; still passes both floors. 2026-07-14 09:00 fresh re-analysis: ledger position_status/entry.actual corrected to reflect the live entered trade (was stale at NO POSITION/null); price has consolidated 0.63-0.65 for the last several hours after sweeping to 0.6095 - no new signal, trade still working, no management change recommended. 2026-07-14 16:47 UTC+1 follow-up (after a browser-tooling outage delayed the check by ~2 hours real time, confirmed via `date -u`): live TradingView re-check shows the zone survived a second, stronger test (wick above 0.68, closed below). No management change. 2026-07-15 08:23 UTC follow-up (after a second, longer gap - session tab reset, real time had moved ~16.5 hours, confirmed via `date -u`; also hit the interval/symbol-switch render bug again on the fresh tab, cleared via reload): price has broken down hard since the last check, from ~0.65 through the ~0.605-0.615 support to ~0.6193 now. Unrealized profit up to ~1.5R from ~0.47R. 2026-07-15 (same pass, immediately after) TP1 corrected per the new TP Zone Validity Rule: user pointed out the old TP1 (0.59) sat inside a second demand zone (0.5934-0.5806), skipping past an untested first zone (0.6076-0.5991) entirely. Corrected TP1 to 0.5968 (just past Zone 1's far edge, before Zone 2). Verified TP2/TP3 visually against the same rule - no violation found, but with lower confidence than TP1 since those boundaries weren't user-provided. 2026-07-15 second TP1 correction after user review: rule sharpened - TP1 belongs at the NEAR edge of the first opposing zone (0.6076, Zone 1 top), not past its far edge; even traversing zone 1 was an untested assumption. At 0.6076 this trade pays 1.91R, BELOW the 2R Intraday floor - under the fully-corrected rulebook this setup would have been WAIT/SKIP at analysis time. Trade is live and in profit, so this is managed forward (take the partial at 0.6076), but journal the lesson: map zone boundaries BEFORE placing SL/TP; every correction this week moved R:R down, never up. 2026-07-15 third TP correction, user-prompted: TP2 and TP3 must follow the same near-edge rule as TP1, not just TP1 alone. TP2 moved to 0.5934 (Zone 2 top, was 0.56 - the old value assumed clearing Zone 2 entirely, same untested-assumption error just fixed on TP1). TP3 moved to ~0.545 (deeper base top, was 0.52 - same fix, lower confidence since that zone's boundary was only visually read, not user-verified). Both TP2 and TP3 are conditional targets: TP2 only becomes real once Zone 1 (0.5991-0.6076) is confirmed broken by a held close; TP3 only once Zone 2 is also confirmed broken. R:R at each: TP1 1.91R, TP2 2.39R, TP3 ~4.0R (approximate, pending precise TP3 zone verification). 2026-07-15 14:30 UTC follow-up (TradingView render failed past the retry cap, Bybit 1H kline used instead): Zone 1 (TP1, 0.5991-0.6076) got swept (low 0.5956 at 08:00 UTC+1) then reclaimed (close 0.6236 at 09:00 UTC+1, well above 0.6076) and price has kept climbing since to ~0.628. This is a real defended zone, not a wick-and-continue - downgrading confidence in TP2/TP3 arriving on this leg without a cleaner second test of Zone 1. Unrealized profit down to ~1.23R from ~1.5R. No management change (SL untouched, still profitable), but flagging this as the first real structural pushback the trade has seen.",
-      "analyzed_at": "2026-07-15T14:30:38Z",
-      "activation_basis": "rejection-candle",
-      "rr_tp1": 1.91,
-      "rr_tp2": 2.39
-    },
     "XRPUSDT.P": {
       "coin": "XRPUSDT.P",
       "exchange": "BYBIT",
@@ -339,6 +301,14 @@
     }
   },
   "journal": [
+    {
+      "coin": "JTOUSDT.P",
+      "date": "2026-07-16",
+      "setup_type": "Liquidity Sweep + Failed Reclaim / Deviation",
+      "result": "WIN - closed manually at 0.6051, entry 0.665, SL 0.695 (never touched). Realized ~2.0R, which cleared the corrected TP1 (0.6076) despite the exit being a manual close rather than a TP fill - 0.6051 is a better price than 0.6076 for a short. Held roughly three days (entered 07-13, closed 07-16) through two separate zone tests (a wick-only reclaim sweep above 0.68 that got rejected, and a later sweep-and-reclaim of the TP1 zone itself) without the thesis ever actually invalidating (SL untouched throughout).",
+      "mistake_tag": "PREMATURE_ENTRY_STILL_WON",
+      "note": "This trade carries two separate, opposite lessons that should not be merged into one takeaway. (1) Entry timing was still premature at the start - the original limit filled ~15-30 min before the actual confirmation candle closed (documented in SCORECARD.json's JTO record), which was flagged as a real process issue at the time, independent of outcome. (2) TP levels were miscalibrated THREE times over the trade's life as the TP Zone Validity Rule and its near-edge refinement were discovered and sharpened (0.59 -> 0.5968 -> 0.6076 for TP1 alone) - every correction moved the stated R:R down, never up, which became the general pattern named explicitly in PUMPFUN's record. Despite both of these process gaps, the underlying directional thesis (short from the 0.665-0.68 reclaim-failure zone) was correct and the trade won on a real, if early, discretionary exit. Do not let a winning outcome retroactively excuse either the early entry or the TP miscalibration - grade process and outcome separately, same principle established in the scorecard for this exact trade."
+    },
     {
       "coin": "USUSDT.P",
       "date": "2026-07-14",
