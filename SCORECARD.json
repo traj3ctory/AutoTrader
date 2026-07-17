@@ -1,14 +1,14 @@
 {
   "version": 1,
-  "last_updated": "2026-07-13",
+  "last_updated": "2026-07-16",
   "principle": "Keep thesis result simple. Trade result only updates when the user confirms a trade was taken.",
   "summary": {
-    "reviewed_setups": 8,
-    "correct_thesis": 1,
-    "invalidated_thesis": 5,
+    "reviewed_setups": 10,
+    "correct_thesis": 2,
+    "invalidated_thesis": 7,
     "trades_taken": 2,
     "trade_wins": 1,
-    "trade_losses": 0
+    "trade_losses": 1
   },
   "rules": {
     "correct_thesis": "Use only when the exact plan played out: reclaim/trigger, entry area, and TP.",
@@ -193,7 +193,7 @@
       ],
       "trade_taken": true,
       "trade_result": "Win",
-      "outcome": "Closed manually at 0.6051, ~2.0R realized",
+      "outcome": "Correct Thesis",
       "milestones": [
         "Entry Placed Before Confirmation",
         "Chop 15:15-16:30",
@@ -203,6 +203,60 @@
         "Closed manually 07-16 at 0.6051 - better than the corrected TP1 (0.6076), realized ~2.0R"
       ],
       "review_note": "User placed a live 10x isolated limit short at 0.6650 with SL 0.695 and TP 0.59, matching the analyzed zone and levels exactly - but the entry preceded confirmation, not the reverse. Reconciled via 15m candles and the Pine card's own ENTRY TAGGED timestamp (both agree, no timezone gap - user confirmed TradingView is also UTC+1): the 15:00 local candle (O 0.6506, H 0.6884, C 0.6747) tagged the entry zone while still climbing and closed near its high - no rejection yet. The actual rejection/confirmation candle was the next one, 15:15 local (O 0.6747, L 0.6521, C 0.6592). So the limit filled roughly 15-30 min before any confirmation existed. Entry timing was premature - that finding stands regardless of outcome. SEPARATE FINDING (07-15): the planned_tp above (0.59/0.56/0.52) was itself miscalibrated - it assumed price would clear a full demand zone (or two) with no evidence, a TP Zone Validity Rule violation caught and fixed in SETUP_LEDGER.json. Corrected targets became 0.6076/0.5934/~0.545 (each zone's near edge). RESOLUTION (07-16): user closed the position manually at 0.6051, entry 0.665, SL 0.695 never touched - realized R = (0.665-0.6051)/0.03 = ~1.997, essentially exactly 2R. 0.6051 is a better exit than the corrected TP1 (0.6076), so this clears TP1 on the corrected ladder even though it was a discretionary close rather than a limit fill. Graded WIN. Held ~3 days through two separate zone tests (a wick-only reclaim sweep above 0.68, and a sweep-and-reclaim of the TP1 zone itself) without the thesis ever structurally invalidating. Per the standing note above: this win does not retroactively excuse the premature entry or the three TP recalibrations - those remain logged as real process gaps (see SETUP_LEDGER.json journal, mistake tag PREMATURE_ENTRY_STILL_WON). Process and outcome are graded separately on purpose."
+    },
+    {
+      "id": "2026-07-09-KMNOUSDT.P-long-demand-retest",
+      "date": "2026-07-09",
+      "coin": "KMNOUSDT.P",
+      "exchange": "BYBIT",
+      "trade_type": "Intraday",
+      "direction": "Long",
+      "setup_type": "Standard Supply/Demand Retest",
+      "setup_rating": "Watch Only",
+      "final_action": "WAIT / NO CHASE",
+      "planned_entry": "0.0185-0.0190 demand retest after confirmation",
+      "planned_sl": 0.0178,
+      "planned_tp": [
+        0.022,
+        0.023,
+        0.026
+      ],
+      "trade_taken": false,
+      "trade_result": "Not Taken",
+      "outcome": "Invalidated Thesis",
+      "milestones": [
+        "Entry zone lost",
+        "SL tagged Jul 15",
+        "Fresh reanalysis Jul 16"
+      ],
+      "review_note": "The July 9 conditional long depended on the 0.0185-0.0190 demand holding after confirmation. Price accepted below that zone and later tagged 0.0178, so the saved recovery thesis was invalidated. No user position was reported."
+    },
+    {
+      "id": "2026-07-08-APEUSDT.P-long-reclaim-deep-retest",
+      "date": "2026-07-08",
+      "coin": "APEUSDT.P",
+      "exchange": "BYBIT",
+      "trade_type": "Intraday",
+      "direction": "Long",
+      "setup_type": "Breaker / Failed Supply-Demand Flip / Compression-to-Expansion Breakout",
+      "setup_rating": "Watch Only",
+      "final_action": "WAIT / NO CHASE",
+      "planned_entry": "0.1345-0.1375 deep retest after the 0.152 reclaim held",
+      "planned_sl": 0.1295,
+      "planned_tp": [
+        0.154,
+        0.162,
+        0.17
+      ],
+      "trade_taken": false,
+      "trade_result": "Not Taken",
+      "outcome": "Invalidated Thesis",
+      "milestones": [
+        "0.152 reclaimed",
+        "TP1 through TP3 tagged",
+        "Mapped deep entry never touched"
+      ],
+      "review_note": "APE reached the displayed targets after reclaiming 0.152, but it never returned to the mapped 0.1345-0.1375 entry zone. Under the exact-plan scorecard rule this is a missed entry, not a correct thesis and not a taken trade. The old ledger mixed reclaim-entry activation with a deep-retest entry; the conservative entry-zone requirement controls the grade."
     },
     {
       "id": "2026-07-15-PUMPFUNUSDT.P-short-sub-floor-entry",
@@ -222,15 +276,17 @@
         0.00135
       ],
       "trade_taken": true,
-      "trade_result": "Open",
-      "outcome": "Pending / Trade Open - taken below the R:R floor",
+      "trade_result": "Loss",
+      "outcome": "SL tagged 07-16 13:00 UTC, exactly -1.0R",
       "milestones": [
         "Confirmed Rejection 12:30 UTC+1 (close 0.0016378, below 0.00165)",
         "Reinforced 12:45 UTC+1 (close 0.0016256)",
         "Limit Filled on Retest 13:45 UTC+1 (0.0016469, resting order at 0.00165)",
-        "TP1 recalculated 07-15 to zone near-edge (0.0015244), dropping R:R from 2.4R to 1.26R - below the 2R Intraday floor"
+        "TP1 recalculated 07-15 to zone near-edge (0.0015244), dropping R:R from 2.4R to 1.26R - below the 2R Intraday floor",
+        "SL 0.001727 recalibrated 07-15 via volatility (not a borrowed number)",
+        "SL TAGGED 07-16 13:00 UTC (candle H 0.0017823) - clean -1R stop-out, price broke out and continued to a 16-day high afterward"
       ],
-      "review_note": "This is a genuinely different case from the JTO record above: entry TIMING and MECHANICS were correct here - the user waited for a real confirmed rejection candle (12:30 UTC+1, close 0.0016378 below the 0.00165 line, touched via a wick to 0.0016641 first), then let a resting limit at the zone edge (0.00165) get filled on the retest (13:45 UTC+1), rather than chasing market right after the reject candle. That is exactly the entry technique this workflow recommends. The problem is upstream of execution: TP1 was originally mis-mapped at 0.00141, skipping over a real, well-tested intervening demand zone (0.0014948-0.0015244, PUMPFUN's actual multi-day base) - a TP Zone Validity Rule violation caught only after the trade context came up in conversation. At the corrected, honest TP1 (0.0015244), this trade only pays 1.26R against the 2R Intraday floor - it should have been rated Skip/No Trade from the start (and was, once corrected), but the user had already entered before/independent of that correction landing. Do not credit this as a 'correct thesis' trade even if it closes in profit - the entry mechanics were sound but the underlying setup never should have been proposed as tradeable. When this closes, grade Win/Loss normally, but keep the R:R-floor-violation flagged separately from thesis-direction correctness - these are two different failure/success axes and conflating them would hide the real lesson (zone-mapping completeness, not entry discipline)."
+      "review_note": "This is a genuinely different case from the JTO record above: entry TIMING and MECHANICS were correct here - the user waited for a real confirmed rejection candle (12:30 UTC+1, close 0.0016378 below the 0.00165 line, touched via a wick to 0.0016641 first), then let a resting limit at the zone edge (0.00165) get filled on the retest (13:45 UTC+1), rather than chasing market right after the reject candle. That is exactly the entry technique this workflow recommends. The problem is upstream of execution: TP1 was originally mis-mapped at 0.00141, skipping over a real, well-tested intervening demand zone (0.0014948-0.0015244, PUMPFUN's actual multi-day base) - a TP Zone Validity Rule violation caught only after the trade context came up in conversation. At the corrected, honest TP1 (0.0015244), this trade only pays 1.26R against the 2R Intraday floor - it should have been rated Skip/No Trade from the start (and was, once corrected), but the user had already entered before/independent of that correction landing. RESOLUTION (07-16): the trade lost, exactly -1R, a clean stop-out with no slippage. This is the deliberate counterpart to JTO's win: same class of process gap (a sub-floor trade taken with eyes open), opposite outcome. Do not read the loss as 'proof the entry mechanics were bad' - they weren't, they were the correct technique. Read it as proof the R:R floor rule exists for a real reason: this trade paid out negatively exactly as the floor discipline would have predicted for a sub-2R setup. Keep the R:R-floor-violation lesson separate from the entry-technique lesson - conflating them would hide that PUMPFUN's failure and JTO's success were both process gaps of the identical type, just with different market outcomes."
     }
   ]
 }

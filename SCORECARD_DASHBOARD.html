@@ -85,16 +85,16 @@
 <div class="sub">Keep thesis result simple. Trade result only updates when the user confirms a trade was taken.</div>
 
 <div class="tiles">
-  <div class="tile"><div class="num">8</div><div class="lbl">Reviewed setups</div></div>
-  <div class="tile"><div class="num green">1</div><div class="lbl">Correct thesis</div></div>
-  <div class="tile"><div class="num amber">5</div><div class="lbl">Invalidated thesis</div></div>
-  <div class="tile"><div class="num blue">13%</div><div class="lbl">Thesis accuracy</div></div>
+  <div class="tile"><div class="num">10</div><div class="lbl">Reviewed setups</div></div>
+  <div class="tile"><div class="num green">2</div><div class="lbl">Correct thesis</div></div>
+  <div class="tile"><div class="num amber">7</div><div class="lbl">Invalidated thesis</div></div>
+  <div class="tile"><div class="num blue">20%</div><div class="lbl">Thesis accuracy</div></div>
   <div class="tile"><div class="num">2</div><div class="lbl">Trades taken</div></div>
-  <div class="tile"><div class="num">1 / 0</div><div class="lbl">Trade wins / losses</div></div>
+  <div class="tile"><div class="num">1 / 1</div><div class="lbl">Trade wins / losses</div></div>
 </div>
 
 <div class="bar">
-  <strong>3 / 30</strong> toward the automation gate — correct analyses + taken trades (10%) · 8 reviewed in total
+  <strong>3 / 30</strong> toward the automation gate — correct analyses + taken trades (10%) · 10 reviewed in total
   <div class="track"><div class="fill" style="width:10%"></div></div>
 </div>
 
@@ -140,12 +140,12 @@
       </table>
     </div>
   </div>
-<div class="group" data-search="pumpfunusdt.p intraday standard supply/demand retest pending / trade open - taken below the r:r floor open short" data-idx="1">
+<div class="group" data-search="pumpfunusdt.p intraday standard supply/demand retest sl tagged 07-16 13:00 utc, exactly -1.0r loss short" data-idx="1">
     <button class="group-header" type="button" onclick="toggleGroup(1)">
       <span class="chev" id="chev-1">&rsaquo;</span>
       <span class="g-coin">PUMPFUNUSDT.P</span>
       <span class="g-count">1 analysis</span>
-      <span class="pill k-other">Pending / Trade Open - taken below the R:R floor</span>
+      <span class="pill k-other">SL tagged 07-16 13:00 UTC, exactly -1.0R</span>
       <span class="g-date">2026-07-15</span>
     </button>
     <div class="group-body" id="body-1" hidden>
@@ -157,20 +157,20 @@
         <td><span class="type-badge type-intraday">Intraday</span></td>
         <td>Short</td>
         <td>Standard Supply/Demand Retest</td>
-        <td><span class="pill k-other">Pending / Trade Open - taken below the R:R floor</span></td>
-        <td>Open</td>
-        <td class="note">This is a genuinely different case from the JTO record above: entry TIMING and MECHANICS were correct here - the user waited for a real confirmed rejection candle (12:30 UTC+1, close 0.0016378 below the 0.00165 line, touched via a wick to 0.0016641 first), then let a resting limit at the zone edge (0.00165) get filled on the retest (13:45 UTC+1), rather than chasing market right after the reject candle. That is exactly the entry technique this workflow recommends. The problem is upstream of execution: TP1 was originally mis-mapped at 0.00141, skipping over a real, well-tested intervening demand zone (0.0014948-0.0015244, PUMPFUN&#39;s actual multi-day base) - a TP Zone Validity Rule violation caught only after the trade context came up in conversation. At the corrected, honest TP1 (0.0015244), this trade only pays 1.26R against the 2R Intraday floor - it should have been rated Skip/No Trade from the start (and was, once corrected), but the user had already entered before/independent of that correction landing. Do not credit this as a &#39;correct thesis&#39; trade even if it closes in profit - the entry mechanics were sound but the underlying setup never should have been proposed as tradeable. When this closes, grade Win/Loss normally, but keep the R:R-floor-violation flagged separately from thesis-direction correctness - these are two different failure/success axes and conflating them would hide the real lesson (zone-mapping completeness, not entry discipline).</td>
+        <td><span class="pill k-other">SL tagged 07-16 13:00 UTC, exactly -1.0R</span></td>
+        <td>Loss</td>
+        <td class="note">This is a genuinely different case from the JTO record above: entry TIMING and MECHANICS were correct here - the user waited for a real confirmed rejection candle (12:30 UTC+1, close 0.0016378 below the 0.00165 line, touched via a wick to 0.0016641 first), then let a resting limit at the zone edge (0.00165) get filled on the retest (13:45 UTC+1), rather than chasing market right after the reject candle. That is exactly the entry technique this workflow recommends. The problem is upstream of execution: TP1 was originally mis-mapped at 0.00141, skipping over a real, well-tested intervening demand zone (0.0014948-0.0015244, PUMPFUN&#39;s actual multi-day base) - a TP Zone Validity Rule violation caught only after the trade context came up in conversation. At the corrected, honest TP1 (0.0015244), this trade only pays 1.26R against the 2R Intraday floor - it should have been rated Skip/No Trade from the start (and was, once corrected), but the user had already entered before/independent of that correction landing. RESOLUTION (07-16): the trade lost, exactly -1R, a clean stop-out with no slippage. This is the deliberate counterpart to JTO&#39;s win: same class of process gap (a sub-floor trade taken with eyes open), opposite outcome. Do not read the loss as &#39;proof the entry mechanics were bad&#39; - they weren&#39;t, they were the correct technique. Read it as proof the R:R floor rule exists for a real reason: this trade paid out negatively exactly as the floor discipline would have predicted for a sub-2R setup. Keep the R:R-floor-violation lesson separate from the entry-technique lesson - conflating them would hide that PUMPFUN&#39;s failure and JTO&#39;s success were both process gaps of the identical type, just with different market outcomes.</td>
       </tr>
         </tbody>
       </table>
     </div>
   </div>
-<div class="group" data-search="jtousdt.p intraday liquidity sweep + failed reclaim / deviation closed manually at 0.6051, ~2.0r realized win short" data-idx="2">
+<div class="group" data-search="jtousdt.p intraday liquidity sweep + failed reclaim / deviation correct thesis win short" data-idx="2">
     <button class="group-header" type="button" onclick="toggleGroup(2)">
       <span class="chev" id="chev-2">&rsaquo;</span>
       <span class="g-coin">JTOUSDT.P</span>
       <span class="g-count">1 analysis</span>
-      <span class="pill k-other">Closed manually at 0.6051, ~2.0R realized</span>
+      <span class="pill k-correct">Correct Thesis</span>
       <span class="g-date">2026-07-13</span>
     </button>
     <div class="group-body" id="body-2" hidden>
@@ -182,7 +182,7 @@
         <td><span class="type-badge type-intraday">Intraday</span></td>
         <td>Short</td>
         <td>Liquidity Sweep + Failed Reclaim / Deviation</td>
-        <td><span class="pill k-other">Closed manually at 0.6051, ~2.0R realized</span></td>
+        <td><span class="pill k-correct">Correct Thesis</span></td>
         <td>Win</td>
         <td class="note">User placed a live 10x isolated limit short at 0.6650 with SL 0.695 and TP 0.59, matching the analyzed zone and levels exactly - but the entry preceded confirmation, not the reverse. Reconciled via 15m candles and the Pine card&#39;s own ENTRY TAGGED timestamp (both agree, no timezone gap - user confirmed TradingView is also UTC+1): the 15:00 local candle (O 0.6506, H 0.6884, C 0.6747) tagged the entry zone while still climbing and closed near its high - no rejection yet. The actual rejection/confirmation candle was the next one, 15:15 local (O 0.6747, L 0.6521, C 0.6592). So the limit filled roughly 15-30 min before any confirmation existed. Entry timing was premature - that finding stands regardless of outcome. SEPARATE FINDING (07-15): the planned_tp above (0.59/0.56/0.52) was itself miscalibrated - it assumed price would clear a full demand zone (or two) with no evidence, a TP Zone Validity Rule violation caught and fixed in SETUP_LEDGER.json. Corrected targets became 0.6076/0.5934/~0.545 (each zone&#39;s near edge). RESOLUTION (07-16): user closed the position manually at 0.6051, entry 0.665, SL 0.695 never touched - realized R = (0.665-0.6051)/0.03 = ~1.997, essentially exactly 2R. 0.6051 is a better exit than the corrected TP1 (0.6076), so this clears TP1 on the corrected ladder even though it was a discretionary close rather than a limit fill. Graded WIN. Held ~3 days through two separate zone tests (a wick-only reclaim sweep above 0.68, and a sweep-and-reclaim of the TP1 zone itself) without the thesis ever structurally invalidating. Per the standing note above: this win does not retroactively excuse the premature entry or the three TP recalibrations - those remain logged as real process gaps (see SETUP_LEDGER.json journal, mistake tag PREMATURE_ENTRY_STILL_WON). Process and outcome are graded separately on purpose.</td>
       </tr>
@@ -190,15 +190,65 @@
       </table>
     </div>
   </div>
-<div class="group" data-search="hypeusdt.p scalp reclaim + retest / compression bounce invalidated thesis not taken long" data-idx="3">
+<div class="group" data-search="kmnousdt.p intraday standard supply/demand retest invalidated thesis not taken long" data-idx="3">
     <button class="group-header" type="button" onclick="toggleGroup(3)">
       <span class="chev" id="chev-3">&rsaquo;</span>
+      <span class="g-coin">KMNOUSDT.P</span>
+      <span class="g-count">1 analysis</span>
+      <span class="pill k-invalidated">Invalidated Thesis</span>
+      <span class="g-date">2026-07-09</span>
+    </button>
+    <div class="group-body" id="body-3" hidden>
+      <table>
+        <thead><tr><th>Date</th><th>Type</th><th>Direction</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
+        <tbody>
+<tr>
+        <td class="date">2026-07-09</td>
+        <td><span class="type-badge type-intraday">Intraday</span></td>
+        <td>Long</td>
+        <td>Standard Supply/Demand Retest</td>
+        <td><span class="pill k-invalidated">Invalidated Thesis</span></td>
+        <td>Not Taken</td>
+        <td class="note">The July 9 conditional long depended on the 0.0185-0.0190 demand holding after confirmation. Price accepted below that zone and later tagged 0.0178, so the saved recovery thesis was invalidated. No user position was reported.</td>
+      </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<div class="group" data-search="apeusdt.p intraday breaker / failed supply-demand flip / compression-to-expansion breakout invalidated thesis not taken long" data-idx="4">
+    <button class="group-header" type="button" onclick="toggleGroup(4)">
+      <span class="chev" id="chev-4">&rsaquo;</span>
+      <span class="g-coin">APEUSDT.P</span>
+      <span class="g-count">1 analysis</span>
+      <span class="pill k-invalidated">Invalidated Thesis</span>
+      <span class="g-date">2026-07-08</span>
+    </button>
+    <div class="group-body" id="body-4" hidden>
+      <table>
+        <thead><tr><th>Date</th><th>Type</th><th>Direction</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
+        <tbody>
+<tr>
+        <td class="date">2026-07-08</td>
+        <td><span class="type-badge type-intraday">Intraday</span></td>
+        <td>Long</td>
+        <td>Breaker / Failed Supply-Demand Flip / Compression-to-Expansion Breakout</td>
+        <td><span class="pill k-invalidated">Invalidated Thesis</span></td>
+        <td>Not Taken</td>
+        <td class="note">APE reached the displayed targets after reclaiming 0.152, but it never returned to the mapped 0.1345-0.1375 entry zone. Under the exact-plan scorecard rule this is a missed entry, not a correct thesis and not a taken trade. The old ledger mixed reclaim-entry activation with a deep-retest entry; the conservative entry-zone requirement controls the grade.</td>
+      </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<div class="group" data-search="hypeusdt.p scalp reclaim + retest / compression bounce invalidated thesis not taken long" data-idx="5">
+    <button class="group-header" type="button" onclick="toggleGroup(5)">
+      <span class="chev" id="chev-5">&rsaquo;</span>
       <span class="g-coin">HYPEUSDT.P</span>
       <span class="g-count">1 analysis</span>
       <span class="pill k-invalidated">Invalidated Thesis</span>
       <span class="g-date">2026-07-02</span>
     </button>
-    <div class="group-body" id="body-3" hidden>
+    <div class="group-body" id="body-5" hidden>
       <table>
         <thead><tr><th>Date</th><th>Type</th><th>Direction</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
         <tbody>
@@ -215,15 +265,15 @@
       </table>
     </div>
   </div>
-<div class="group" data-search="xrpusdt.p scalp reclaim + retest / standard demand retest invalidated thesis not taken long" data-idx="4">
-    <button class="group-header" type="button" onclick="toggleGroup(4)">
-      <span class="chev" id="chev-4">&rsaquo;</span>
+<div class="group" data-search="xrpusdt.p scalp reclaim + retest / standard demand retest invalidated thesis not taken long" data-idx="6">
+    <button class="group-header" type="button" onclick="toggleGroup(6)">
+      <span class="chev" id="chev-6">&rsaquo;</span>
       <span class="g-coin">XRPUSDT.P</span>
       <span class="g-count">1 analysis</span>
       <span class="pill k-invalidated">Invalidated Thesis</span>
       <span class="g-date">2026-07-02</span>
     </button>
-    <div class="group-body" id="body-4" hidden>
+    <div class="group-body" id="body-6" hidden>
       <table>
         <thead><tr><th>Date</th><th>Type</th><th>Direction</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
         <tbody>
@@ -240,15 +290,15 @@
       </table>
     </div>
   </div>
-<div class="group" data-search="brevusdt.p scalp liquidity sweep + failed reclaim / supply rejection correct thesis not taken short" data-idx="5">
-    <button class="group-header" type="button" onclick="toggleGroup(5)">
-      <span class="chev" id="chev-5">&rsaquo;</span>
+<div class="group" data-search="brevusdt.p scalp liquidity sweep + failed reclaim / supply rejection correct thesis not taken short" data-idx="7">
+    <button class="group-header" type="button" onclick="toggleGroup(7)">
+      <span class="chev" id="chev-7">&rsaquo;</span>
       <span class="g-coin">BREVUSDT.P</span>
       <span class="g-count">1 analysis</span>
       <span class="pill k-correct">Correct Thesis</span>
       <span class="g-date">2026-07-02</span>
     </button>
-    <div class="group-body" id="body-5" hidden>
+    <div class="group-body" id="body-7" hidden>
       <table>
         <thead><tr><th>Date</th><th>Type</th><th>Direction</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
         <tbody>
@@ -265,15 +315,15 @@
       </table>
     </div>
   </div>
-<div class="group" data-search="sportfunusdt.p scalp reclaim + retest / compression bounce invalidated thesis not taken long" data-idx="6">
-    <button class="group-header" type="button" onclick="toggleGroup(6)">
-      <span class="chev" id="chev-6">&rsaquo;</span>
+<div class="group" data-search="sportfunusdt.p scalp reclaim + retest / compression bounce invalidated thesis not taken long" data-idx="8">
+    <button class="group-header" type="button" onclick="toggleGroup(8)">
+      <span class="chev" id="chev-8">&rsaquo;</span>
       <span class="g-coin">SPORTFUNUSDT.P</span>
       <span class="g-count">1 analysis</span>
       <span class="pill k-invalidated">Invalidated Thesis</span>
       <span class="g-date">2026-07-02</span>
     </button>
-    <div class="group-body" id="body-6" hidden>
+    <div class="group-body" id="body-8" hidden>
       <table>
         <thead><tr><th>Date</th><th>Type</th><th>Direction</th><th>Setup type</th><th>Outcome</th><th>Trade result</th><th>Review note</th></tr></thead>
         <tbody>
@@ -299,9 +349,10 @@
 
 <h2>Mistake tags (from ledger journal)</h2>
 <div class="tags">
-<div class="tag"><span class="tagname">MISSED_ENTRY</span><span class="tagcount">6</span></div>
-<div class="tag"><span class="tagname">SL_HIT_NO_ENTRY</span><span class="tagcount">4</span></div>
+<div class="tag"><span class="tagname">MISSED_ENTRY</span><span class="tagcount">7</span></div>
+<div class="tag"><span class="tagname">SL_HIT_NO_ENTRY</span><span class="tagcount">5</span></div>
 <div class="tag"><span class="tagname">NO_CHASE_WORKED</span><span class="tagcount">2</span></div>
+<div class="tag"><span class="tagname">SUB_FLOOR_TRADE_LOSS</span><span class="tagcount">1</span></div>
 <div class="tag"><span class="tagname">PREMATURE_ENTRY_STILL_WON</span><span class="tagcount">1</span></div>
 <div class="tag"><span class="tagname">HTF_SUPPLY_MISREAD</span><span class="tagcount">1</span></div>
 <div class="tag"><span class="tagname">WRONG_COIN_ANALYZED</span><span class="tagcount">1</span></div>
@@ -310,7 +361,7 @@
 <div class="tag"><span class="tagname">PINE_SCRIPT_CORRUPTED</span><span class="tagcount">1</span></div>
 </div>
 
-<div class="foot">Generated 2026-07-16T06:44:02.859Z from SCORECARD.json and SETUP_LEDGER.json · regenerate with: node scripts/buildScorecard.mjs</div>
+<div class="foot">Generated 2026-07-17T07:12:55.677Z from SCORECARD.json and SETUP_LEDGER.json · regenerate with: node scripts/buildScorecard.mjs</div>
 
 <script>
   const PAGE_SIZE = 5;

@@ -32,6 +32,8 @@ const chain = (fallback, transform) =>
 const stringChain = (field, fallback = '""') => chain(fallback, (setup) => q(setup[field]));
 const numberChain = (field, fallback = "na") => chain(fallback, (setup) => n(setup[field]));
 const entryChain = (side) => chain("na", (setup) => n(setup.entry?.[side]));
+const watchZoneChain = (side) => chain("na", (setup) => n(setup.watch_zone?.[side]));
+const watchLabelChain = chain('""', (setup) => q(setup.watch_zone?.label || "REANALYZE ZONE"));
 const tpChain = (index) => chain("na", (setup) => n(setup.tp?.[index]));
 
 const shortDir = (proposed) => {
@@ -172,6 +174,9 @@ needsRejection = ${d("needsRejection", "false")}
 
 entryLow = ${entryChain("low")}
 entryHigh = ${entryChain("high")}
+watchLow = ${watchZoneChain("low")}
+watchHigh = ${watchZoneChain("high")}
+watchLabel = ${watchLabelChain}
 reclaim = ${numberChain("reclaim")}
 sl = ${numberChain("sl")}
 tp1 = ${tpChain(0)}
@@ -286,6 +291,8 @@ statusText = setupState + " / " + plState
 
 plot(showMap ? entryLow : na, "Entry Bottom", color=green, linewidth=2, display=display.all - display.status_line)
 plot(showMap ? entryHigh : na, "Entry Top", color=green, linewidth=2, display=display.all - display.status_line)
+plot(showMap ? watchLow : na, "Watch Zone Bottom", color=blue, linewidth=1, display=display.all - display.status_line)
+plot(showMap ? watchHigh : na, "Watch Zone Top", color=blue, linewidth=1, display=display.all - display.status_line)
 plot(showMap ? reclaim : na, "Reclaim", color=blue, linewidth=2, display=display.all - display.status_line)
 plot(showMap ? sl : na, "Invalid / SL", color=red, linewidth=2, display=display.all - display.status_line)
 plot(showMap ? tp1 : na, "TP1", color=isLong ? green : red, linewidth=2, display=display.all - display.status_line)
@@ -293,6 +300,7 @@ plot(showMap ? tp2 : na, "TP2", color=isLong ? green : red, linewidth=2, display
 plot(showMap and not na(tp3) ? tp3 : na, "TP3", color=grey, linewidth=2, display=display.all - display.status_line)
 
 var label lEntry = na
+var label lWatch = na
 var label lReclaim = na
 var label lSL = na
 var label lTP1 = na
@@ -301,6 +309,8 @@ var label lTP3 = na
 var label lState = na
 var line gEntryLow = na
 var line gEntryHigh = na
+var line gWatchLow = na
+var line gWatchHigh = na
 var line gReclaim = na
 var line gSL = na
 var line gTP1 = na
@@ -317,10 +327,18 @@ makeGuide(line old, float y, color c) =>
         line.delete(old)
     line.new(bar_index, y, bar_index + ${labelOffset}, y, xloc=xloc.bar_index, extend=extend.none, color=c, width=2)
 
+makeWatchGuide(line old, float y) =>
+    if not na(old)
+        line.delete(old)
+    line.new(bar_index, y, bar_index + ${labelOffset}, y, xloc=xloc.bar_index, extend=extend.none, color=blue, style=line.style_dashed, width=1)
+
 if barstate.islast
     if showMap
         gEntryLow := makeGuide(gEntryLow, entryLow, green)
         gEntryHigh := makeGuide(gEntryHigh, entryHigh, green)
+        if not na(watchLow) and not na(watchHigh)
+            gWatchLow := makeWatchGuide(gWatchLow, watchLow)
+            gWatchHigh := makeWatchGuide(gWatchHigh, watchHigh)
         gReclaim := makeGuide(gReclaim, reclaim, blue)
         gSL := makeGuide(gSL, sl, red)
         gTP1 := makeGuide(gTP1, tp1, isLong ? green : red)
@@ -328,6 +346,8 @@ if barstate.islast
         if not na(tp3)
             gTP3 := makeGuide(gTP3, tp3, grey)
         lEntry := makeLabel(lEntry, (entryLow + entryHigh) / 2.0, "ENTRY " + str.tostring(entryLow) + "-" + str.tostring(entryHigh), green)
+        if not na(watchLow) and not na(watchHigh)
+            lWatch := makeLabel(lWatch, (watchLow + watchHigh) / 2.0, watchLabel + " " + str.tostring(watchLow) + "-" + str.tostring(watchHigh), blue)
         lReclaim := makeLabel(lReclaim, reclaim, "RECLAIM " + str.tostring(reclaim), blue)
         lSL := makeLabel(lSL, sl, "SL " + str.tostring(sl), red)
         lTP1 := makeLabel(lTP1, tp1, "TP1 " + str.tostring(tp1) + " · " + str.tostring(rr1v, "#.#") + "R", isLong ? green : red)
@@ -338,6 +358,7 @@ if barstate.islast
     else
         if not na(lEntry)
             label.delete(lEntry)
+            label.delete(lWatch)
             label.delete(lReclaim)
             label.delete(lSL)
             label.delete(lTP1)
@@ -346,6 +367,8 @@ if barstate.islast
             label.delete(lState)
             line.delete(gEntryLow)
             line.delete(gEntryHigh)
+            line.delete(gWatchLow)
+            line.delete(gWatchHigh)
             line.delete(gReclaim)
             line.delete(gSL)
             line.delete(gTP1)

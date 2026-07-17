@@ -24,6 +24,7 @@ The normal output format is allowed only after TradingView chart marking and ver
 - If the chart genuinely cannot be read this turn (render failure, retry cap hit, no screenshot available), that is a `CHART NOT MARKED`-class limitation - say so explicitly. Do not paper over it by returning the last saved ledger values as if they were produced by this turn's analysis.
 - Record the reasoning, not just the numbers: for every entry/retest zone, state what structural evidence produced it (which swing high/low, which liquidity pool, which relative-strength signal, which candle behavior) directly in the ledger's `bias`/`notes`/`nearest_liquidity` fields, and repeat the key reasoning in the chat output. The "why" must survive without needing to be reconstructed later.
 - Always give TradingView a short pause to paint before reading it: after opening a chart, switching symbols, or changing timeframe/interval, wait a few seconds before the first screenshot or read. Do not screenshot immediately on navigation - the canvas is frequently still blank or showing the prior symbol's stale data at that instant, not a real render failure yet. Only treat it as a genuine render failure (subject to the one-retry-cap) if it is still blank/stale after that pause.
+- The one-retry-cap means ONE retry, full stop - not one retry per remediation technique. Reload, new tab, timeframe switch, and symbol-hop-and-back are all still "trying to read the chart"; switching techniques does not reset the counter. Two total attempts (the first read, one retry) is the entire budget. If it's still blank after that, stop immediately and fall back (Bybit kline data, clearly labeled as a fallback, or a stated `CHART NOT MARKED` limitation) rather than escalating through more techniques - each additional attempt costs a full round of navigate/wait/screenshot for a coin flip's chance of success.
 
 ## Chart Drawing Method
 
@@ -124,6 +125,8 @@ Keep `SETUP_LEDGER.json` compact and current:
 - Move completed, invalidated, stale, TP/SL-hit, or learning-review items into `journal` only when they are worth reviewing.
 - Keep journal entries concise: coin, date, setup type, result, mistake tag, and one short note.
 - Do not store long narrative analysis inside the ledger.
+- `bias` and `notes` on an active setup describe the CURRENT state only - not a growing log of every correction. When a level or read changes, replace the old explanation, don't append "2026-07-15 follow-up: ... 2026-07-16 follow-up: ..." onto it. That history already exists in git commits (every ledger write this session gets committed) and, once a setup closes, in its journal entry - repeating it inside the active record costs real tokens on every future read/edit for zero benefit, since nothing reads an active setup's history, only its current call.
+- If a field is approaching a couple hundred words, that's the signal to compress it back to current-state-only, not to keep appending.
 - If the ledger entry is older than the current chart structure, classify it as stale and overwrite it with the fresh setup.
 - If a setup is no longer useful and not worth journaling, replace it rather than preserving old levels.
 

@@ -25,7 +25,7 @@ Move these files as a set:
 Recommended folder:
 
 ```text
-chrome-analyze-epic-on-the-current/
+AutoTrader/
 ```
 
 ## What Each File Does
