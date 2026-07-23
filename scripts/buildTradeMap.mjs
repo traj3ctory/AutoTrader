@@ -72,9 +72,9 @@ for (const setup of setups) {
   // TP2 being undefined is a valid single-target setup, not a band violation.
   const warnTp2 = Number.isFinite(rr2) && !(rr2 >= floors.band[0] - 1e-9 && rr2 <= floors.band[1] + 1e-9);
   const suffix = failTp1
-    ? ` · FAILS TP1 >= ${floors.tp1}`
+    ? ` - FAILS TP1 >= ${floors.tp1}`
     : warnTp2
-      ? " · TP2 OUT OF BAND"
+      ? " - TP2 OUT OF BAND"
       : "";
   // No entry/SL defined yet (e.g. post-spike, waiting for a base) is a real,
   // valid state - show it plainly instead of formatting NaN into the card.
@@ -122,7 +122,7 @@ for (const setup of setups) {
       : "blue";
 
   derived.set(setup.coin, {
-    planText: `${shortDir(setup.proposed_type)} · ${effRating}`,
+    planText: `${shortDir(setup.proposed_type)} - ${effRating}`,
     planColor,
     rrText,
     rrColor,
@@ -350,10 +350,10 @@ if barstate.islast
             lWatch := makeLabel(lWatch, (watchLow + watchHigh) / 2.0, watchLabel + " " + str.tostring(watchLow) + "-" + str.tostring(watchHigh), blue)
         lReclaim := makeLabel(lReclaim, reclaim, "RECLAIM " + str.tostring(reclaim), blue)
         lSL := makeLabel(lSL, sl, "SL " + str.tostring(sl), red)
-        lTP1 := makeLabel(lTP1, tp1, "TP1 " + str.tostring(tp1) + " · " + str.tostring(rr1v, "#.#") + "R", isLong ? green : red)
-        lTP2 := makeLabel(lTP2, tp2, "TP2 " + str.tostring(tp2) + " · " + str.tostring(rr2v, "#.#") + "R", isLong ? green : red)
+        lTP1 := makeLabel(lTP1, tp1, "TP1 " + str.tostring(tp1) + " - " + str.tostring(rr1v, "#.#") + "R", isLong ? green : red)
+        lTP2 := makeLabel(lTP2, tp2, "TP2 " + str.tostring(tp2) + " - " + str.tostring(rr2v, "#.#") + "R", isLong ? green : red)
         if not na(tp3)
-            lTP3 := makeLabel(lTP3, tp3, "TP3 " + str.tostring(tp3) + " · " + str.tostring(rr3v, "#.#") + "R", grey)
+            lTP3 := makeLabel(lTP3, tp3, "TP3 " + str.tostring(tp3) + " - " + str.tostring(rr3v, "#.#") + "R", grey)
         lState := makeLabel(lState, close, statusText, plState == "UR PROFIT" ? green : plState == "UR LOSS" ? red : orange)
     else
         if not na(lEntry)
@@ -386,16 +386,16 @@ if barstate.islast
     if showMap
         staleMs = tradeType == "Scalp" ? ${STALE_MS.Scalp} : ${STALE_MS.Intraday}
         ageMs = na(analyzedAt) ? staleMs * 2.0 : timenow - analyzedAt
-        updatedTxt = na(analyzedAt) ? "UNKNOWN" : str.format_time(int(analyzedAt), "MMM d · HH:mm", "GMT+1")
+        updatedTxt = na(analyzedAt) ? "UNKNOWN" : str.format_time(int(analyzedAt), "MMM d - HH:mm", "GMT+1")
         updatedColor = ageMs >= staleMs ? red : ageMs >= staleMs / 2 ? orange : neutral
         stateColor = str.contains(setupState, "INVALID") or plState == "UR LOSS" ? red : plState == "UR PROFIT" or str.contains(setupState, "ACTIVE") ? green : orange
-        cell(0, "Coin", coin + " · " + tradeType, neutral)
+        cell(0, "Coin", coin + " - " + tradeType, neutral)
         cell(1, "Plan", planText, colorOf(planColorName))
-        cell(2, "State", setupState + " · " + plState, stateColor)
+        cell(2, "State", setupState + " - " + plState, stateColor)
         cell(3, "R:R", rrText, colorOf(rrColorName))
         cell(4, "Updated", updatedTxt, updatedColor)
         if liveEvent != "" and not na(liveTime)
-            cell(5, "Live", liveEvent + " · " + str.format_time(liveTime, "MMM d HH:mm", "GMT+1") + " · REANALYZE", liveEvent == "SL TAGGED" ? red : orange)
+            cell(5, "Live", liveEvent + " - " + str.format_time(liveTime, "MMM d HH:mm", "GMT+1") + " - REANALYZE", liveEvent == "SL TAGGED" ? red : orange)
 `;
 
 fs.writeFileSync(outputPath, pine);

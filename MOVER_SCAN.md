@@ -1,28 +1,28 @@
-# Bybit mover scan — 2026-07-16T08:52:51.423Z
+# Bybit mover scan — 2026-07-23T09:13:06.343Z
 
 ## Top 10 gainers (24h)
-AKEUSDT.P        +35.38%  turnover $245.5M  price 0.0008507
-FLOCKUSDT.P      +31.26%  turnover $14.9M  price 0.04157
-BANKUSDT.P       +27.29%  turnover $10.2M  price 0.05583
-USUSDT.P         +21.43%  turnover $46.2M  price 0.038808  [already in ledger]
-CAPUSDT.P        +16.34%  turnover $3.9M  price 0.0188
-ONDOUSDT.P       +14.91%  turnover $90.5M  price 0.3676
-ROAMUSDT.P       +11.50%  turnover $15.0M  price 0.008248
-LDOUSDT.P        +11.47%  turnover $17.2M  price 0.3654
-EDGEUSDT.P       +10.55%  turnover $4.6M  price 0.4316
-ALLOUSDT.P       +9.24%  turnover $12.6M  price 0.39891
+BANKUSDT.P       +53.52%  turnover $181.4M  price 0.25723
+ZAMAUSDT.P       +20.31%  turnover $20.8M  price 0.05029
+KORUUSDT.P       +14.31%  turnover $31.2M  price 23.01
+TLMUSDT.P        +11.82%  turnover $11.2M  price 0.001832
+STABLEUSDT.P     +10.64%  turnover $3.7M  price 0.039861
+WLFIUSDT.P       +10.26%  turnover $32.4M  price 0.06213
+AKEUSDT.P        +10.05%  turnover $49.3M  price 0.0019071
+SOXLUSDT.P       +8.86%  turnover $155.7M  price 162.39
+SNXXUSDT.P       +8.74%  turnover $24.4M  price 18.66
+MIRAUSDT.P       +8.60%  turnover $30.1M  price 0.04773
 
 ## Top 10 losers (24h)
-BLUAIUSDT.P      -23.76%  turnover $5.2M  price 0.013086
-SNXXUSDT.P       -22.66%  turnover $9.7M  price 17.1
-USELESSUSDT.P    -18.93%  turnover $6.1M  price 0.06857
-BILLUSDT.P       -16.30%  turnover $21.5M  price 0.02921
-SLXUSDT.P        -16.29%  turnover $10.1M  price 0.1125
-SOXLUSDT.P       -15.90%  turnover $127.7M  price 154.61
-AAOIUSDT.P       -15.81%  turnover $6.5M  price 106.54
-HUSDT.P          -13.27%  turnover $8.6M  price 0.05993
-KORUUSDT.P       -13.21%  turnover $23.7M  price 20.23
-GWEIUSDT.P       -11.99%  turnover $5.4M  price 0.03921
+B2USDT.P         -30.21%  turnover $11.2M  price 0.3602
+DEXEUSDT.P       -23.60%  turnover $115.1M  price 3.528
+BLESSUSDT.P      -20.88%  turnover $7.3M  price 0.007861
+TSLLUSDT.P       -13.10%  turnover $3.2M  price 9.75
+BUSDT.P          -11.01%  turnover $3.4M  price 0.20401
+ACEUSDT.P        -10.95%  turnover $4.7M  price 0.08431
+SOXSUSDT.P       -7.79%  turnover $5.1M  price 44.24
+SPCXUSDT.P       -6.78%  turnover $65.6M  price 116.51
+TSLAUSDT.P       -6.76%  turnover $9.6M  price 353.86
+GWEIUSDT.P       -6.38%  turnover $3.5M  price 0.02288
 
 Filters: USDT perps only, BTC/ETH excluded (market filters not candidates), min $3M 24h turnover.
 This is a candidate shortlist only. No analysis, ledger writes, or chart drawing happens here — run `Analyze [coin]` on whichever ones look worth a real read.
