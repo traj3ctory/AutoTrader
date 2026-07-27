@@ -43,29 +43,21 @@ If the Light Pass reveals something has actually changed (state flips, a new tri
 
 ## Chart Drawing Method
 
-Attempt automated drawing first, every time, using this exact method - not the fragile methods from earlier sessions.
+Manual paste is the default, every time - do not drive the Pine Editor via browser automation (no automated select-all/paste/save/add-to-chart click-through). That path was tried and dropped: it burned excessive time and tokens on click-by-click Pine Editor automation for something the user can do in seconds themselves. Claude in Chrome (the user's real, logged-in browser - never the sandboxed Browser pane) is still the right tool for reading the live chart and for the verification screenshot, just not for performing the paste itself.
 
 Session setup:
 
 - Use one persistent browser tab for the whole session. Do not close and reopen a fresh tab per coin; fresh navigations are the main trigger for the TradingView blank-canvas render bug. Switch symbols within the same tab (watchlist click or symbol search) instead of renavigating.
+- Always use Claude in Chrome for any TradingView interaction (chart reads, verification). The sandboxed Browser pane has no TradingView login and will show a blank canvas / sign-up wall that looks like the render bug but isn't - don't burn the retry cap on it.
 
-Paste method - OS-level clipboard only, never a page-JS clipboard write:
+Manual handoff (the default path, not a fallback):
 
 1. Update the ledger and run `node scripts/buildTradeMap.mjs` to regenerate `AUTOTRADER_TRADE_MAP_TEMPLATE.pine`.
-2. Load the script into the real OS clipboard via `pbcopy < AUTOTRADER_TRADE_MAP_TEMPLATE.pine` (Bash, outside the browser entirely). Never use `navigator.clipboard.writeText()` from page JS - it silently no-ops without document focus, which was the root cause of nearly every paste failure in prior sessions.
-3. In the Pine Editor: click into the editor, Cmd+A, Cmd+V (a real native paste, never a synthetic ClipboardEvent or `execCommand insertText` - both of those let Monaco's auto-indent corrupt nested indentation-sensitive blocks).
-4. Cmd+S to save, then use "Add to chart" if the script is not already attached to this chart.
-5. Run the observed Post-Drawing Verification Gate (fresh screenshot, read the rendered card, confirm every field against the ledger).
-
-One retry cap: if the paste or verification fails, retry the exact same method once. If it fails twice, stop automation and fall back to the manual handoff below - do not improvise a third method or debug-loop.
-
-Manual handoff (fallback only, after the retry cap is hit):
-
-1. Tell the user plainly the automated paste failed after retry, and point to the exact file path (reveal in Finder if useful).
 2. Start the final answer with `SCRIPT READY - MANUAL PASTE REQUIRED`.
 3. Give a compact analysis: Coin / Trade Type / Direction / Entry / SL / TP / R:R / Trigger-Reclaim / Setup State / Final Action / one-line bias - not the full field list.
 4. Render a visual trade-map (entry zone, SL, TP1-3, reclaim line, state) from the same ledger data as a fallback the user can look at immediately, independent of whether the live chart ever renders.
-5. When the user confirms they pasted it, run the observed Post-Drawing Verification Gate before calling the chart verified.
+5. Point to the file (`AUTOTRADER_TRADE_MAP_TEMPLATE.pine`) and tell the user to paste it into the Pine Editor themselves (select-all, paste, save, add to chart if needed).
+6. When the user says "confirm," run the observed Post-Drawing Verification Gate (fresh screenshot via Claude in Chrome, read the rendered card, confirm every field against the ledger) before calling the chart verified.
 
 The journal and scorecard update every time regardless of paste outcome - the record of what was analyzed does not depend on whether the chart shows it yet.
 

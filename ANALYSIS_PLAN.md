@@ -39,8 +39,8 @@ When the user says `Analyze [coin]`, execute this flow:
 13. Rate the setup.
 14. Decide final action.
 15. Update `SETUP_LEDGER.json`, including `analyzed_at` (ISO timestamp), `activation_basis`, `rr_tp1`, and `rr_tp2`.
-16. Run `node scripts/buildTradeMap.mjs` to regenerate the Pine map, and heed its R:R warnings. If an outcome was journaled or a scorecard record added, also run `node scripts/buildScorecard.mjs`. Then draw or update the current TradingView map from the regenerated template.
-17. Verify chart map against the ledger and written levels.
+16. Run `node scripts/buildTradeMap.mjs` to regenerate the Pine map, and heed its R:R warnings. If an outcome was journaled or a scorecard record added, also run `node scripts/buildScorecard.mjs`. Hand the regenerated file to the user to paste themselves (manual paste is the default - see Chart Drawing Method in `ANALYZE_PROMPT.md`), do not drive the Pine Editor via browser automation.
+17. After the user confirms they pasted it, verify chart map against the ledger and written levels.
 18. Close Pine Editor/panels and leave chart visible.
 19. Give final output in the required format.
 
