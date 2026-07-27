@@ -16,6 +16,8 @@ Do not give a normal final trade summary while the chart is stale, unmarked, or 
 
 The normal output format is allowed only after TradingView chart marking and verification succeed, or after a manual-paste handoff per the rule below. If the chart is not marked or cannot be verified and no handoff was offered, do not present the setup as completed. You may still provide the setup, but it must be clearly labeled `SETUP ONLY - NOT DRAWN ON TRADINGVIEW`, include the drawing/verification issue, and offer to redraw from the ledger.
 
+**Light Pass carve-out:** this entire rule is suspended for a Light Pass (see Light Pass Mode below) that confirms a setup is genuinely unchanged. A Light Pass with no material change does not require Pine marking, verification, or a paste handoff - state plainly that nothing changed and why the chart wasn't touched. The instant a Light Pass finds something material changed, it becomes a full pass and this rule applies again in full.
+
 ## Analyze Always Means A Fresh Read
 
 `Analyze [coin]` is never satisfied by reciting the ledger's last saved entry, no matter how recent it looks. Every request requires reading the live chart across the required timeframe stack this turn and re-deciding the setup from what is actually happening right now.
@@ -25,6 +27,19 @@ The normal output format is allowed only after TradingView chart marking and ver
 - Record the reasoning, not just the numbers: for every entry/retest zone, state what structural evidence produced it (which swing high/low, which liquidity pool, which relative-strength signal, which candle behavior) directly in the ledger's `bias`/`notes`/`nearest_liquidity` fields, and repeat the key reasoning in the chat output. The "why" must survive without needing to be reconstructed later.
 - Always give TradingView a short pause to paint before reading it: after opening a chart, switching symbols, or changing timeframe/interval, wait a few seconds before the first screenshot or read. Do not screenshot immediately on navigation - the canvas is frequently still blank or showing the prior symbol's stale data at that instant, not a real render failure yet. Only treat it as a genuine render failure (subject to the one-retry-cap) if it is still blank/stale after that pause.
 - The one-retry-cap means ONE retry, full stop - not one retry per remediation technique. Reload, new tab, timeframe switch, and symbol-hop-and-back are all still "trying to read the chart"; switching techniques does not reset the counter. Two total attempts (the first read, one retry) is the entire budget. If it's still blank after that, stop immediately and fall back (Bybit kline data, clearly labeled as a fallback, or a stated `CHART NOT MARKED` limitation) rather than escalating through more techniques - each additional attempt costs a full round of navigate/wait/screenshot for a coin flip's chance of success.
+
+### Light Pass Mode
+
+A Light Pass is allowed only when the live Pine card's `Live` reanalyze flag has NOT fired since the ledger's `analyzed_at` timestamp for that coin - i.e. no crossing event has happened since the last full read. It is never allowed to substitute for a first Analyze on a coin, and it is never allowed when the level-alert poller (`checkAlerts.mjs` / `level-alert-check`) just reported a crossing - a crossing always earns a full pass.
+
+Under Light Pass:
+- Still open the live chart and check current price against the existing ledger levels this turn - this is still a real chart check, not a recitation of old values. "Analyze Always Means A Fresh Read" still applies to the confirmation itself.
+- Skip the full 1D->4H->1H (or Scalp stack) re-derivation. One timeframe check (whichever the setup's `trade_type` plans entry on) confirming price is still where the ledger says it is, is sufficient.
+- Update `bias` and `analyzed_at` with a short confirmation note (a sentence or two, not a full re-derivation) and update the price/percentage figures.
+- Do not touch `entry`, `sl`, `tp`, `watch_zone`, `reclaim`, or `setup_state` unless something actually changed - if it's genuinely unchanged, say so plainly rather than restating them for no reason.
+- Skip the Pine paste/verify cycle entirely (see the Non-Negotiable Execution Rule carve-out below) - do not run `buildTradeMap.mjs` or ask for a paste/confirm round-trip for a Light Pass that changed nothing material.
+
+If the Light Pass reveals something has actually changed (state flips, a new trigger fires, price breaks a level), it immediately stops being a Light Pass - switch to a full pass for that coin.
 
 ## Chart Drawing Method
 
@@ -284,11 +299,16 @@ Watch Only:
 - Useful levels exist, but trade is not ready.
 - Needs reclaim, retest, rejection, MSS, or better R:R.
 
+Conditional Trade - Reduced Size:
+
+- See the Conditional (Reduced-Size) Tier in Trade Rules. TP1 is sub-floor but within the defined reduced-size band (1.5-2R Intraday / 1.2-1.5R Scalp), every other gate passes, and the trigger has actually confirmed.
+- Trade candidate at half normal risk (0.75% instead of 1.5%), not full size.
+
 Skip / No Trade:
 
 - No clean invalidation.
 - SL is Too Tight.
-- Proper structural SL puts TP1 below the trade-type floor.
+- Proper structural SL puts TP1 below the trade-type floor (including below the reduced-size band).
 - Price is late or chasing.
 - BTC/ETH strongly conflict and the coin has no clear relative strength.
 
@@ -296,6 +316,7 @@ Final action by rating:
 
 - Clean Trade = Trade candidate if entry condition is met.
 - Conditional Trade = Conditional trade or reduced confidence.
+- Conditional Trade - Reduced Size = Trade candidate at half risk if the trigger has confirmed.
 - Watch Only = Wait / monitor only.
 - Skip / No Trade = No trade.
 
@@ -478,7 +499,7 @@ Mark ACTIVE / MANAGE only when price has traded through the planned entry zone a
 
 If both a pullback entry and reclaim entry are possible, state which one controls activation before drawing the map.
 
-If the coin is in active expansion/momentum, map BOTH a deep pullback zone and a break-and-retest activation at the reclaim level, and state which one is primary. Do not map only a deep limit zone in momentum conditions; that is how valid theses become missed entries.
+Dual-Activation Rule (mandatory, not situational): every setup with a defined reclaim or trigger level must map BOTH a deep pullback zone AND a break-and-retest activation at that level, and state which one is primary. This applies whenever a reclaim/trigger level exists, not only when momentum is judged to be active - "is this coin in expansion" was too easy to skip. A setup that maps only a deep limit zone is incomplete and must not be presented as final. This rule exists because the scorecard's own history shows repeated MISSED_ENTRY outcomes (HYPE, XRP, SPORTFUN, APE) where price ran through a reclaim without ever returning to a mapped deep zone - a break-and-retest trigger would have caught or correctly scored every one of them.
 
 If price is above reclaim but entry was missed, do not convert the missed trade into active management. Refresh the setup as WAIT RETEST, NO CHASE, or a new breakout-retest setup.
 
@@ -745,8 +766,18 @@ If verification fails:
 - R:R is measured from the conservative edge of the entry zone (entry high for longs, entry low for shorts) to each TP against the SL. Confirmation fills happen at the edge, so midpoint math flatters the ratio; never use the midpoint for the floor check.
 - Scalp floor: TP1 at least 1:1.5, and TP2 placed at structure inside the 1:2.5 to 1:3.5 band.
 - Intraday floor: TP1 at least 1:2, and TP2 placed at structure inside the 1:3 to 1:4 band.
-- If TP1 is below the floor, cap the setup rating at Watch Only or Skip / No Trade.
+- If TP1 is below the floor, cap the setup rating at Watch Only or Skip / No Trade - EXCEPT when the Conditional (Reduced-Size) Tier below applies.
 - If TP2 falls outside the band, re-place it at the nearest structural level inside the band; if no structural level exists there, the setup does not fit the template. Never move a TP into empty air to hit a ratio.
+
+### Conditional (Reduced-Size) Tier
+
+A setup whose TP1 (off the conservative entry edge) falls in the 1.5R-2R range (Intraday) or 1.2R-1.5R range (Scalp) - i.e. below the full floor but not far below it - qualifies for `Conditional Trade - Reduced Size` instead of an automatic Watch Only/Skip, but only if every other gate passes cleanly:
+- SL is Safe (not Vulnerable, not Too Tight).
+- Entry activation has actually triggered (rejection candle confirmed, reclaim confirmed-and-holding, or break-and-retest confirmed) - not "no entry yet."
+- Catalyst is Clear or News Risk-with-a-defined-cap, not an active veto-level event.
+- BTC/ETH filter is Aligned or Mixed, not strongly Conflicting.
+
+If all four hold, rate the setup `Conditional Trade - Reduced Size` and state explicitly in `final_action`: position size is half the user's normal risk (0.75% of available balance instead of 1.5%, per the Risk Context section), because R:R is genuine but sub-floor. This tier does not apply to setups below 1.5R (Intraday) / 1.2R (Scalp) - those remain Skip / No Trade regardless of how clean the other gates are. This tier never overrides Vulnerable/Too-Tight SL, an unconfirmed trigger, or a hard catalyst veto.
 - Store rr_tp1 and rr_tp2 in the ledger record for every setup.
 - Do not force a trade.
 - If no clean setup exists, say WAIT.

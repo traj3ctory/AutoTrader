@@ -19,6 +19,8 @@ Move these files as a set:
 - `scripts/buildTradeMap.mjs`
 - `scripts/buildScorecard.mjs`
 - `scripts/scanMovers.mjs`
+- `scripts/checkAlerts.mjs`
+- `WATCHLIST_TIER2.md`
 - `AUTOTRADER_TRADE_MAP_TEMPLATE.pine`
 - `HANDOVER_TRADING_WORKFLOW.md`
 
@@ -47,6 +49,11 @@ AutoTrader/
 - Keeps entries, SL, TP, reclaim, setup state, position status, catalyst state, and notes.
 - This replaces TradingView/Pine as memory.
 
+`WATCHLIST_TIER2.md`
+
+- A lighter-weight tier below the ledger: coins worth watching that aren't in the core 6 and aren't polled by `level-alert-check`.
+- Maintained entirely by `daily-mover-scan` (Job 3). Promotion into the core 6, or removal, always goes through the user.
+
 `AUTOTRADER_TRADE_MAP_TEMPLATE.pine`
 
 - The reusable TradingView renderer.
@@ -65,16 +72,56 @@ Do not trust this file for coin lists or setup states; it goes stale. The curren
 
 ## Morning Scan (Scheduled Task)
 
-A scheduled task `daily-mover-scan` runs weekdays ~10:30 AM local (task file: `~/.claude/scheduled-tasks/daily-mover-scan/SKILL.md`, not part of this repo). It produces a pre-market triage report in chat - report only, no ledger writes, no Pine redraw.
+A scheduled task `daily-mover-scan` runs weekdays ~10:12 AM local (task file: `~/.claude/scheduled-tasks/daily-mover-scan/SKILL.md`, not part of this repo). It produces a pre-market triage report in chat - report only except for the two explicit write paths noted below.
 
-- `scripts/scanMovers.mjs` is the data source for the "outside movers" half of the scan: pulls Bybit's public perpetuals ticker feed (no auth), excludes BTC/ETH and thin-volume symbols (<$3M 24h turnover), ranks top 10 gainers/losers, flags anything already in `SETUP_LEDGER.json`, writes `MOVER_SCAN.md`.
-- The scheduled task itself does more than run that script: it also reads the active ledger/watchlist, applies the full `ANALYZE_PROMPT.md` ruleset (validity gate, no-chase, entry activation, SL quality, catalyst gate, R:R floors, Parabolic Spike Rule) to watchlist coins, and TradingView-verifies any outside mover before it's allowed into the ranked candidate list. Movers that can't be chart-verified go in a separate "Unverified Outside Movers" bucket, never the ranked list.
-- If TradingView/Chrome is inaccessible during a run, the task states that limitation and falls back to a source-limited scan from the ledger and Bybit data alone - it does not pretend chart verification happened.
-- To change the schedule or prompt, use the scheduled-tasks tools (`list_scheduled_tasks` / `update_scheduled_task`), not a manual edit of the SKILL.md file.
+As of 2026-07-24 this task does three jobs in one run (it previously had a separate `weekly-deep-review` task for jobs 1/3, which was deleted once the overlap became clear - both tasks were independently running mover discovery, which was pure duplicated work; only the re-verification piece was actually distinct, so it moved here instead):
+
+1. **Light-touch check on the core 6** (HYPE, XRP, DOGE, JTO, AVAX, ZEC): one timeframe only per coin (not a full 1D->4H->1H re-derivation), checking current price against already-mapped levels. Classifies each Still Valid / Needs Update (in which case the ledger IS updated and `buildTradeMap.mjs` IS run, same as a normal Analyze) / Stale-Dead. Never touches HYPE/XRP/DOGE's scalp-pair membership - that's `monthly-scalp-review`'s call on different criteria.
+2. **Outside-mover discovery** (unchanged from the original design): `scripts/scanMovers.mjs` pulls Bybit's public perpetuals feed (no auth), excludes BTC/ETH and thin-volume symbols (<$3M 24h turnover), flags anything already tracked, writes `MOVER_SCAN.md`. Survivors get chart-verified before being reported as Trade-Worthy/Conditional/Watch.
+3. **`WATCHLIST_TIER2.md` maintenance**: a lighter-weight list, below the ledger, for promising coins that don't yet deserve full ledger depth or poller coverage. Adds/drops rows based on Job 2 findings, and if Job 1 flagged a core-6 coin Stale/Dead while Job 2 (or an existing tier-2 entry) shows real chart-verified structure, this is where a swap gets suggested - never applied automatically.
+
+Finding a good candidate here does not add it to the ledger automatically, and a suggested swap is never auto-applied - the user decides both. To change the schedule or prompt, use the scheduled-tasks tools (`list_scheduled_tasks` / `update_scheduled_task`), not a manual edit of the SKILL.md file.
+
+## Monthly Scalp Review (Scheduled Task)
+
+`monthly-scalp-review` runs the 1st of each month at 09:00 local (task file: `~/.claude/scheduled-tasks/monthly-scalp-review/SKILL.md`, not part of this repo). Confirms HYPE (primary), XRP (primary), and DOGE (fallback) are still the best scalp picks.
+
+- Pulls fresh Bybit ticker data (spread, 24h range, turnover, per-unit price) for the current picks plus a comparison set of other liquid coins.
+- Deliberately NOT sourced from mover-scan hits - momentum-driven candidates tend to be thin/volatile, which is close to the opposite of good scalp microstructure (tight spread, deep liquidity). BTC/ETH are included for reference only and are not re-litigated as candidates each month - they were already ruled out for insufficient volatility relative to smaller-account position sizing, a settled decision.
+- Reports only; never modifies the ledger or the scalp designation without the user acting on it.
+
+## Level-Crossing Alerts (Scheduled Task, Free TradingView Alert Workaround)
+
+TradingView's free plan caps active alerts too low to cover a full watchlist. `level-alert-check` (task file: `~/.claude/scheduled-tasks/level-alert-check/SKILL.md`, not part of this repo) runs every 30 minutes, 08:00-22:59 local, and is a free substitute built entirely from data already in this repo:
+
+- `scripts/checkAlerts.mjs` reads every active coin's `reclaim`, `watch_zone.low/high`, `sl`, `tp[]`, and `entry.low/high` levels straight from `SETUP_LEDGER.json`, fetches current prices from Bybit's free public ticker feed (same endpoint `scanMovers.mjs` uses), and compares against the previous run's prices (stored in `.alert_state.json`, gitignored - not part of the handover file set, it's a local cache that rebuilds itself).
+- It reports a level only when price actually CROSSED it since the last check (previous price and current price on opposite sides) - not merely "close to" a level. This avoids repeat-noise from price chopping right at a line.
+- The scheduled task stays silent when nothing crossed. It only messages when a real crossing fires, then suggests running `Analyze [coin]` for a fresh read.
+- Resolution is 30 minutes, not instant - fine for Intraday setups, coarse for fast scalp triggers. For time-sensitive scalp levels, use Bybit's own native price alerts (free, unlimited, no TradingView subscription needed) as the faster-reacting complement to this poller.
+- If `.alert_state.json` is deleted or this runs on a new device, the next run is a fresh baseline (no crossings reported that run) - expected, not a bug.
+
+## Operating Cadence
+
+Three scheduled tasks now run the routine layer of this workflow (a fourth, `weekly-deep-review`, was tried and deleted 2026-07-24 once it became clear it was independently re-running mover discovery that `daily-mover-scan` already does daily - the one genuinely distinct piece, core-6 re-verification, was folded into daily-mover-scan's Job 1 instead of kept as a separate task). Daily activity for the user is meant to be alert-response only: react to pings, run `Analyze [coin]` on whatever actually fired, manage anything open.
+
+| Task | Schedule | Watches | Job |
+|---|---|---|---|
+| `level-alert-check` | Every 30 min, 08:00-22:59 daily | Live Bybit price vs. levels already in `SETUP_LEDGER.json` | Silent unless a level actually crosses, then flags it and suggests `Analyze [coin]` |
+| `daily-mover-scan` | Weekdays ~10:12 | Core 6 (light touch) + Bybit-wide movers + `WATCHLIST_TIER2.md` | Three jobs: (1) light re-verify the core 6, updating the ledger only if something actually changed, (2) find new outside candidates, (3) maintain the tier-2 watchlist and suggest core-6 swaps when a core coin is stale AND a real replacement exists |
+| `monthly-scalp-review` | 1st of month, 09:00 | HYPE/XRP/DOGE vs. fresh Bybit spread/turnover/range data | Confirms the scalp picks still lead on liquidity/execution criteria - deliberately NOT sourced from mover-scan, since momentum and good scalp microstructure tend to pull in opposite directions |
+
+Adding or removing a coin from the ledger is never automatic from any of these tasks - they recommend; the user (or a live `Analyze` session) makes the actual ledger write. If a coin is added, the one-in-one-out discipline from the original prune (18 coins down to a 5-6 target) should be applied again rather than letting the list creep back up.
 
 ## Ledger Size
 
-Keep active `setups` lean, target roughly 10-15 coins max. This is a scannable watchlist, not an archive. The moment a setup goes dead (SL tagged, TP tagged, missed, invalidated), journal it with a mistake tag and delete it from `setups` in the same pass — do not let dead entries accumulate. A bloated `setups` object makes every priority check slower and defeats the point of the ledger being glanceable. `Pine` script size scales with active-setup count (~2.3KB per coin in the ternary chains); this is not a near-term technical limit, but ledger hygiene matters well before script size would.
+Keep active `setups` lean, target roughly 5-6 coins for real day-to-day attention, with a hard ceiling of 10-15 before hygiene is overdue regardless. This is a scannable watchlist, not an archive. The moment a setup goes dead (SL tagged, TP tagged, missed, invalidated), journal it with a mistake tag and delete it from `setups` in the same pass — do not let dead entries accumulate. A bloated `setups` object makes every priority check slower and defeats the point of the ledger being glanceable. `Pine` script size scales with active-setup count (~2.3KB per coin in the ternary chains); this is not a near-term technical limit, but ledger hygiene matters well before script size would.
+
+Current core watchlist (2026-07-24), pruned from a prior 18-coin list:
+
+- **HYPE, XRP** — designated scalp pair. Picked from live Bybit ticker data (spread, 24h range, turnover), not guesswork - see the scalp comparison in journal/chat history if the reasoning needs revisiting. BTC/ETH were considered but ruled out for scalping specifically due to low % volatility relative to the account size being sized against, not because they're untradeable in general.
+- **DOGE** — scalp fallback, kept specifically for its low per-unit price (fine position-size granularity on a smaller account), used only if HYPE/XRP setups go cold.
+- **JTO, AVAX, ZEC** — Intraday candidates, kept because each was closest to a live trigger at prune time (JTO: reclaim holding; AVAX: live demand-zone test; ZEC: near-miss thesis worth continued attention).
+- **BTC, ETH** — never trade candidates in this ledger. Used only as the `btc_eth_filter` confidence check on every other coin's analysis, exactly as they always have been. This is unchanged by anything above; they were never going to get `setups` entries regardless of scalp planning.
 
 ## Timeframe Stacks
 
@@ -201,7 +248,7 @@ Each active ledger coin gets one guarded Pine slot. Reanalyzing a coin updates t
 
 On a new device:
 
-1. Copy the five files listed above into the workspace.
+1. Copy the files listed under "Files To Move Together" above into the workspace.
 2. Open `HANDOVER_TRADING_WORKFLOW.md`.
 3. Open `ANALYZE_PROMPT.md` and `ANALYSIS_PLAN.md`.
 4. Confirm `SETUP_LEDGER.json` parses as valid JSON.
@@ -217,7 +264,7 @@ On a new device:
 To validate the JSON ledger locally:
 
 ```bash
-ruby -rjson -e 'JSON.parse(File.read("SETUP_LEDGER.json")); puts "SETUP_LEDGER.json OK"'
+node -e "JSON.parse(require('fs').readFileSync('SETUP_LEDGER.json','utf8')); console.log('SETUP_LEDGER.json OK')"
 ```
 
 Expected:
@@ -253,9 +300,11 @@ Ledger memory -> validity gate -> generated multi-symbol renderer -> verificatio
 
 ## Future Step 2 Readiness
 
-Do not move to alerts or auto-trading until:
+Do not move to auto-trading (orders placed without a human confirming each one) until:
 
-- At least 30 setups counted toward the gate: correct-thesis analyses plus user-confirmed taken trades (one record counts once).
+- At least 30 setups counted toward the gate: correct-thesis analyses plus user-confirmed taken trades (one record counts once). Check `SCORECARD.json`'s `summary.reviewed_setups`/`correct_thesis`/`trades_taken` for the current count - as of the last count it was 3/30, nowhere close.
 - No repeated confusion between entry, reclaim, and active trade.
 - Setup outcomes are tracked as Win, Loss, Missed, No Trade, or Invalidated.
 - Alerts can be expressed as strict pass/fail rules.
+
+Note: `level-alert-check` (see Level-Crossing Alerts above) is NOT the "alerts" this gate refers to. It's a free price-crossing notifier that tells a human when to look at a chart - it never places an order or skips human judgment. The Step 2 gate is specifically about moving to unattended auto-trading, which is a different and much bigger step than the notification poller already built.
