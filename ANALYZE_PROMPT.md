@@ -840,6 +840,12 @@ Optional journal line:
 
 Journal Tag:
 
+## Plain-English Setup Summary (Required)
+
+Every analysis ends with a short, plain-language summary of the trade in one or two sentences, written like explaining it to someone who doesn't read the field list - e.g. "Wait for price to drop back into 486-492 and hold, then buy there with a stop below. Alternate: if price breaks and holds above 522 instead, buy the retest of that level." No jargon dump, just: what to wait for, what confirms it, and roughly where the entry/stop would go. If there's no valid setup at all, say so plainly ("nothing tradeable right now, just watching X").
+
+Accompany this with a simple visual (zones/levels on a price line or mini chart) whenever practical, generated as an artifact or inline image - not just the text summary alone.
+
 ## Important
 
 If the trade is not ready, still show the conditional setup levels and clearly label WAIT, WAIT / SKIP, or NO CHASE.
