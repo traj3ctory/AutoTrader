@@ -17,6 +17,15 @@ Step 1 is complete only when:
 - Failed chart operations are reported clearly instead of silently skipped.
 - `SETUP_LEDGER.json` is the remembered source of truth, and TradingView is treated as the display layer.
 
+## Gate 0: Significance Pre-Check
+
+Before running the full Analyze Command Contract below, check whether a fresh Analyze is actually warranted:
+
+- If the coin already has an active ledger entry with a stated trigger/confirmation level and an invalidation level, compare the current price against both before doing anything else.
+- If the price sits between those two levels without clearing either one (a marginal tick, a small wick, noise around a line already flagged as unconfirmed), say so plainly and do not run the full 19-step contract on it - a full Analyze pass spent on noise is wasted effort and clutters the ledger's `analyzed_at` history with reads that changed nothing.
+- Only proceed with the full contract when price has actually cleared the stated trigger or invalidation level, or when the user explicitly asks for a fresh read regardless of significance.
+- Reference: 2026-07-28, DOGE ticked from 0.06993 to 0.07001 - technically "crossing" the 0.07 flip level already in the ledger, but nowhere near the stated 0.0715 confirmation threshold or the 0.0693 invalidation level from the prior pass. Correctly held off running a full Analyze on it.
+
 ## Analyze Command Contract
 
 When the user says `Analyze [coin]`, execute this flow:
@@ -46,6 +55,8 @@ When the user says `Analyze [coin]`, execute this flow:
 
 **Light Pass Mode is disabled.** Every `Analyze [coin]` request runs all 19 steps in full, every time, regardless of how recently the coin was last analyzed - see `ANALYZE_PROMPT.md`'s "Light Pass Mode - DISABLED" note. Do not skip the timeframe stack, the Pine regenerate/clipboard step, or the summary/image based on an assumption that nothing changed.
 
+The 1D read specifically is not optional or skippable just because the ledger already has a `watch_zone` for the coin - a coin can have real daily-timeframe structure (an origin base, an old support/resistance cluster) that predates and is completely absent from the current ledger entry. Re-verifying the ledger's existing level is not the same as doing the daily read; both are required, and the daily read is what catches structure the ledger has never seen at all.
+
 ## Gate 1: Source Check
 
 Allowed source order:
@@ -56,6 +67,8 @@ Allowed source order:
 4. External APIs only if the user explicitly requests.
 
 If source access is limited, state the limitation.
+
+Do not default to external API/kline pulls as the working source for an Analyze, even when TradingView is technically reachable - this is exactly the judgment call that caused the 2026-07-28 incident: a round of re-Analyzes on DOGE/AVAX/ZEC/JTO leaned on Bybit API kline data instead of opening the actual chart, and as a direct result JTO's real 10-day-old daily support zone (0.538-0.556, three prior touches) never got read and was missing from the ledger until the user caught it. API data is a supplement for a source-access gap the user has been told about, or something the user explicitly asks for - never the default move for a fresh Analyze.
 
 ## Gate 1A: Ledger Check
 

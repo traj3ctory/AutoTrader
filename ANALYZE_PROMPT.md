@@ -82,6 +82,10 @@ The ledger must store coin, exchange, trade type, proposed type, bias, BTC/ETH f
 
 If TradingView fails to render the map, do not lose the setup. Keep the ledger updated and start final output with `CHART NOT MARKED` or `CHART VERIFICATION FAILED`.
 
+The moment any TradingView read fails (blank canvas after the mandatory pause, retry cap hit, verification mismatch), stop and send the user a short message stating the failure plainly - before doing anything else, including before falling back to Bybit API/kline data. Do not fold "chart failed, falling back to X" into the middle of an otherwise-normal-looking full analysis where it reads as one flagged line rather than a real pause. The user has explicitly said (2026-07-28) that a silent fallback made it impossible to tell which numbers came from the live chart versus an API substitute until they checked their own screen - the fallback itself can be legitimate and correctly labeled in the final output and still fail this rule if it wasn't surfaced as a stop-and-tell moment first.
+
+The user's timezone is UTC+1 (GMT+1). State analysis times in that frame, or give both UTC and UTC+1, rather than defaulting to bare UTC.
+
 Do not treat TradingView Pine/drawings as persistent memory. If TradingView loses or hides a setup during symbol switching, redraw it from the ledger.
 
 ## Ledger Validity Gate
@@ -426,6 +430,13 @@ Before giving an entry:
 - If price has already rejected the trigger/reclaim level, downgrade the setup to WAIT until demand/supply confirms.
 - If setup is late, clearly label NO CHASE.
 
+Candle-Shape Judgment Rule (applies to every coin surfaced, not just full Analyze):
+
+- Before presenting any coin as a candidate - from a mover scan, tier2, or a full Analyze - classify the shape of its recent move: an orderly, sustained trend (tradeable, has a real directional expectation) versus a long wick with an immediate reversal (spike up then instant dump, or the reverse - noise/a liquidity sweep, not a real move).
+- A coin passing a raw %/range filter is not automatically a candidate. `scanMovers.mjs`'s range%/net% ratio can flag both a genuine sweep-and-orderly-reclaim (tradeable, e.g. FARTCOIN's dip-sweep-bounce) and a spike-and-instant-reverse (not tradeable) with a similar signature - the two must be told apart by eye before reporting either as a find.
+- State a directional expectation for every coin mentioned: continuation, mean-reversion against an extension (see Parabolic Spike Rule below), or explicitly "noise/skip, not tradeable." Do not just report the stat line and let the user filter it themselves.
+- Reference: user flagged this 2026-07-28 after DIA/EUL/ACH/AKE were repeatedly surfaced despite each showing a long wick with an immediate reversal, contrasted with PHAROSUSDT.P's orderly climb, which had a clear, statable short-the-extension read.
+
 Parabolic Spike Rule:
 
 After a single-candle (or near-single-candle) extension of roughly 20%+ with an Unverified catalyst:
@@ -434,6 +445,7 @@ After a single-candle (or near-single-candle) extension of roughly 20%+ with an 
 - The valid patterns are: (a) liquidity sweep + failed reclaim SHORT per Pattern Priority, or (b) wait for the retest of the impulse origin base.
 - Any TP/supply level wick-swept during the spike is no longer virgin liquidity; treat first-touch magnets as consumed and take partials faster.
 - Reference: USUSDT.P 2026-07-07 journal entry, mistake tag SWEEP_FAIL_MISREAD.
+- This applies to short retest entries too, not just longs: on 2026-07-28, PHAROSUSDT.P's proposed short retest zone (0.44-0.4527) was placed inside the reversal candle's own range instead of at the real resistance zone the user had drawn (0.48-0.5225, actual mid-June consolidation) - the same mistake mirrored to the short side. Price reversed before even tagging real structure, which made the zone void, not confirmed. Always use the user's own drawn zones or verified consolidation ranges as the entry zone - never a point picked from inside the impulse/reversal candle itself, for either direction.
 
 ## Setup State Lifecycle Rules
 
@@ -835,7 +847,7 @@ Journal Tag:
 
 Every analysis ends with a short, plain-language summary of the trade in one or two sentences, written like explaining it to someone who doesn't read the field list - e.g. "Wait for price to drop back into 486-492 and hold, then buy there with a stop below. Alternate: if price breaks and holds above 522 instead, buy the retest of that level." No jargon dump, just: what to wait for, what confirms it, and roughly where the entry/stop would go. If there's no valid setup at all, say so plainly ("nothing tradeable right now, just watching X").
 
-Accompany this with a simple visual (zones/levels on a price line or mini chart) whenever practical, generated as an artifact or inline image - not just the text summary alone.
+Accompany this with a visual whenever practical, generated as one combined artifact/image - not a separate summary card and a separate zone diagram. The single visual should carry both: a compact summary card (coin, direction, setup state, entry, SL, TP, R:R) and the price-zone diagram (levels on a price line/mini chart) together in one piece. This sits alongside the full field-by-field Output Format above, not instead of it - the full format is the complete record, the combined card+diagram is the fast-read companion.
 
 ## Important
 

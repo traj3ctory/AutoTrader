@@ -23,6 +23,7 @@ Move these files as a set:
 - `WATCHLIST_TIER2.md`
 - `AUTOTRADER_TRADE_MAP_TEMPLATE.pine`
 - `HANDOVER_TRADING_WORKFLOW.md`
+- `Readme.md`
 
 Recommended folder:
 
