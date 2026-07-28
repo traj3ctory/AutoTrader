@@ -24,6 +24,7 @@ Move these files as a set:
 - `AUTOTRADER_TRADE_MAP_TEMPLATE.pine`
 - `HANDOVER_TRADING_WORKFLOW.md`
 - `Readme.md`
+- `scheduled-tasks/` (the repo-tracked source of truth for `daily-mover-scan`, `level-alert-check`, `monthly-scalp-review` - see "Scheduled Tasks Are Now Repo-Tracked" below)
 
 Recommended folder:
 
@@ -73,7 +74,7 @@ Do not trust this file for coin lists or setup states; it goes stale. The curren
 
 ## Morning Scan (Scheduled Task)
 
-A scheduled task `daily-mover-scan` runs weekdays ~10:12 AM local (task file: `~/.claude/scheduled-tasks/daily-mover-scan/SKILL.md`, not part of this repo). It produces a pre-market triage report in chat - report only except for the two explicit write paths noted below.
+A scheduled task `daily-mover-scan` runs weekdays ~10:12 AM local. Source of truth is `scheduled-tasks/daily-mover-scan/SKILL.md` in this repo (registered locally at `~/.claude/scheduled-tasks/daily-mover-scan/SKILL.md` - see "Scheduled Tasks Are Now Repo-Tracked" below for how the two stay in sync). It produces a pre-market triage report in chat - report only except for the two explicit write paths noted below.
 
 As of 2026-07-24 this task does three jobs in one run (it previously had a separate `weekly-deep-review` task for jobs 1/3, which was deleted once the overlap became clear - both tasks were independently running mover discovery, which was pure duplicated work; only the re-verification piece was actually distinct, so it moved here instead):
 
@@ -85,7 +86,7 @@ Finding a good candidate here does not add it to the ledger automatically, and a
 
 ## Monthly Scalp Review (Scheduled Task)
 
-`monthly-scalp-review` runs the 1st of each month at 09:00 local (task file: `~/.claude/scheduled-tasks/monthly-scalp-review/SKILL.md`, not part of this repo). Confirms HYPE (primary), XRP (primary), and DOGE (fallback) are still the best scalp picks.
+`monthly-scalp-review` runs the 1st of each month at 09:00 local. Source of truth is `scheduled-tasks/monthly-scalp-review/SKILL.md` in this repo. Confirms HYPE (primary), XRP (primary), and DOGE (fallback) are still the best scalp picks.
 
 - Pulls fresh Bybit ticker data (spread, 24h range, turnover, per-unit price) for the current picks plus a comparison set of other liquid coins.
 - Deliberately NOT sourced from mover-scan hits - momentum-driven candidates tend to be thin/volatile, which is close to the opposite of good scalp microstructure (tight spread, deep liquidity). BTC/ETH are included for reference only and are not re-litigated as candidates each month - they were already ruled out for insufficient volatility relative to smaller-account position sizing, a settled decision.
@@ -93,7 +94,7 @@ Finding a good candidate here does not add it to the ledger automatically, and a
 
 ## Level-Crossing Alerts (Scheduled Task, Free TradingView Alert Workaround)
 
-TradingView's free plan caps active alerts too low to cover a full watchlist. `level-alert-check` (task file: `~/.claude/scheduled-tasks/level-alert-check/SKILL.md`, not part of this repo) runs every 30 minutes, 08:00-22:59 local, and is a free substitute built entirely from data already in this repo:
+TradingView's free plan caps active alerts too low to cover a full watchlist. `level-alert-check` (source of truth: `scheduled-tasks/level-alert-check/SKILL.md` in this repo) runs every 30 minutes, 08:00-22:59 local, and is a free substitute built entirely from data already in this repo:
 
 - `scripts/checkAlerts.mjs` reads current prices from Bybit's free public ticker feed (same endpoint `scanMovers.mjs` uses) and compares against the previous run's prices (stored in `.alert_state.json`, gitignored - not part of the handover file set, it's a local cache that rebuilds itself).
 - Which levels it watches depends on `position_status`: for a coin with **no confirmed position**, it watches `reclaim`, `watch_zone.low/high`, `sl`, `tp[]`, and `entry.low/high` - all the levels relevant to finding an entry. For a coin with a **confirmed open position** (`position_status` is `ENTERED LONG`, `ENTERED SHORT`, `UR PROFIT`, or `UR LOSS`), it only watches `sl` and `tp[]` - entry/reclaim/zone crossings are no longer useful once you're already in the trade (2026-07-27: this was a real gap - "price crossed the entry zone" alerts kept firing on a coin the user had already entered, which is just noise once the entry already happened).
@@ -247,6 +248,21 @@ SETUP_LEDGER.json -> scripts/buildTradeMap.mjs -> AUTOTRADER_TRADE_MAP_TEMPLATE.
 
 Each active ledger coin gets one guarded Pine slot. Reanalyzing a coin updates that coin's ledger record, then rebuilds the Pine map. Switching charts should show only the matching symbol's slot.
 
+## Scheduled Tasks Are Now Repo-Tracked
+
+As of 2026-07-28, `scheduled-tasks/daily-mover-scan/SKILL.md`, `scheduled-tasks/level-alert-check/SKILL.md`, and `scheduled-tasks/monthly-scalp-review/SKILL.md` live in this repo and are the source of truth for what each task should say and do - `git pull` on any machine now brings the full task definitions with it, not just the scripts they call.
+
+What still does NOT move automatically: the actual registered, firing scheduled task on a given machine. A scheduled task only runs because the Claude Code harness on that specific machine has it registered (visible via `list_scheduled_tasks`, stored locally outside this repo at `~/.claude/scheduled-tasks/<name>/SKILL.md`). Cloning the repo does not register anything - it only gets you the content to register.
+
+To bootstrap on a new device:
+
+1. `git pull` (or copy the files) so `scheduled-tasks/*/SKILL.md` is present.
+2. For each of the three tasks, read its repo copy - the frontmatter carries `schedule_human` and `schedule_cron` alongside the prompt body.
+3. Use the scheduled-tasks tools (`create_scheduled_task`) to register each one on the new machine, passing the prompt body as the task content and the `schedule_cron` value as the schedule.
+4. Confirm with `list_scheduled_tasks` that all three show up, enabled, with the expected `nextRunAt`.
+
+To change a task's schedule or prompt on an already-set-up machine: edit the repo copy in `scheduled-tasks/`, then use `update_scheduled_task` to push that change into the live registration - don't edit `~/.claude/scheduled-tasks/*/SKILL.md` directly, since that copy is not version-controlled and the next repo pull won't know about a change made only there. Keeping the repo copy as the edit target is what makes this whole thing portable rather than another local-only file.
+
 ## New Device Setup
 
 On a new device:
@@ -261,6 +277,7 @@ On a new device:
 8. Install or update `AUTOTRADER_TRADE_MAP_TEMPLATE.pine`.
 9. Test one coin from the ledger, preferably XRP.
 10. Verify map levels match the ledger.
+11. Register the three scheduled tasks from `scheduled-tasks/*/SKILL.md` per "Scheduled Tasks Are Now Repo-Tracked" above, then confirm with `list_scheduled_tasks`.
 
 ## Quick Validation
 
