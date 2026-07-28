@@ -3,12 +3,12 @@
   "last_updated": "2026-07-16",
   "principle": "Keep thesis result simple. Trade result only updates when the user confirms a trade was taken.",
   "summary": {
-    "reviewed_setups": 10,
-    "correct_thesis": 2,
+    "reviewed_setups": 11,
+    "correct_thesis": 3,
     "invalidated_thesis": 7,
-    "trades_taken": 2,
+    "trades_taken": 3,
     "trade_wins": 1,
-    "trade_losses": 1
+    "trade_losses": 2
   },
   "rules": {
     "correct_thesis": "Use only when the exact plan played out: reclaim/trigger, entry area, and TP.",
@@ -287,6 +287,33 @@
         "SL TAGGED 07-16 13:00 UTC (candle H 0.0017823) - clean -1R stop-out, price broke out and continued to a 16-day high afterward"
       ],
       "review_note": "This is a genuinely different case from the JTO record above: entry TIMING and MECHANICS were correct here - the user waited for a real confirmed rejection candle (12:30 UTC+1, close 0.0016378 below the 0.00165 line, touched via a wick to 0.0016641 first), then let a resting limit at the zone edge (0.00165) get filled on the retest (13:45 UTC+1), rather than chasing market right after the reject candle. That is exactly the entry technique this workflow recommends. The problem is upstream of execution: TP1 was originally mis-mapped at 0.00141, skipping over a real, well-tested intervening demand zone (0.0014948-0.0015244, PUMPFUN's actual multi-day base) - a TP Zone Validity Rule violation caught only after the trade context came up in conversation. At the corrected, honest TP1 (0.0015244), this trade only pays 1.26R against the 2R Intraday floor - it should have been rated Skip/No Trade from the start (and was, once corrected), but the user had already entered before/independent of that correction landing. RESOLUTION (07-16): the trade lost, exactly -1R, a clean stop-out with no slippage. This is the deliberate counterpart to JTO's win: same class of process gap (a sub-floor trade taken with eyes open), opposite outcome. Do not read the loss as 'proof the entry mechanics were bad' - they weren't, they were the correct technique. Read it as proof the R:R floor rule exists for a real reason: this trade paid out negatively exactly as the floor discipline would have predicted for a sub-2R setup. Keep the R:R-floor-violation lesson separate from the entry-technique lesson - conflating them would hide that PUMPFUN's failure and JTO's success were both process gaps of the identical type, just with different market outcomes."
+    },
+    {
+      "id": "2026-07-27-HYPEUSDT.P-long-sweep-reclaim",
+      "date": "2026-07-27",
+      "coin": "HYPEUSDT.P",
+      "exchange": "BYBIT",
+      "trade_type": "Intraday",
+      "direction": "Long",
+      "setup_type": "Liquidity Sweep + MSS",
+      "setup_rating": "Conditional Trade - Reduced Size",
+      "final_action": "TRADE CANDIDATE AT HALF RISK - user took the trade",
+      "planned_entry": "59.9-60.2 break-and-retest zone",
+      "planned_sl": 58.7,
+      "planned_tp": [
+        62.6,
+        68.2
+      ],
+      "trade_taken": true,
+      "trade_result": "Loss",
+      "outcome": "Correct Thesis, SL Hit",
+      "milestones": [
+        "Confirmed reclaim: four consecutive 1H closes above 60 starting Jul 27 04:00 (60.184)",
+        "Sweep-and-reclaim: 1H wick to 59.706 (below the 59.9 zone floor) then closed back at 60.255",
+        "User entered long 59.902 (Bybit, isolated 10x, 0.8 HYPE), TP 62.6 / SL 58.7 set on exchange matching the mapped plan exactly",
+        "SL TAGGED ~14:00-15:00 UTC during a broad market flush (BTC -1.5%, HYPE low 57.521) - closed at -1R"
+      ],
+      "review_note": "Entry mechanics match the plan: filled inside the mapped 59.9-60.2 zone via the break-and-retest activation, at half size per the Conditional Trade - Reduced Size rating (R:R 1.6R, sub-floor but within the reduced-size band). Trade is still open as of 2026-07-27 09:54 - update trade_result to Win/Loss once TP1 (62.6) or SL (58.7) is hit. RESOLUTION (2026-07-27): SL tagged during a market-wide liquidation flush led by BTC (-1.5% in one hour). HYPE, as the higher-beta name, dropped harder (low 57.521) and tagged the 58.7 stop cleanly. Realized approximately -1R. This is a clean stop-out, not a process failure - entry mechanics, SL placement, and the sweep-and-reclaim confirmation were all sound; a broad market event overrode the coin-specific structure. Grade this the same way as prior clean stop-outs: the risk management worked as designed (capped the loss at 1R rather than letting it run to the 57.5 low), even though the trade lost."
     }
   ]
 }

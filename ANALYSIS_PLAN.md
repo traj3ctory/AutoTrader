@@ -39,12 +39,12 @@ When the user says `Analyze [coin]`, execute this flow:
 13. Rate the setup.
 14. Decide final action.
 15. Update `SETUP_LEDGER.json`, including `analyzed_at` (ISO timestamp), `activation_basis`, `rr_tp1`, and `rr_tp2`.
-16. Run `node scripts/buildTradeMap.mjs` to regenerate the Pine map, and heed its R:R warnings. If an outcome was journaled or a scorecard record added, also run `node scripts/buildScorecard.mjs`. Hand the regenerated file to the user to paste themselves (manual paste is the default - see Chart Drawing Method in `ANALYZE_PROMPT.md`), do not drive the Pine Editor via browser automation.
+16. Run `node scripts/buildTradeMap.mjs` to regenerate the Pine map, and heed its R:R warnings. If an outcome was journaled or a scorecard record added, also run `node scripts/buildScorecard.mjs`. Copy the regenerated file to the user's clipboard (`pbcopy < AUTOTRADER_TRADE_MAP_TEMPLATE.pine`) and hand it off for the user to paste themselves (manual paste is the default - see Chart Drawing Method in `ANALYZE_PROMPT.md`), do not drive the Pine Editor via browser automation.
 17. After the user confirms they pasted it, verify chart map against the ledger and written levels.
 18. Close Pine Editor/panels and leave chart visible.
-19. Give final output in the required format.
+19. Give final output in the required format, including the required Plain-English Setup Summary and image (see `ANALYZE_PROMPT.md`).
 
-**Light Pass exception:** if the coin's live Pine card shows no `Live` reanalyze flag since the ledger's `analyzed_at`, and this is not the coin's first Analyze, and the level-alert poller did not just report a crossing on it, steps 8 (only check the trade-type's primary timeframe, not the full stack), 16, and 17 may be skipped - see Light Pass Mode in `ANALYZE_PROMPT.md` for the exact rules. This still requires a real live price check (step 1-2 minimum); it is never a recitation of the ledger. The moment a Light Pass finds a material change, fall through to the full 19-step contract for that coin.
+**Light Pass Mode is disabled.** Every `Analyze [coin]` request runs all 19 steps in full, every time, regardless of how recently the coin was last analyzed - see `ANALYZE_PROMPT.md`'s "Light Pass Mode - DISABLED" note. Do not skip the timeframe stack, the Pine regenerate/clipboard step, or the summary/image based on an assumption that nothing changed.
 
 ## Gate 1: Source Check
 

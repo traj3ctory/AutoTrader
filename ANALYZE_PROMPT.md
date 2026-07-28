@@ -16,7 +16,7 @@ Do not give a normal final trade summary while the chart is stale, unmarked, or 
 
 The normal output format is allowed only after TradingView chart marking and verification succeed, or after a manual-paste handoff per the rule below. If the chart is not marked or cannot be verified and no handoff was offered, do not present the setup as completed. You may still provide the setup, but it must be clearly labeled `SETUP ONLY - NOT DRAWN ON TRADINGVIEW`, include the drawing/verification issue, and offer to redraw from the ledger.
 
-**Light Pass carve-out:** this entire rule is suspended for a Light Pass (see Light Pass Mode below) that confirms a setup is genuinely unchanged. A Light Pass with no material change does not require Pine marking, verification, or a paste handoff - state plainly that nothing changed and why the chart wasn't touched. The instant a Light Pass finds something material changed, it becomes a full pass and this rule applies again in full.
+**Light Pass Mode is disabled.** Every `Analyze [coin]` request runs the full contract below, every time, regardless of how recently the coin was last analyzed or whether anything appears to have crossed - full timeframe stack, ledger update, `buildTradeMap.mjs` regeneration, script copied to the user's clipboard, and the plain-English summary + image. The user explicitly asked for this after a Light Pass skipped steps they expected to see every time (2026-07-27) - do not reintroduce a shortcut path without the user asking for it back.
 
 ## Analyze Always Means A Fresh Read
 
@@ -28,18 +28,9 @@ The normal output format is allowed only after TradingView chart marking and ver
 - Always give TradingView a short pause to paint before reading it: after opening a chart, switching symbols, or changing timeframe/interval, wait a few seconds before the first screenshot or read. Do not screenshot immediately on navigation - the canvas is frequently still blank or showing the prior symbol's stale data at that instant, not a real render failure yet. Only treat it as a genuine render failure (subject to the one-retry-cap) if it is still blank/stale after that pause.
 - The one-retry-cap means ONE retry, full stop - not one retry per remediation technique. Reload, new tab, timeframe switch, and symbol-hop-and-back are all still "trying to read the chart"; switching techniques does not reset the counter. Two total attempts (the first read, one retry) is the entire budget. If it's still blank after that, stop immediately and fall back (Bybit kline data, clearly labeled as a fallback, or a stated `CHART NOT MARKED` limitation) rather than escalating through more techniques - each additional attempt costs a full round of navigate/wait/screenshot for a coin flip's chance of success.
 
-### Light Pass Mode
+### Light Pass Mode - DISABLED
 
-A Light Pass is allowed only when the live Pine card's `Live` reanalyze flag has NOT fired since the ledger's `analyzed_at` timestamp for that coin - i.e. no crossing event has happened since the last full read. It is never allowed to substitute for a first Analyze on a coin, and it is never allowed when the level-alert poller (`checkAlerts.mjs` / `level-alert-check`) just reported a crossing - a crossing always earns a full pass.
-
-Under Light Pass:
-- Still open the live chart and check current price against the existing ledger levels this turn - this is still a real chart check, not a recitation of old values. "Analyze Always Means A Fresh Read" still applies to the confirmation itself.
-- Skip the full 1D->4H->1H (or Scalp stack) re-derivation. One timeframe check (whichever the setup's `trade_type` plans entry on) confirming price is still where the ledger says it is, is sufficient.
-- Update `bias` and `analyzed_at` with a short confirmation note (a sentence or two, not a full re-derivation) and update the price/percentage figures.
-- Do not touch `entry`, `sl`, `tp`, `watch_zone`, `reclaim`, or `setup_state` unless something actually changed - if it's genuinely unchanged, say so plainly rather than restating them for no reason.
-- Skip the Pine paste/verify cycle entirely (see the Non-Negotiable Execution Rule carve-out below) - do not run `buildTradeMap.mjs` or ask for a paste/confirm round-trip for a Light Pass that changed nothing material.
-
-If the Light Pass reveals something has actually changed (state flips, a new trigger fires, price breaks a level), it immediately stops being a Light Pass - switch to a full pass for that coin.
+Light Pass Mode previously allowed skipping the full timeframe re-derivation and the Pine regenerate/paste/summary/image steps when nothing had crossed since the last read. The user found this confusing - they expect the same full output (full timeframe stack, ledger update, regenerated Pine script copied to clipboard, plain-English summary, image) every time they say `Analyze [coin]`, whether or not anything changed since the last pass. This mode is off. If a future session wants to re-enable a shortcut path, it must be requested explicitly by the user first, not assumed from context.
 
 ## Chart Drawing Method
 
