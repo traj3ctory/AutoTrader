@@ -60,7 +60,7 @@ Produce a single chat message (not a file dump of Job 3's internals), kept SHORT
 - One line: Market Filter (BTC/ETH state, including whether BTC has crossed a `context_watch` level since the last check - see Job 0).
 - **CORE 6 CHECK**: one line per coin (Still Valid / Needs Update + what changed / Stale-Dead). If all 6 slots active and Still Valid, one line total: "All 6 still valid, no changes." If a slot is open (e.g. post-SL, not yet re-filled), say so explicitly.
 - **OUTSIDE MOVERS WORTH A LOOK** (table): Trade-Worthy/Conditional/Watch coins from Job 2, including any intraday-range-mover finds. Empty is a valid, honest result - say so in one line.
-- **TIER 2 WATCHLIST**: what got added/dropped today, one line each. If nothing changed, one line: "No tier-2 changes."
+- **TIER 2 WATCHLIST** (table): full current table every run (Coin / Added / Why / Last note - same columns as `WATCHLIST_TIER2.md`), not just today's deltas - the user has to open the file otherwise. Lead with one line stating what changed today (added/dropped/none), then the full table underneath.
 - **SUGGESTED SWAP** (only if Job 3 step 4 found one): clearly separated, states the trade-off plainly.
 - Do NOT include Skips, Ruled Out, or Unverified sections by default - noise for a daily read. If TradingView is entirely inaccessible this run, say so explicitly at the top (per the 2026-07-28 stop-and-tell rule - do not silently fall back) and fall back to Bybit-data-only for Job 2, keeping the same short format.
 
