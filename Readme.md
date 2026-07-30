@@ -21,3 +21,62 @@ Background (all scheduled tasks, see matching sections in `HANDOVER_TRADING_WORK
 - scorecard update: JTO correct thesis, trade taken, closed 0.6051, +2R
 - confirm
 ```
+
+
+
+----- 
+ —— New Chat Get up to speed on the AutoTrader project before doing anything else.
+
+Read these files in this exact order:
+1. HANDOVER_TRADING_WORKFLOW.md
+2. ANALYZE_PROMPT.md
+3. ANALYSIS_PLAN.md
+4. SETUP_LEDGER.json
+5. WATCHLIST_TIER2.md
+
+Treat SETUP_LEDGER.json as lifecycle/history context only, never as a
+substitute for a fresh TradingView chart read.
+
+Do not analyze coins, modify the ledger, regenerate Pine, or interact
+with TradingView yet.
+
+When finished, summarize:
+- the analysis workflow you understand;
+- the current ledger and watchlist state;
+- any missing, conflicting, or ambiguous instructions.   —— New PC/ENV setup
+
+git clone https://traj3ctory@github.com/traj3ctory/AutoTrader.git && cd AutoTrader
+
+Get up to speed on the AutoTrader project before doing anything else.
+
+Read these files in this exact order:
+1. HANDOVER_TRADING_WORKFLOW.md
+2. ANALYZE_PROMPT.md
+3. ANALYSIS_PLAN.md
+4. SETUP_LEDGER.json
+5. WATCHLIST_TIER2.md
+
+Treat SETUP_LEDGER.json as lifecycle/history context only, never as a
+substitute for a fresh TradingView chart read.
+
+Then inspect every scheduled-tasks/*/SKILL.md file and inspect whatever
+scheduled-task/automation mechanism is available in this environment
+(list existing ones first). For each of daily-mover-scan, level-alert-check,
+and monthly-scalp-review: if it's missing, register it using that file's
+frontmatter for the schedule and its body as the task's instructions,
+verbatim. If it's already registered, compare the live version against
+the repo file and update it only if they differ, using the repo file as
+the source of truth. Do not create a duplicate if one already exists.
+Preserve each task's specified schedule, timezone, workspace, workflow
+order, and output format exactly as written - do not paraphrase or shorten.
+
+Do not analyze coins, modify the ledger, regenerate Pine, or interact
+with TradingView yet.
+
+When finished, summarize:
+- the analysis workflow you understand;
+- the current ledger and watchlist state;
+- every scheduled task found in scheduled-tasks/*/SKILL.md;
+- whether each automation was created, updated, or already correct;
+- its schedule, timezone, and task/automation ID;
+- any missing, conflicting, or ambiguous instructions.
