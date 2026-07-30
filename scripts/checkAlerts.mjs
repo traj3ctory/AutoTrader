@@ -1,18 +1,35 @@
 import fs from "node:fs";
 
 // Free workaround for TradingView's paid alert limit: poll Bybit's public
-// ticker feed (same endpoint scanMovers.mjs uses, no auth) and compare
+// ticker/kline feed (same source scanMovers.mjs uses, no auth) and compare
 // against the trigger levels already mapped in SETUP_LEDGER.json. Reports
-// only levels that were CROSSED since the last run (previous price and
-// current price on opposite sides of the level) - not just "near" a level.
+// only levels that were CROSSED since the last run - not just "near" a level.
+//
+// Two noise-reduction passes on top of the original instant-ticker crossing:
+//
+// 1. Hysteresis band: a level only re-arms for the opposite direction once
+//    price has cleared a small buffer past it. Chop that oscillates right at
+//    a line (JTO/ZEC repeatedly this week) no longer fires a crossing every
+//    30 minutes - it has to actually clear the line by ~0.25% each way.
+// 2. Close-based confirmation for entry/reclaim/zone levels: these are
+//    judged by candle closes per ANALYZE_PROMPT.md ("reclaims, retests, and
+//    confirmations are judged by candle closes on the entry timeframe, not
+//    wicks"), so the poller now uses the last CLOSED candle's close on the
+//    coin's own trade-timeframe (1H Intraday / 5m Scalp) for those levels,
+//    instead of the instantaneous ticker price. SL/TP and context_watch
+//    levels still use live ticker price - a stop or a market-wide BTC level
+//    is worth knowing about the instant it's touched, not on next close.
 
 const ledgerPath = new URL("../SETUP_LEDGER.json", import.meta.url);
 const statePath = new URL("../.alert_state.json", import.meta.url);
+
+const HYSTERESIS_PCT = 0.0025; // 0.25% buffer each side of a level before it re-arms
 
 const ledger = JSON.parse(fs.readFileSync(ledgerPath, "utf8"));
 const prevState = fs.existsSync(statePath)
   ? JSON.parse(fs.readFileSync(statePath, "utf8"))
   : {};
+const prevSides = prevState.levelSides || {};
 
 const res = await fetch("https://api.bybit.com/v5/market/tickers?category=linear");
 const data = await res.json();
@@ -24,30 +41,60 @@ const priceBySymbol = new Map(
   data.result.list.map((t) => [t.symbol, Number(t.lastPrice)])
 );
 
+// Bybit kline interval codes are plain minutes ("60" = 1H, "5" = 5m).
+function klineIntervalFor(setup) {
+  return setup.trade_type === "Scalp" ? "5" : "60";
+}
+
+const closeCache = new Map();
+async function lastClosedCandleClose(symbol, interval) {
+  const key = `${symbol}:${interval}`;
+  if (closeCache.has(key)) return closeCache.get(key);
+  try {
+    const url = `https://api.bybit.com/v5/market/kline?category=linear&symbol=${symbol}&interval=${interval}&limit=2`;
+    const r = await fetch(url);
+    const j = await r.json();
+    if (j.retCode !== 0 || !j.result?.list?.length) {
+      closeCache.set(key, undefined);
+      return undefined;
+    }
+    // list[0] is the most recent candle and may still be forming; list[1] is
+    // the last candle guaranteed closed. Fall back to list[0] if only one
+    // candle exists (new listing).
+    const candle = j.result.list[1] || j.result.list[0];
+    const close = Number(candle[4]);
+    closeCache.set(key, close);
+    return close;
+  } catch {
+    closeCache.set(key, undefined);
+    return undefined;
+  }
+}
+
 // Once a position is actually confirmed open, entry/reclaim/zone levels are
 // no longer useful triggers - the user already acted on those. Only SL/TP
 // crossings matter for managing a live position; entry-style levels would
 // just be noise ("price moved through the zone you already bought").
 const OPEN_POSITION_STATUSES = new Set(["ENTERED LONG", "ENTERED SHORT", "UR PROFIT", "UR LOSS"]);
 
-function levelsFor(coin, setup) {
+function instantLevelsFor(setup) {
+  // SL/TP: always instant-ticker, fires the moment price touches them.
   const levels = [];
-  const isOpenPosition = OPEN_POSITION_STATUSES.has(setup.position_status);
-
-  if (typeof setup.sl === "number") {
-    levels.push({ label: "SL", price: setup.sl });
-  }
+  if (typeof setup.sl === "number") levels.push({ label: "SL", price: setup.sl });
   if (Array.isArray(setup.tp)) {
     setup.tp.forEach((tp, i) => {
       if (typeof tp === "number") levels.push({ label: `TP${i + 1}`, price: tp });
     });
   }
+  return levels;
+}
 
-  if (isOpenPosition) return levels; // skip entry/reclaim/zone triggers - already in the trade
-
-  if (typeof setup.reclaim === "number") {
-    levels.push({ label: "RECLAIM", price: setup.reclaim });
-  }
+function closeConfirmedLevelsFor(setup) {
+  // RECLAIM/ZONE/ENTRY: judged by candle close, not wick - skip entirely
+  // once a position is open, same as before.
+  if (OPEN_POSITION_STATUSES.has(setup.position_status)) return [];
+  const levels = [];
+  if (typeof setup.reclaim === "number") levels.push({ label: "RECLAIM", price: setup.reclaim });
   if (setup.watch_zone && typeof setup.watch_zone === "object") {
     if (typeof setup.watch_zone.low === "number") {
       levels.push({ label: `${setup.watch_zone.label || "ZONE"} low`, price: setup.watch_zone.low });
@@ -57,12 +104,8 @@ function levelsFor(coin, setup) {
     }
   }
   if (setup.entry && typeof setup.entry === "object") {
-    if (typeof setup.entry.low === "number") {
-      levels.push({ label: "ENTRY low", price: setup.entry.low });
-    }
-    if (typeof setup.entry.high === "number") {
-      levels.push({ label: "ENTRY high", price: setup.entry.high });
-    }
+    if (typeof setup.entry.low === "number") levels.push({ label: "ENTRY low", price: setup.entry.low });
+    if (typeof setup.entry.high === "number") levels.push({ label: "ENTRY high", price: setup.entry.high });
   }
   return levels;
 }
@@ -70,6 +113,7 @@ function levelsFor(coin, setup) {
 // Context-only coins (currently just BTC) are never trade candidates - no
 // entry/SL/TP, just key S/R levels for early warning that a market-wide move
 // may be coming before it cascades through the tradeable coins' own alerts.
+// Kept on instant ticker (same reasoning as SL/TP - worth knowing immediately).
 function levelsForContext(entry) {
   const levels = [];
   for (const field of ["key_resistance", "key_support", "deeper_support"]) {
@@ -83,57 +127,85 @@ function levelsForContext(entry) {
 }
 
 const crossings = [];
-const newState = {};
-const firstRun = Object.keys(prevState).length === 0;
+const newSides = {};
+const firstRun = Object.keys(prevSides).length === 0 && !prevState.prices;
+
+// Hysteresis-aware crossing check. Returns true (and records the new side)
+// only when price has cleared the buffer band on the opposite side from the
+// last confirmed side. Price sitting inside the buffer band is "inside" -
+// no state change, no alert, still armed for whichever side it last cleared.
+function checkCrossing(sideKey, price, levelPrice) {
+  const buffer = Math.abs(levelPrice) * HYSTERESIS_PCT;
+  const side = price > levelPrice + buffer ? "above" : price < levelPrice - buffer ? "below" : "inside";
+  const prevSide = prevSides[sideKey];
+
+  if (side === "inside") {
+    // Stay armed for whatever side was last confirmed; don't overwrite with "inside".
+    if (prevSide !== undefined) newSides[sideKey] = prevSide;
+    return null;
+  }
+  newSides[sideKey] = side;
+  if (prevSide === undefined || firstRun) return null; // no baseline yet
+  if (side !== prevSide) return side; // real, hysteresis-confirmed crossing
+  return null;
+}
 
 for (const [coin, setup] of Object.entries(ledger.setups || {})) {
   const symbol = coin.replace(/\.P$/, "");
-  const currPrice = priceBySymbol.get(symbol);
-  if (currPrice === undefined) continue;
+  const tickerPrice = priceBySymbol.get(symbol);
+  if (tickerPrice === undefined) continue;
 
-  const prevPrice = prevState[coin];
-  newState[coin] = currPrice;
-
-  if (firstRun || prevPrice === undefined) continue; // no baseline yet, skip detection this run
-
-  for (const level of levelsFor(coin, setup)) {
-    const wasBelow = prevPrice < level.price;
-    const isBelow = currPrice < level.price;
-    if (wasBelow !== isBelow) {
-      const direction = wasBelow ? "crossed UP through" : "crossed DOWN through";
+  for (const level of instantLevelsFor(setup)) {
+    const sideKey = `${coin}:${level.label}`;
+    const newSide = checkCrossing(sideKey, tickerPrice, level.price);
+    if (newSide) {
+      const direction = newSide === "above" ? "crossed UP through" : "crossed DOWN through";
       crossings.push(
-        `${coin}: ${direction} ${level.label} (${level.price}) — now ${currPrice} (was ${prevPrice})`
+        `${coin}: ${direction} ${level.label} (${level.price}) — now ${tickerPrice} (was near ${prevSides[sideKey] === "above" ? "above" : "below"} it)`
       );
+    }
+  }
+
+  const closeLevels = closeConfirmedLevelsFor(setup);
+  if (closeLevels.length) {
+    const interval = klineIntervalFor(setup);
+    const closedPrice = await lastClosedCandleClose(symbol, interval);
+    if (closedPrice !== undefined) {
+      for (const level of closeLevels) {
+        const sideKey = `${coin}:${level.label}`;
+        const newSide = checkCrossing(sideKey, closedPrice, level.price);
+        if (newSide) {
+          const direction = newSide === "above" ? "closed UP through" : "closed DOWN through";
+          crossings.push(
+            `${coin}: ${direction} ${level.label} (${level.price}) on the last closed ${interval === "5" ? "5m" : "1H"} candle — close ${closedPrice}`
+          );
+        }
+      }
     }
   }
 }
 
 for (const [coin, entry] of Object.entries(ledger.context_watch || {})) {
   const symbol = coin.replace(/\.P$/, "");
-  const currPrice = priceBySymbol.get(symbol);
-  if (currPrice === undefined) continue;
-
-  const prevPrice = prevState[coin];
-  newState[coin] = currPrice;
-
-  if (firstRun || prevPrice === undefined) continue;
+  const tickerPrice = priceBySymbol.get(symbol);
+  if (tickerPrice === undefined) continue;
 
   for (const level of levelsForContext(entry)) {
-    const wasBelow = prevPrice < level.price;
-    const isBelow = currPrice < level.price;
-    if (wasBelow !== isBelow) {
-      const direction = wasBelow ? "crossed UP through" : "crossed DOWN through";
+    const sideKey = `${coin}:${level.label}`;
+    const newSide = checkCrossing(sideKey, tickerPrice, level.price);
+    if (newSide) {
+      const direction = newSide === "above" ? "crossed UP through" : "crossed DOWN through";
       crossings.push(
-        `${coin} (context): ${direction} ${level.label} (${level.price}) — now ${currPrice} (was ${prevPrice}) - market-wide move possible, check the tradeable coins`
+        `${coin} (context): ${direction} ${level.label} (${level.price}) — now ${tickerPrice} - market-wide move possible, check the tradeable coins`
       );
     }
   }
 }
 
-fs.writeFileSync(statePath, JSON.stringify(newState, null, 2) + "\n");
+fs.writeFileSync(statePath, JSON.stringify({ levelSides: newSides }, null, 2) + "\n");
 
 if (firstRun) {
-  console.log("First run - baseline prices saved, no crossings can be detected yet. Next run onward will report crossings.");
+  console.log("First run - baseline levels armed, no crossings can be detected yet. Next run onward will report hysteresis-confirmed crossings.");
 } else if (crossings.length === 0) {
   console.log("No triggers crossed since last check.");
 } else {
