@@ -1,7 +1,7 @@
 ---
 name: daily-mover-scan
 description: Daily (weekdays ~10:05): light-touch check on the core 6, outside-mover discovery, and tier-2 watchlist maintenance - all in one run, replaces the old separate weekly review.
-schedule_human: At 10:12 AM, Monday through Friday
+schedule_human: At 10:05 AM, Monday through Friday
 schedule_cron: 5 10 * * 1-5
 ---
 

@@ -9,7 +9,7 @@
 
 Background (all scheduled tasks, see matching sections in `HANDOVER_TRADING_WORKFLOW.md`):
 - `level-alert-check` (every 30 min) — polls Bybit prices against every level in `SETUP_LEDGER.json`, including the `context_watch` block (currently BTC's key S/R levels, flagged separately as `(context)` - never a trade candidate, no Pine slot). Silent unless a level actually crosses.
-- `daily-mover-scan` (weekdays ~10:12) — three jobs in one run: light re-verify of the core 6, outside-mover discovery (including an intraday-range-mover pass alongside the 24h% scan, so a coin with a real intraday sweep/bounce isn't missed just because its net 24h% is small), and `WATCHLIST_TIER2.md` maintenance (incl. suggesting core-6 swaps when warranted).
+- `daily-mover-scan` (weekdays at 10:05) — three jobs in one run: light re-verify of the core 6, outside-mover discovery (including an intraday-range-mover pass alongside the 24h% scan, so a coin with a real intraday sweep/bounce isn't missed just because its net 24h% is small), and `WATCHLIST_TIER2.md` maintenance (incl. suggesting core-6 swaps when warranted).
 - `monthly-scalp-review` (1st, 09:00) — re-checks HYPE/XRP/DOGE against fresh liquidity/spread data.
 
 ```

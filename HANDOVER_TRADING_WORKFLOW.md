@@ -74,7 +74,7 @@ Do not trust this file for coin lists or setup states; it goes stale. The curren
 
 ## Morning Scan (Scheduled Task)
 
-A scheduled task `daily-mover-scan` runs weekdays ~10:12 AM local. Source of truth is `scheduled-tasks/daily-mover-scan/SKILL.md` in this repo (registered locally at `~/.claude/scheduled-tasks/daily-mover-scan/SKILL.md` - see "Scheduled Tasks Are Now Repo-Tracked" below for how the two stay in sync). It produces a pre-market triage report in chat - report only except for the two explicit write paths noted below.
+A scheduled task `daily-mover-scan` runs weekdays at 10:05 AM local. Source of truth is `scheduled-tasks/daily-mover-scan/SKILL.md` in this repo (registered locally at `~/.claude/scheduled-tasks/daily-mover-scan/SKILL.md` - see "Scheduled Tasks Are Now Repo-Tracked" below for how the two stay in sync). It produces a pre-market triage report in chat - report only except for the two explicit write paths noted below.
 
 As of 2026-07-24 this task does three jobs in one run (it previously had a separate `weekly-deep-review` task for jobs 1/3, which was deleted once the overlap became clear - both tasks were independently running mover discovery, which was pure duplicated work; only the re-verification piece was actually distinct, so it moved here instead):
 
@@ -111,7 +111,7 @@ Three scheduled tasks now run the routine layer of this workflow (a fourth, `wee
 | Task | Schedule | Watches | Job |
 |---|---|---|---|
 | `level-alert-check` | Every 30 min, 08:00-22:59 daily | Live Bybit price vs. levels already in `SETUP_LEDGER.json` | Silent unless a level actually crosses, then flags it and suggests `Analyze [coin]` |
-| `daily-mover-scan` | Weekdays ~10:12 | Core 6 (light touch) + Bybit-wide movers + `WATCHLIST_TIER2.md` | Three jobs: (1) light re-verify the core 6, updating the ledger only if something actually changed, (2) find new outside candidates, (3) maintain the tier-2 watchlist and suggest core-6 swaps when a core coin is stale AND a real replacement exists |
+| `daily-mover-scan` | Weekdays 10:05 | Core 6 (light touch) + Bybit-wide movers + `WATCHLIST_TIER2.md` | Three jobs: (1) light re-verify the core 6, updating the ledger only if something actually changed, (2) find new outside candidates, (3) maintain the tier-2 watchlist and suggest core-6 swaps when a core coin is stale AND a real replacement exists |
 | `monthly-scalp-review` | 1st of month, 09:00 | HYPE/XRP/DOGE vs. fresh Bybit spread/turnover/range data | Confirms the scalp picks still lead on liquidity/execution criteria - deliberately NOT sourced from mover-scan, since momentum and good scalp microstructure tend to pull in opposite directions |
 
 Adding or removing a coin from the ledger is never automatic from any of these tasks - they recommend; the user (or a live `Analyze` session) makes the actual ledger write. If a coin is added, the one-in-one-out discipline from the original prune (18 coins down to a 5-6 target) should be applied again rather than letting the list creep back up.
