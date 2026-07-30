@@ -158,6 +158,15 @@ Mandatory scalp HTF veto:
 - A scalp long into overhead 4H supply, or a scalp short into 4H demand, is capped at Watch Only unless the setup is explicitly a reaction trade at that 4H zone.
 - Reclaims, retests, and confirmations are judged by candle closes on the entry timeframe, not wicks.
 
+Mandatory scalp API pre-screen (added 2026-07-30, hard gates):
+
+- Before the TradingView structural read, run `node scripts/scalpScreen.mjs SYMBOL` for every coin resolving to Scalp trade type. This is a fast, objective pre-screen sourced from Bybit kline data - it does not replace the chart as source of truth, it decides whether a chart pass is worth spending before doing it.
+- VWAP gate: no scalp long below the 24h rolling VWAP, no scalp short above it. Same severity as the HTF veto - failing this caps the trade at Watch Only regardless of structure.
+- Directional-efficiency gate: the script's 1H/8-candle directional-efficiency score is the objective version of the Candle-Shape-Judgment Rule below. A score under 0.4 means CHOPPY - cap at Watch Only regardless of structure, same as a failed HTF veto. 0.4+ means the move is trending/orderly enough to proceed to the structural read.
+- The script's 9 EMA (1H and 15m) is an entry-timing reference, not a standalone signal: prefer entries on a pullback to the 9 EMA in the direction the VWAP/efficiency gates already support, layered onto the existing reclaim/retest/rejection triggers - it does not create a new activation basis by itself.
+- The script's 4H ATR% is the SL-buffer basis for the SL Buffer Calibration Rule below - use it instead of re-deriving ATR by hand from chart candles.
+- If both gates pass, proceed to the full chart-based structural read (4H veto, zones, liquidity, dual-activation) as normal - the pre-screen narrows candidates, it does not skip the chart pass.
+
 If the user gives only a coin name, choose the trade type based on chart structure, volatility, distance to target, and setup quality.
 
 The chart table and final written output must use the exact same trade type.

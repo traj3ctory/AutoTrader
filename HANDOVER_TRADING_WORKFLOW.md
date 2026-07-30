@@ -20,6 +20,7 @@ Move these files as a set:
 - `scripts/buildScorecard.mjs`
 - `scripts/scanMovers.mjs`
 - `scripts/checkAlerts.mjs`
+- `scripts/scalpScreen.mjs`
 - `WATCHLIST_TIER2.md`
 - `AUTOTRADER_TRADE_MAP_TEMPLATE.pine`
 - `HANDOVER_TRADING_WORKFLOW.md`
