@@ -1,40 +1,40 @@
-# Bybit mover scan — 2026-07-29T20:55:14.184Z
+# Bybit mover scan — 2026-07-31T09:15:10.407Z
 
 ## Top 10 gainers (24h)
-COTIUSDT.P       +54.26%  turnover $114.0M  price 0.017158
-UAIUSDT.P        +33.45%  turnover $30.5M  price 0.40683
-SOXSUSDT.P       +17.86%  turnover $24.3M  price 74.49
-BEATUSDT.P       +16.13%  turnover $50.0M  price 3.8655
-PRLUSDT.P        +13.76%  turnover $5.2M  price 0.21
-KAITOUSDT.P      +13.57%  turnover $43.2M  price 1.3061
-HOLOUSDT.P       +13.20%  turnover $3.7M  price 0.0783
-SSPCUSDT.P       +8.82%  turnover $12.5M  price 21.83
-REUSDT.P         +8.59%  turnover $11.5M  price 0.5046
-CXMTUSDT.P       +7.39%  turnover $7.3M  price 7.05
+SNXXUSDT.P       +70.00%  turnover $115.1M  price 11.73
+AXTIUSDT.P       +55.65%  turnover $5.9M  price 60.16
+MMTUSDT.P        +51.95%  turnover $58.6M  price 0.29984
+MUUUSDT.P        +50.10%  turnover $12.9M  price 29.21
+KORUUSDT.P       +48.88%  turnover $74.4M  price 17.94
+GIGGLEUSDT.P     +45.74%  turnover $24.2M  price 36.58
+SOXLUSDT.P       +35.67%  turnover $337.7M  price 128.72
+BEUSDT.P         +35.56%  turnover $5.4M  price 224.75
+NBISUSDT.P       +34.30%  turnover $16.8M  price 207.51
+IRENUSDT.P       +34.12%  turnover $5.3M  price 41.08
 
 ## Top 10 losers (24h)
-BANKUSDT.P       -37.38%  turnover $159.3M  price 0.15717
-SOONUSDT.P       -26.16%  turnover $21.9M  price 0.20165
-MUUUSDT.P        -24.48%  turnover $9.5M  price 18.88
-SNXXUSDT.P       -20.74%  turnover $45.3M  price 6.61
-KORUUSDT.P       -18.73%  turnover $66.1M  price 11.93
-LAUSDT.P         -18.10%  turnover $19.5M  price 0.05184
-SOXLUSDT.P       -17.55%  turnover $613.0M  price 90.04
-AAOIUSDT.P       -15.10%  turnover $4.9M  price 75.23
-0GUSDT.P         -13.89%  turnover $4.4M  price 0.1444
-BTWUSDT.P        -13.05%  turnover $24.6M  price 0.0798
+BANKUSDT.P       -38.99%  turnover $173.4M  price 0.06696
+SOXSUSDT.P       -32.61%  turnover $18.0M  price 47.58
+VANAUSDT.P       -13.41%  turnover $5.1M  price 0.9043
+VANRYUSDT.P      -12.00%  turnover $4.4M  price 0.003638
+ESPUSDT.P        -11.94%  turnover $37.1M  price 0.0672
+ALLOUSDT.P       -8.82%  turnover $5.4M  price 0.27522
+ZROUSDT.P        -8.68%  turnover $4.5M  price 0.7124
+GWEIUSDT.P       -8.49%  turnover $3.5M  price 0.01531
+AAPLUSDT.P       -8.39%  turnover $12.4M  price 310.59
+ZAMAUSDT.P       -8.08%  turnover $5.7M  price 0.05402
 
 ## Intraday range movers (net 24h% small, but swung hard within the day)
-BANKUSDT.P       range 77.5% (H 0.25491 / L 0.13315)  net -37.38%  turnover $159.3M  price 0.15717
-BTWUSDT.P        range 45.8% (H 0.10905 / L 0.07251)  net -13.05%  turnover $24.6M  price 0.0798
-SOONUSDT.P       range 44.4% (H 0.28607 / L 0.19663)  net -26.16%  turnover $21.9M  price 0.20165
-KORUUSDT.P       range 43.2% (H 15.66 / L 10.51)  net -18.73%  turnover $66.1M  price 11.93
-MUUUSDT.P        range 43.0% (H 26.69 / L 18.58)  net -24.48%  turnover $9.5M  price 18.88
-AKEUSDT.P        range 42.2% (H 0.0048395 / L 0.0032055)  net -4.39%  turnover $85.1M  price 0.003871
-SNXXUSDT.P       range 40.8% (H 9.13 / L 6.43)  net -20.74%  turnover $45.3M  price 6.61
-UBUSDT.P         range 34.5% (H 0.16092 / L 0.11671)  net -3.59%  turnover $20.0M  price 0.128
-ZILUSDT.P        range 33.1% (H 0.003281 / L 0.002457)  net -9.83%  turnover $27.0M  price 0.002487
-SOXLUSDT.P       range 30.1% (H 115.99 / L 88.93)  net -17.55%  turnover $613.0M  price 90.04
+BANKUSDT.P       range 86.8% (H 0.11246 / L 0.05437)  net -38.99%  turnover $173.4M  price 0.06696
+UAIUSDT.P        range 39.3% (H 0.49075 / L 0.34139)  net +2.37%  turnover $33.0M  price 0.38025
+ESPORTSUSDT.P    range 35.7% (H 0.023244 / L 0.016253)  net -1.80%  turnover $17.3M  price 0.01956
+RLCUSDT.P        range 32.7% (H 0.371 / L 0.268)  net +13.57%  turnover $3.4M  price 0.3146
+COTIUSDT.P       range 31.3% (H 0.017499 / L 0.012751)  net -6.62%  turnover $57.7M  price 0.015154
+ESPUSDT.P        range 29.2% (H 0.0863 / L 0.06665)  net -11.94%  turnover $37.1M  price 0.0672
+ZHIPUUSDT.P      range 26.0% (H 142.06 / L 109.66)  net +13.71%  turnover $5.8M  price 124.69
+EPICUSDT.P       range 24.4% (H 0.8945 / L 0.7072)  net +6.45%  turnover $8.2M  price 0.7675
+AKEUSDT.P        range 23.0% (H 0.00472 / L 0.0038038)  net -0.84%  turnover $55.1M  price 0.0039875
+CFXUSDT.P        range 21.9% (H 0.04982 / L 0.0402)  net +6.04%  turnover $9.6M  price 0.04387
 
 Filters: USDT perps only, BTC/ETH excluded (market filters not candidates), min $3M 24h turnover.
 Range-mover filters: 24h high-low span >= 8% of price, net 24h% move <= 60% of that range (i.e. it round-tripped rather than trending).
