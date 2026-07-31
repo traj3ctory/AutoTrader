@@ -55,6 +55,43 @@ function ema(values, period) {
   return e;
 }
 
+// Full EMA series (not just the final value) - needed to detect crossovers and slope.
+function emaSeries(values, period) {
+  if (values.length < period) return [];
+  const k = 2 / (period + 1);
+  const out = new Array(values.length).fill(null);
+  let e = values.slice(0, period).reduce((a, b) => a + b, 0) / period;
+  out[period - 1] = e;
+  for (let i = period; i < values.length; i++) {
+    e = values[i] * k + e * (1 - k);
+    out[i] = e;
+  }
+  return out;
+}
+
+// 9/20 EMA cross + slope, used as the required entry trigger once price is
+// already reacting at a mapped zone (per ANALYZE_PROMPT.md's Scalp Entry
+// Trigger rule) - never a standalone signal, since a bare EMA cross in open
+// air is exactly the whipsaw-prone setup the efficiency gate exists to block.
+function emaCrossSignal(candles, lookback = 3) {
+  const closes = candles.map((c) => c.c);
+  const e9 = emaSeries(closes, 9);
+  const e20 = emaSeries(closes, 20);
+  const n = closes.length;
+  if (!e9[n - 1] || !e20[n - 1] || !e9[n - 1 - lookback] || !e20[n - 1 - lookback]) {
+    return { cross: "N/A", slope: "N/A" };
+  }
+  let cross = "NONE";
+  for (let i = n - lookback; i < n; i++) {
+    if (e9[i] == null || e20[i] == null || e9[i - 1] == null || e20[i - 1] == null) continue;
+    if (e9[i - 1] <= e20[i - 1] && e9[i] > e20[i]) cross = "BULLISH_CROSS";
+    if (e9[i - 1] >= e20[i - 1] && e9[i] < e20[i]) cross = "BEARISH_CROSS";
+  }
+  const slopeVal = e9[n - 1] - e9[n - 1 - lookback];
+  const slope = slopeVal > 0 ? "UP" : slopeVal < 0 ? "DOWN" : "FLAT";
+  return { cross, slope, ema9: e9[n - 1], ema20: e20[n - 1] };
+}
+
 function pivots(candles, lookback = 2, window = 40) {
   const recent = candles.slice(-window);
   const highs = [], lows = [];
@@ -84,13 +121,14 @@ function vwap24h(candles) {
 }
 
 async function screen(symbol) {
-  const [c4h, c1h, c15m] = await Promise.all([
+  const [c4h, c1h, c15m, c5m] = await Promise.all([
     fetchKline(symbol, "240"),
     fetchKline(symbol, "60"),
     fetchKline(symbol, "15"),
+    fetchKline(symbol, "5"),
   ]);
 
-  const price = c15m[c15m.length - 1].c;
+  const price = c5m[c5m.length - 1].c;
   const a4h = atr(c4h, 14);
   const { highs, lows } = pivots(c4h, 2, 40);
   const nearSupply = highs.filter((h) => h > price).slice(-3).reverse();
@@ -99,6 +137,10 @@ async function screen(symbol) {
   const ema9_15m = ema(c15m.map((c) => c.c), 9);
   const vwap = vwap24h(c1h);
   const effLong = directionalEfficiency(c1h, 8);
+
+  // 15m sets direction (per the multi-timeframe EMA approach), 5m times entry.
+  const dirSignal = emaCrossSignal(c15m, 3);
+  const timingSignal = emaCrossSignal(c5m, 3);
 
   const vwapBias = vwap == null ? "N/A" : price > vwap ? "LONG-OK" : "SHORT-OK";
   const effGate = effLong >= EFFICIENCY_GATE ? "TRENDING (pass)" : "CHOPPY (fail - Watch Only cap)";
@@ -112,6 +154,7 @@ async function screen(symbol) {
     vwap, vwapBias,
     directionalEfficiency: effLong,
     effGate,
+    dirSignal, timingSignal,
   };
 }
 
@@ -129,6 +172,9 @@ for (const symbol of symbols) {
   console.log(`VWAP (24h): ${r.vwap?.toFixed(6)}  -> GATE: ${r.vwapBias}`);
   console.log(`9 EMA 1H: ${r.ema9_1h?.toFixed(6)} (price ${r.priceVsEma1h})  | 9 EMA 15m: ${r.ema9_15m?.toFixed(6)}`);
   console.log(`Directional efficiency (1H, 8c): ${r.directionalEfficiency.toFixed(2)} -> GATE: ${r.effGate}`);
+  console.log(`15m EMA 9/20 (direction): cross=${r.dirSignal.cross}, slope=${r.dirSignal.slope}`);
+  console.log(`5m EMA 9/20 (entry timing): cross=${r.timingSignal.cross}, slope=${r.timingSignal.slope}`);
+  console.log(`  -> Entry trigger valid ONLY if price is already reacting at a mapped zone (see chart read). A bare cross here is not a signal on its own.`);
   console.log(`Nearest 4H supply: ${r.nearSupply.join(", ") || "none in window"}`);
   console.log(`Nearest 4H demand: ${r.nearDemand.join(", ") || "none in window"}`);
 }

@@ -163,9 +163,18 @@ Mandatory scalp API pre-screen (added 2026-07-30, hard gates):
 - Before the TradingView structural read, run `node scripts/scalpScreen.mjs SYMBOL` for every coin resolving to Scalp trade type. This is a fast, objective pre-screen sourced from Bybit kline data - it does not replace the chart as source of truth, it decides whether a chart pass is worth spending before doing it.
 - VWAP gate: no scalp long below the 24h rolling VWAP, no scalp short above it. Same severity as the HTF veto - failing this caps the trade at Watch Only regardless of structure.
 - Directional-efficiency gate: the script's 1H/8-candle directional-efficiency score is the objective version of the Candle-Shape-Judgment Rule below. A score under 0.4 means CHOPPY - cap at Watch Only regardless of structure, same as a failed HTF veto. 0.4+ means the move is trending/orderly enough to proceed to the structural read.
-- The script's 9 EMA (1H and 15m) is an entry-timing reference, not a standalone signal: prefer entries on a pullback to the 9 EMA in the direction the VWAP/efficiency gates already support, layered onto the existing reclaim/retest/rejection triggers - it does not create a new activation basis by itself.
 - The script's 4H ATR% is the SL-buffer basis for the SL Buffer Calibration Rule below - use it instead of re-deriving ATR by hand from chart candles.
 - If both gates pass, proceed to the full chart-based structural read (4H veto, zones, liquidity, dual-activation) as normal - the pre-screen narrows candidates, it does not skip the chart pass.
+
+Scalp Entry Trigger Rule (added 2026-07-31, required, not optional): once VWAP and efficiency both pass AND price is chart-verified reacting at a mapped zone (a reclaim/retest/rejection already in progress, per the structural read above), the actual entry trigger is a 9/20 EMA cross with slope, read multi-timeframe:
+
+- 15m sets direction: a 9-over-20 EMA cross (bullish or bearish) with the 9 EMA sloping the same direction as the intended trade.
+- 5m times entry: the same cross confirmed on 5m, in the same direction as the 15m read.
+- `scripts/scalpScreen.mjs` reports both (`dirSignal` for 15m, `timingSignal` for 5m) alongside the VWAP/efficiency gates.
+- This is a required trigger, not optional confirmation - do not enter a scalp on zone-reaction alone without the 15m+5m cross agreeing, and do not enter on an EMA cross alone without a zone reaction. Either one without the other is exactly the whipsaw-prone setup the efficiency gate exists to block. Both must be present.
+- If 15m and 5m disagree on direction, treat as WAIT - no entry until they align.
+
+False Zone Break Rule (added 2026-07-31): a break of a mapped zone is false - and the zone stays live, not invalidated - if it was wick-only: the candle's high/low pierced the level but the candle closed back inside the zone. Only a close beyond the zone (per the existing close-based confirmation standard above) counts as a real break. Do not treat a wick-only pierce as invalidation, a failed reclaim, or a trigger of any kind - it is noise until a close confirms it.
 
 If the user gives only a coin name, choose the trade type based on chart structure, volatility, distance to target, and setup quality.
 
