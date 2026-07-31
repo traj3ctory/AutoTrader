@@ -224,6 +224,46 @@
       "notes": "Continued straight through the 0.5215-0.528 retest-short zone without ever revisiting it - that thesis is moot, not triggered. Now testing the deeper 0.49-0.50 daily support flagged in the prior pass, same-day. Candle shape check (1m, full session): continuous orderly decline, not spike-and-reverse - a real directional move, but still no structural reaction visible at support. This is the worst-performing core-6 coin against a green BTC/ETH tape, a genuine coin-specific divergence with no news explanation found.",
       "analyzed_at": "2026-07-30T19:04:00Z",
       "activation_basis": "no-entry-yet"
+    },
+    "LITUSDT.P": {
+      "coin": "LITUSDT.P",
+      "exchange": "BYBIT",
+      "trade_type": "Scalp",
+      "proposed_type": "Proposed Wait / No Trade",
+      "bias": "Fresh TradingView scalp read (2026-07-31 11:21 UTC+1) across 4H -> 1H -> 15m -> 5m. LIT remains inside a broad post-rally range: 4H demand is roughly 1.98-2.05 and overhead supply begins around 2.28-2.38. The 1H/15m structure is choppy between repeated support near 2.16-2.18 and resistance near 2.22-2.24, then 2.28-2.30. Current price near 2.19 is between those edges. The 5m bounce from approximately 2.166 has already moved off the sweep low but is running directly into the first 2.205-2.22 reaction zone, leaving inadequate honest R:R for a new long; shorting here would sell directly into support.",
+      "btc_eth_filter": "Conflicting - BTC is down about 1.6% and testing its 63700-63750 context support after rejecting the 65300-66500 supply stack; ETH is down about 1.7% and printing lower highs below the recent 1910-1970 range. This weak backdrop vetoes a marginal LIT long. It supports shorts directionally, but LIT itself is too close to local support for a safe short entry.",
+      "catalyst": "Unverified - TradingView shows only a three-day-old Lighter founder/token-value headline; no fresh visible catalyst explains today's roughly 4% decline. Check manually before trading any sudden expansion.",
+      "setup_type": "No Clean Setup",
+      "setup_rating": "Watch Only",
+      "setup_state": "WAIT / SKIP",
+      "position_status": "NO POSITION",
+      "direction": "Wait",
+      "entry": {
+        "low": null,
+        "high": null,
+        "basis": "No entry now. Primary deep-pullback watch: a 5m sweep/reclaim and MSS from the 4H demand area around 1.98-2.05. Secondary break-and-retest watch: a 5m close above 2.237 followed by a held retest, but that long remains capped at Watch Only because 4H supply starts near 2.28 and the first opposing zone leaves weak R:R. Alternate short watch: rejection/MSS from 2.28-2.30, only after price reaches the zone; do not short current support.",
+        "actual": null
+      },
+      "watch_zone": {
+        "low": 2.16,
+        "high": 2.237,
+        "label": "LOCAL RANGE - MID-ZONE / NO ENTRY",
+        "trigger": "Bullish: 5m close above 2.237 and held retest, with BTC holding 63700-63750; still Watch Only into 2.28 supply unless structure opens room. Deep long: sweep/reclaim plus MSS from 1.98-2.05 4H demand. Bearish: rejection/MSS from 2.28-2.30 supply; a clean loss of 2.16 is information, not an automatic chase entry."
+      },
+      "reclaim": 2.237,
+      "sl": null,
+      "sl_quality": "N/A - no R:R-valid entry",
+      "tp": [],
+      "rr_tp1": null,
+      "rr_tp2": null,
+      "invalidation": "No active thesis to invalidate. The local bounce idea fails on 5m acceptance below 2.16; the broader 4H long context fails if 1.98 demand is accepted below. A short thesis is not active unless 2.28-2.30 produces a confirmed rejection/MSS.",
+      "nearest_liquidity": "Buy-side: 2.205-2.22 first reaction zone, 2.237 local pivot, then 2.28-2.30 repeated highs/4H supply edge. Sell-side: 2.175-2.16 repeated local lows, then 2.145, followed by the 1.98-2.05 4H demand zone.",
+      "reclaim_status": "Not reclaimed - price is below 2.205-2.237 resistance after bouncing from the 2.16-2.18 support cluster.",
+      "relative_strength": "LIT is down about 4%, materially weaker than BTC and ETH at roughly -1.6% to -1.7%. That weakness argues against a blind long, but current location at local support makes a fresh short late rather than clean.",
+      "final_action": "WAIT / SKIP - no trade at 2.19. Price is mid-range, the immediate long runs into 2.205-2.22 before meeting the 1.5R scalp floor, and the immediate short sells into 2.16-2.18 support. Reassess only after a reaction at 1.98-2.05 demand, a held break/retest above 2.237 with room through 2.28, or a confirmed rejection from 2.28-2.30 supply.",
+      "notes": "Fresh chart read completed successfully. Candle shape is two-sided range chop, not an orderly continuation and not a single spike-and-reverse. No SL or TP ladder is stored because neither direction clears the structural-zone and conservative-edge R:R gates at current price. Dual watch paths are recorded: deep-pullback reaction at 4H demand and break/retest above 2.237; both require confirmation.",
+      "analyzed_at": "2026-07-31T10:21:23Z",
+      "activation_basis": "no-entry-yet"
     }
   },
   "journal": [
