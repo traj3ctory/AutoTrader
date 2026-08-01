@@ -1,2 +1,4 @@
 .DS_Store
 .alert_state.json
+backtests/*/data/
+scripts/__pycache__/
