@@ -21,6 +21,8 @@ Move these files as a set:
 - `scripts/scanMovers.mjs`
 - `scripts/checkAlerts.mjs`
 - `scripts/scalpScreen.mjs`
+- `scripts/strategyBacktest.py` and `scripts/scalpBacktestV3.py` (backtest engines behind the current Scalp Entry Rule in `ANALYZE_PROMPT.md` - re-run before changing scalp rules again)
+- `backtests/` (results only - raw candle cache under `backtests/*/data/` is gitignored and rebuilds from Bybit on demand)
 - `WATCHLIST_TIER2.md`
 - `AUTOTRADER_TRADE_MAP_TEMPLATE.pine`
 - `HANDOVER_TRADING_WORKFLOW.md`

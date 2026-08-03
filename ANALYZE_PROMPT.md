@@ -149,8 +149,8 @@ If the chart has stale or conflicting drawings, mark the state as `Stale Map / N
 
 First decide the trade type:
 
-- Normal intraday/day trade: use 1D -> 4H -> 1H, with entry planned on 1H and trigger confirmation on 15m or 1H closes.
-- Scalp: use 4H -> 1H -> 15m -> 5m, with entry planned on 5m.
+- Normal intraday/day trade: use 1D -> 4H -> 1H, with entry planned on 1H, refined to 15m for the confirmation candle (rejection: full body closes outside the zone with a long wick inside it; OR engulfing: full body covers the previous candle's body). Limit order at the zone's entry line.
+- Scalp: use 4H -> 1H -> 15m, entry triggered on the 15m 9/20 EMA cross (see Scalp Entry Rule below) at market price - no 5m timeframe in the structure stack; that was an earlier untested addition and has been retired.
 
 Mandatory scalp HTF veto:
 
@@ -167,13 +167,19 @@ Scalp API pre-screen (added 2026-07-30; downgraded from hard gates to reported c
 - The script's 4H ATR% is the SL-buffer basis for the SL Buffer Calibration Rule below - use it instead of re-deriving ATR by hand from chart candles.
 - Always proceed to the full chart-based structural read (4H veto, zones, liquidity, dual-activation). The pre-screen supplies context and the ATR buffer; it no longer decides whether a coin is worth a chart pass.
 
-Scalp Entry Trigger Rule (added 2026-07-31, required, not optional): once price is chart-verified reacting at a mapped zone (a reclaim/retest/rejection already in progress, per the structural read above), the actual entry trigger is a 9/20 EMA cross with slope, read multi-timeframe:
+Scalp Entry Rule (v4, 2026-08-01 - backtest-validated, see `scripts/scalpBacktestV3.py` and `backtests/2026-07-31/`): structure is 4H -> 1H zones refined to 15m. The entry trigger is a 9/20 EMA cross on 15m (single timeframe - the earlier 15m+5m multi-timeframe version was never tested and is retired in favor of this validated one):
 
-- 15m sets direction: a 9-over-20 EMA cross (bullish or bearish) with the 9 EMA sloping the same direction as the intended trade.
-- 5m times entry: the same cross confirmed on 5m, in the same direction as the 15m read.
-- `scripts/scalpScreen.mjs` reports both (`dirSignal` for 15m, `timingSignal` for 5m) alongside the VWAP/efficiency gates.
-- This is a required trigger, not optional confirmation - do not enter a scalp on zone-reaction alone without the 15m+5m cross agreeing, and do not enter on an EMA cross alone without a zone reaction. An EMA cross with no zone behind it is the whipsaw case; a zone reaction with no cross is an unconfirmed guess. Both must be present. NOTE: this trigger has NOT been backtested - unlike the VWAP/efficiency gates it replaced, its expectancy is unmeasured. Treat it as a discipline rule, not a proven edge, until tested.
-- If 15m and 5m disagree on direction, treat as WAIT - no entry until they align.
+- Cross: 9 EMA crosses above 20 EMA = long signal; 9 crosses below 20 = short signal.
+- VWAP confirmation: long needs price above the session VWAP, short needs price below it. VWAP resets every day (00:00 UTC anchor) - do not use a rolling window.
+- Slope confirmation: after the cross, both EMAs must be sloping in the trade's direction.
+- Zone alignment is MANDATORY, not a soft preference: the cross must occur at or immediately after a reaction (retest/rejection) at a 15m-refined zone. This was tested both ways - zone-required trades hold the edge; the framework's earlier "consider" wording undersold how load-bearing this is. No zone, no trade, regardless of how clean the cross looks.
+- Shorts only, two extra required gates (longs are unaffected by either): 1D structure must also read bearish or range/neutral (not just 4H) before a short is valid, AND a 5m micro-structure break (price breaking the prior 5-candle swing low) must confirm right at the signal. Backtest result: adding these turned shorts from a net loser (-0.032R avg, -1.13R total over the test period) into a net winner (+0.140R avg, positive total) with no cost to longs. Keep both, permanently.
+- Entry at market price (not a limit order - this is the scalp/Intraday distinction: Intraday uses a limit at the zone edge, Scalp chases the confirmed cross at market).
+- SL beyond the zone's exit line (the far edge, not the entry edge), buffered by the SL Buffer Calibration Rule's ATR method.
+- TP at the prior peak/swing before the move, or the nearest opposing 15m zone, whichever is closer - respect the TP Zone Validity Rule (near edge only).
+- R:R floor 1:1.5, 1:2 preferred when the next zone allows it - same floor logic as Trade Rules below.
+- Time-stop (v4, tuned): at 6 hours held, if the trade is at -0.3R or worse (i.e. actively losing, not merely undecided), tighten the stop to breakeven. Do NOT use a "must be +0.3R favorable by 6h or breakeven" version - that was tested and backtested at -0.132R avg / 15.4% win rate, a severe regression, because it cuts off winners that simply hadn't resolved yet rather than protecting against real drawdown. The -0.3R-or-worse version tested at +0.234R avg / 37.7% win, beating the no-time-stop baseline (+0.205R avg).
+- Session filter: tested and REJECTED (2026-08-01) - restricting shorts to 06:00-17:00 UTC and half-sizing 18:00-23:00 cost ~6R over the test period with no offsetting benefit. Do not add a session filter without fresh backtest evidence it helps; the prior attempt didn't.
 
 False Zone Break Rule (added 2026-07-31): a break of a mapped zone is false - and the zone stays live, not invalidated - if it was wick-only: the candle's high/low pierced the level but the candle closed back inside the zone. Only a close beyond the zone (per the existing close-based confirmation standard above) counts as a real break. Do not treat a wick-only pierce as invalidation, a failed reclaim, or a trigger of any kind - it is noise until a close confirms it.
 
@@ -820,7 +826,7 @@ Also state the activation basis:
 
 Position size is optional unless the user asks.
 
-The user may use 1.5% of available balance per trade.
+Per-trade risk (corrected 2026-08-01 - was a flat 1.5% for everything, which didn't match either strategy doc): Intraday 1% of available balance per trade; Scalp 0.5% per trade.
 
 Optional risk rules:
 
