@@ -113,8 +113,15 @@ function directionalEfficiency(candles, n = 8) {
   return totalRange > 0 ? netMove / totalRange : 0;
 }
 
-function vwap24h(candles) {
-  const seg = candles.slice(-24);
+// Session-anchored VWAP (resets 00:00 UTC daily), matching the "VWAP resets
+// every day" rule - NOT a rolling window. Computed on the signal timeframe
+// (5m) per the corrected Scalp Entry Rule (2026-08-03: this was previously a
+// 24h rolling average on 1H candles, a real bug - fixed here).
+function sessionVwap(candles5m) {
+  const now = candles5m[candles5m.length - 1].t;
+  const dayStart = Math.floor(now / 86400000) * 86400000;
+  const seg = candles5m.filter((c) => c.t >= dayStart);
+  if (!seg.length) return null;
   const num = seg.reduce((sum, c) => sum + ((c.h + c.l + c.c) / 3) * c.v, 0);
   const den = seg.reduce((sum, c) => sum + c.v, 0);
   return den > 0 ? num / den : null;
@@ -134,13 +141,13 @@ async function screen(symbol) {
   const nearSupply = highs.filter((h) => h > price).slice(-3).reverse();
   const nearDemand = lows.filter((l) => l < price).slice(-3);
   const ema9_1h = ema(c1h.map((c) => c.c), 9);
-  const ema9_15m = ema(c15m.map((c) => c.c), 9);
-  const vwap = vwap24h(c1h);
+  const vwap = sessionVwap(c5m);
   const effLong = directionalEfficiency(c1h, 8);
 
-  // 15m sets direction (per the multi-timeframe EMA approach), 5m times entry.
-  const dirSignal = emaCrossSignal(c15m, 3);
-  const timingSignal = emaCrossSignal(c5m, 3);
+  // Signal timeframe is 5m, per the corrected Scalp Entry Rule (4H trend ->
+  // 1H zone -> 15m refinement -> 5m EMA/VWAP/entry). 15m is zone-refinement
+  // only and never produces the cross itself.
+  const signal = emaCrossSignal(c5m, 3);
 
   const vwapBias = vwap == null ? "N/A" : price > vwap ? "LONG-OK" : "SHORT-OK";
   const effGate = effLong >= EFFICIENCY_GATE ? "TRENDING (pass)" : "CHOPPY (fail - Watch Only cap)";
@@ -149,12 +156,12 @@ async function screen(symbol) {
     symbol, price,
     atr4hPct: a4h ? (a4h / price) * 100 : null,
     nearSupply, nearDemand,
-    ema9_1h, ema9_15m,
+    ema9_1h,
     priceVsEma1h: ema9_1h ? (price > ema9_1h ? "ABOVE" : "BELOW") : "N/A",
     vwap, vwapBias,
     directionalEfficiency: effLong,
     effGate,
-    dirSignal, timingSignal,
+    signal,
   };
 }
 
@@ -169,12 +176,11 @@ for (const symbol of symbols) {
   console.log(`\n===== ${r.symbol} =====`);
   console.log(`Price: ${r.price}`);
   console.log(`4H ATR%: ${r.atr4hPct?.toFixed(2)}%  (SL buffer basis: ~50% of this beyond structure)`);
-  console.log(`VWAP (24h): ${r.vwap?.toFixed(6)}  -> GATE: ${r.vwapBias}`);
-  console.log(`9 EMA 1H: ${r.ema9_1h?.toFixed(6)} (price ${r.priceVsEma1h})  | 9 EMA 15m: ${r.ema9_15m?.toFixed(6)}`);
+  console.log(`Session VWAP (00:00 UTC reset): ${r.vwap?.toFixed(6)}  -> GATE: ${r.vwapBias}`);
+  console.log(`9 EMA 1H (trend reference only): ${r.ema9_1h?.toFixed(6)} (price ${r.priceVsEma1h})`);
   console.log(`Directional efficiency (1H, 8c): ${r.directionalEfficiency.toFixed(2)} -> GATE: ${r.effGate}`);
-  console.log(`15m EMA 9/20 (direction): cross=${r.dirSignal.cross}, slope=${r.dirSignal.slope}`);
-  console.log(`5m EMA 9/20 (entry timing): cross=${r.timingSignal.cross}, slope=${r.timingSignal.slope}`);
-  console.log(`  -> Entry trigger valid ONLY if price is already reacting at a mapped zone (see chart read). A bare cross here is not a signal on its own.`);
+  console.log(`5m EMA 9/20 (SIGNAL TIMEFRAME): cross=${r.signal.cross}, slope=${r.signal.slope}`);
+  console.log(`  -> Entry trigger valid ONLY if this 5m cross occurred at/immediately after a reaction at the 15m-refined zone. A bare cross with no zone is not a signal.`);
   console.log(`Nearest 4H supply: ${r.nearSupply.join(", ") || "none in window"}`);
   console.log(`Nearest 4H demand: ${r.nearDemand.join(", ") || "none in window"}`);
 }

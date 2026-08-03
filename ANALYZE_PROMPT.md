@@ -150,7 +150,7 @@ If the chart has stale or conflicting drawings, mark the state as `Stale Map / N
 First decide the trade type:
 
 - Normal intraday/day trade: use 1D -> 4H -> 1H, with entry planned on 1H, refined to 15m for the confirmation candle (rejection: full body closes outside the zone with a long wick inside it; OR engulfing: full body covers the previous candle's body). Limit order at the zone's entry line.
-- Scalp: use 4H -> 1H -> 15m, entry triggered on the 15m 9/20 EMA cross (see Scalp Entry Rule below) at market price - no 5m timeframe in the structure stack; that was an earlier untested addition and has been retired.
+- Scalp: use 4H -> 1H -> 15m -> 5m. 4H sets trend, 1H draws the zone, 15m refines it - 5m is where the 9/20 EMA cross, VWAP, and the actual entry live (see Scalp Entry Rule below), at market price.
 
 Mandatory scalp HTF veto:
 
@@ -167,13 +167,14 @@ Scalp API pre-screen (added 2026-07-30; downgraded from hard gates to reported c
 - The script's 4H ATR% is the SL-buffer basis for the SL Buffer Calibration Rule below - use it instead of re-deriving ATR by hand from chart candles.
 - Always proceed to the full chart-based structural read (4H veto, zones, liquidity, dual-activation). The pre-screen supplies context and the ATR buffer; it no longer decides whether a coin is worth a chart pass.
 
-Scalp Entry Rule (v4, 2026-08-01 - backtest-validated, see `scripts/scalpBacktestV3.py` and `backtests/2026-07-31/`): structure is 4H -> 1H zones refined to 15m. The entry trigger is a 9/20 EMA cross on 15m (single timeframe - the earlier 15m+5m multi-timeframe version was never tested and is retired in favor of this validated one):
+Scalp Entry Rule (v4, 2026-08-01 - backtest-validated, see `scripts/scalpBacktestV3.py` and `backtests/2026-07-31/`; CORRECTED 2026-08-03 - a documentation error previously said the cross was on 15m, but the actual backtested code has always computed it on 5m. This section now matches the code and the user's stated flow: 4H trend -> 1H zone -> 15m refinement -> 5m EMA/VWAP/entry): the entry trigger is a 9/20 EMA cross on 5m - NOT 15m. 15m is the zone-refinement timeframe only, never the signal timeframe.
 
-- Cross: 9 EMA crosses above 20 EMA = long signal; 9 crosses below 20 = short signal.
-- VWAP confirmation: long needs price above the session VWAP, short needs price below it. VWAP resets every day (00:00 UTC anchor) - do not use a rolling window.
-- Slope confirmation: after the cross, both EMAs must be sloping in the trade's direction.
-- Zone alignment is MANDATORY, not a soft preference: the cross must occur at or immediately after a reaction (retest/rejection) at a 15m-refined zone. This was tested both ways - zone-required trades hold the edge; the framework's earlier "consider" wording undersold how load-bearing this is. No zone, no trade, regardless of how clean the cross looks.
-- Shorts only, two extra required gates (longs are unaffected by either): 1D structure must also read bearish or range/neutral (not just 4H) before a short is valid, AND a 5m micro-structure break (price breaking the prior 5-candle swing low) must confirm right at the signal. Backtest result: adding these turned shorts from a net loser (-0.032R avg, -1.13R total over the test period) into a net winner (+0.140R avg, positive total) with no cost to longs. Keep both, permanently.
+- Cross: 9 EMA crosses above 20 EMA on the 5m chart = long signal; 9 crosses below 20 = short signal.
+- VWAP confirmation: long needs price above the session VWAP (computed on 5m), short needs price below it. VWAP resets every day (00:00 UTC anchor) - do not use a rolling window.
+- Slope confirmation: after the cross, both EMAs (on 5m) must be sloping in the trade's direction.
+- Zone alignment is MANDATORY, not a soft preference: the 5m cross must occur at or immediately after a reaction (retest/rejection) at the 15m-refined zone (itself drawn from a 1H zone). This was tested both ways - zone-required trades hold the edge; the framework's earlier "consider" wording undersold how load-bearing this is. No zone, no trade, regardless of how clean the cross looks. If price has already moved away from the zone by the time the 5m candle confirms the cross, that candle no longer qualifies as "at or immediately after" - treat it as a missed signal, not a chase; wait for a retest or a fresh reaction.
+- The confirming candle must be a CLOSED 5m candle, not a live/forming one.
+- Shorts only, two extra required gates (longs are unaffected by either): 1D structure must also read bearish or range/neutral (not just 4H) before a short is valid, AND a micro-structure break on the same 5m signal timeframe (price breaking the prior 5-candle swing low) must confirm right at the signal. Backtest result: adding these turned shorts from a net loser (-0.032R avg, -1.13R total over the test period) into a net winner (+0.140R avg, positive total) with no cost to longs. Keep both, permanently.
 - Entry at market price (not a limit order - this is the scalp/Intraday distinction: Intraday uses a limit at the zone edge, Scalp chases the confirmed cross at market).
 - SL beyond the zone's exit line (the far edge, not the entry edge), buffered by the SL Buffer Calibration Rule's ATR method.
 - TP at the prior peak/swing before the move, or the nearest opposing 15m zone, whichever is closer - respect the TP Zone Validity Rule (near edge only).
