@@ -24,8 +24,8 @@ ROOT = Path(__file__).parent.parent
 DATA_DIR = ROOT / "backtests" / "2026-07-31" / "data"
 
 MICRO_LOOKBACK = 5
-TIME_STOP_CANDLES = 72  # 6h at 5m
-TIME_STOP_MIN_R = 0.3
+TIME_STOP_CANDLES_DEFAULT = 72  # 6h at 5m
+TIME_STOP_MIN_R_DEFAULT = 0.3
 SESSION_FULL = (6, 17)     # 06:00-17:59 UTC: both directions, full size
 SESSION_LONG_ONLY_NIGHT = (0, 5)   # 00:00-05:59 UTC: longs only, full size
 SESSION_LONG_ONLY_EVE = (18, 23)   # 18:00-23:59 UTC: longs only, half size
@@ -57,7 +57,7 @@ def micro_break(candles, i: int, direction: str) -> bool:
     return candles[i].h > swing_high
 
 
-def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: bool = False, session_filter: bool = False, time_stop: bool = False) -> list:
+def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: bool = False, session_filter: bool = False, time_stop: bool = False, time_stop_candles: int = TIME_STOP_CANDLES_DEFAULT, time_stop_min_r: float = TIME_STOP_MIN_R_DEFAULT) -> list:
     candles = frames["5"]
     closes = [c.c for c in candles]
     e9, e20 = sb.ema(closes, 9), sb.ema(closes, 20)
@@ -92,11 +92,11 @@ def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: boo
         if position is not None:
             direction = position["direction"]
             # v3: 6h / 0.3R time-stop -> tighten to breakeven
-            if time_stop and not position.get("breakeven_applied") and i - position["entry_index"] >= TIME_STOP_CANDLES:
+            if time_stop and not position.get("breakeven_applied") and i - position["entry_index"] >= time_stop_candles:
                 risk = abs(position["entry"] - position["orig_stop"])
                 unreal = ((candle.c - position["entry"]) if direction == "long"
                           else (position["entry"] - candle.c)) / risk if risk else 0
-                if unreal < TIME_STOP_MIN_R:
+                if unreal < time_stop_min_r:
                     position["stop"] = position["entry"]
                 position["breakeven_applied"] = True
 
@@ -201,6 +201,17 @@ VARIANTS = {
     "C_session":      dict(short_gates=False, session_filter=True,  time_stop=False),
     "D_timestop":     dict(short_gates=False, session_filter=False, time_stop=True),
     "E_full_v3":      dict(short_gates=True,  session_filter=True,  time_stop=True),
+    # Time-stop tuning: looser thresholds/windows to find one that keeps risk
+    # control without cutting off winners that just haven't resolved yet.
+    "D1_6h_0.0R":     dict(short_gates=False, session_filter=False, time_stop=True, time_stop_candles=72,  time_stop_min_r=0.0),
+    "D2_6h_-0.3R":    dict(short_gates=False, session_filter=False, time_stop=True, time_stop_candles=72,  time_stop_min_r=-0.3),
+    "D3_12h_0.3R":    dict(short_gates=False, session_filter=False, time_stop=True, time_stop_candles=144, time_stop_min_r=0.3),
+    "D4_12h_0.0R":    dict(short_gates=False, session_filter=False, time_stop=True, time_stop_candles=144, time_stop_min_r=0.0),
+    "D5_12h_-0.3R":   dict(short_gates=False, session_filter=False, time_stop=True, time_stop_candles=144, time_stop_min_r=-0.3),
+    "D6_18h_-0.3R":   dict(short_gates=False, session_filter=False, time_stop=True, time_stop_candles=216, time_stop_min_r=-0.3),
+    # Best-guess combo: short gates (proven) + a tuned time-stop, no session filter.
+    "F_gates+D5":     dict(short_gates=True,  session_filter=False, time_stop=True, time_stop_candles=144, time_stop_min_r=-0.3),
+    "G_gates+D2":     dict(short_gates=True,  session_filter=False, time_stop=True, time_stop_candles=72,  time_stop_min_r=-0.3),
 }
 
 def main():
