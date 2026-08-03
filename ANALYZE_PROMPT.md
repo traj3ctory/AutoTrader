@@ -59,7 +59,7 @@ Use this source hierarchy:
 
 1. `scripts/apiAnalyze.py SYMBOL` (or the coin's live equivalent) - reuses the exact zone-detection, structure, and signal functions from the backtest, live. This is the primary analysis engine: 4H/1D structure, 1H->15m refined zones, 5m EMA/VWAP/slope signal, computed entry/SL/TP/R:R.
 2. `SETUP_LEDGER.json` for remembered setup state, prior levels, position status, and journal history.
-3. TradingView, for exactly two things: (a) a catalyst/news check (the API has no news feed), and (b) the final Pine paste-and-verify display step - this is for the user's own chart, not an analysis input.
+3. TradingView, for exactly two things: (a) a catalyst/news check (the API has no news feed), and (b) the final Pine paste-and-verify display step - this is for the user's own chart, not an analysis input. A catalyst/news-check visit is read-only: do not clear, hide, remove, or otherwise touch any existing AutoTrader Trade Map drawing while just checking the news panel. The Chart Cleanup Gate below only applies when actually drawing/redrawing a map after a real ledger update - never during a passive news glance.
 4. TradingView chart reading as a structural analysis input is now the FALLBACK, used only if `apiAnalyze.py` cannot run (e.g. a coin missing from Bybit's API, a data gap) - not the default path.
 
 If source access is limited, state the limitation before drawing or summarizing.

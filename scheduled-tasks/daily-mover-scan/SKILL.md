@@ -15,6 +15,8 @@ Source order (CHANGED 2026-08-03, per ANALYZE_PROMPT.md's Source Of Truth flip):
 
 Browser tool (fallback/news-check use only): the `claude-in-chrome` MCP tools (the user's real Chrome, already logged into TradingView), not a sandboxed browser preview pane. Start with `tabs_context_mcp{createIfEmpty:true}`, navigate to TradingView once, reuse that same tab for the whole session.
 
+News-check visits are read-only - do not clear, hide, remove, or otherwise touch any existing AutoTrader Trade Map drawings/Pine indicators while just checking the news panel for a coin. The Chart Cleanup Gate in ANALYZE_PROMPT.md only applies when actually drawing/redrawing a map (i.e. Job 1's "Needs Update" path after a real ledger change) - a passive news glance is never a reason to wipe or modify what's on the chart.
+
 Chart-read discipline (fallback path only): give TradingView a short pause to paint after opening/switching before treating it as accessible or blank. The retry cap is ONE retry, full stop - not one retry per remediation technique (reload, new tab, timeframe switch, symbol-hop-and-back all count as the same attempt). Two total attempts per coin is the entire budget.
 
 ---
