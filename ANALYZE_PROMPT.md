@@ -20,13 +20,12 @@ The normal output format is allowed only after TradingView chart marking and ver
 
 ## Analyze Always Means A Fresh Read
 
-`Analyze [coin]` is never satisfied by reciting the ledger's last saved entry, no matter how recent it looks. Every request requires reading the live chart across the required timeframe stack this turn and re-deciding the setup from what is actually happening right now.
+`Analyze [coin]` is never satisfied by reciting the ledger's last saved entry, no matter how recent it looks. Every request requires a fresh run of `scripts/apiAnalyze.py` (or the coin's live equivalent) this turn and re-deciding the setup from what is actually happening right now.
 
-- The ledger is a write-target and history/context source, not an answer. Read it first for prior setup state, journal history, and mistake tags - then perform the actual chart read before writing or reporting anything as the analysis.
-- If the chart genuinely cannot be read this turn (render failure, retry cap hit, no screenshot available), that is a `CHART NOT MARKED`-class limitation - say so explicitly. Do not paper over it by returning the last saved ledger values as if they were produced by this turn's analysis.
+- The ledger is a write-target and history/context source, not an answer. Read it first for prior setup state, journal history, and mistake tags - then run the live API analysis before writing or reporting anything as the analysis.
 - Record the reasoning, not just the numbers: for every entry/retest zone, state what structural evidence produced it (which swing high/low, which liquidity pool, which relative-strength signal, which candle behavior) directly in the ledger's `bias`/`notes`/`nearest_liquidity` fields, and repeat the key reasoning in the chat output. The "why" must survive without needing to be reconstructed later.
-- Always give TradingView a short pause to paint before reading it: after opening a chart, switching symbols, or changing timeframe/interval, wait a few seconds before the first screenshot or read. Do not screenshot immediately on navigation - the canvas is frequently still blank or showing the prior symbol's stale data at that instant, not a real render failure yet. Only treat it as a genuine render failure (subject to the one-retry-cap) if it is still blank/stale after that pause.
-- The one-retry-cap means ONE retry, full stop - not one retry per remediation technique. Reload, new tab, timeframe switch, and symbol-hop-and-back are all still "trying to read the chart"; switching techniques does not reset the counter. Two total attempts (the first read, one retry) is the entire budget. If it's still blank after that, stop immediately and fall back (Bybit kline data, clearly labeled as a fallback, or a stated `CHART NOT MARKED` limitation) rather than escalating through more techniques - each additional attempt costs a full round of navigate/wait/screenshot for a coin flip's chance of success.
+- Still check TradingView's news feed for a catalyst read before finalizing - the API has no news source, and the Catalyst Gate below still applies.
+- Chart-read fallback (rare, only if `apiAnalyze.py` cannot run for a coin): give TradingView a short pause to paint before reading it - wait a few seconds after opening/switching before the first screenshot. The one-retry-cap still applies here: ONE retry, full stop - reload, new tab, timeframe switch, symbol-hop-and-back all count as the same attempt budget. If still blank after that, stop and state a `CHART NOT MARKED` limitation rather than escalating through more techniques.
 
 ### Light Pass Mode - DISABLED
 
@@ -54,16 +53,18 @@ The journal and scorecard update every time regardless of paste outcome - the re
 
 ## Source Of Truth
 
+CHANGED 2026-08-03: Bybit API is now primary for analysis; TradingView is display/news only. This reverses the original chart-first hierarchy after a session of repeated TradingView render failures (blank canvas, stuck symbol switches) versus a fully validated, backtested API pipeline (`scripts/strategyBacktest.py`, `scripts/scalpBacktestV3.py`, `scripts/apiAnalyze.py`) that never failed once across a 3-month/17-coin test.
+
 Use this source hierarchy:
 
-1. Current visible TradingView chart.
+1. `scripts/apiAnalyze.py SYMBOL` (or the coin's live equivalent) - reuses the exact zone-detection, structure, and signal functions from the backtest, live. This is the primary analysis engine: 4H/1D structure, 1H->15m refined zones, 5m EMA/VWAP/slope signal, computed entry/SL/TP/R:R.
 2. `SETUP_LEDGER.json` for remembered setup state, prior levels, position status, and journal history.
-3. TradingView tab candle stream or TradingView page data, only when visual chart access is limited.
-4. External APIs only if the user explicitly asks.
+3. TradingView, for exactly two things: (a) a catalyst/news check (the API has no news feed), and (b) the final Pine paste-and-verify display step - this is for the user's own chart, not an analysis input.
+4. TradingView chart reading as a structural analysis input is now the FALLBACK, used only if `apiAnalyze.py` cannot run (e.g. a coin missing from Bybit's API, a data gap) - not the default path.
 
 If source access is limited, state the limitation before drawing or summarizing.
 
-Do not use old screenshots, old TradingView drawings, or old visible Pine levels as the memory source. The ledger is the memory source. TradingView is only the live chart and display layer.
+Do not use old screenshots, old TradingView drawings, or old visible Pine levels as the memory source. The ledger is the memory source. TradingView is the news/catalyst source and the display layer - it is no longer the primary structural read.
 
 ## Ledger Memory Rule
 

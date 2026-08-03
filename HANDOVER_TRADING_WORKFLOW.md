@@ -22,6 +22,7 @@ Move these files as a set:
 - `scripts/checkAlerts.mjs`
 - `scripts/scalpScreen.mjs`
 - `scripts/strategyBacktest.py` and `scripts/scalpBacktestV3.py` (backtest engines behind the current Scalp Entry Rule in `ANALYZE_PROMPT.md` - re-run before changing scalp rules again)
+- `scripts/apiAnalyze.py` (2026-08-03 - the primary live analysis engine now; imports `strategyBacktest.py`'s zone/structure/signal functions directly so a live read can never drift from what was backtested. TradingView is now display/news only - see Source Of Truth in `ANALYZE_PROMPT.md`)
 - `backtests/` (results only - raw candle cache under `backtests/*/data/` is gitignored and rebuilds from Bybit on demand)
 - `WATCHLIST_TIER2.md`
 - `AUTOTRADER_TRADE_MAP_TEMPLATE.pine`
