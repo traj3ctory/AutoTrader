@@ -96,6 +96,12 @@ class Zone:
     touch_index: Optional[int] = None
     consumed: bool = False
     invalidated: bool = False
+    has_fvg: bool = False  # 2026-08-03: soft/reported-only quality signal, never a
+    # gate (see ANALYZE_PROMPT.md) - True if the displacement leg away from this
+    # zone (origin candle to the confirming BOS candle, at the zone's own source
+    # timeframe) left a 3-candle Fair Value Gap in the zone's direction. Evidence
+    # the move was genuinely one-sided, not proof either way - does not affect
+    # entry, sizing, or R:R.
 
     @property
     def proximal(self) -> float:
@@ -252,6 +258,21 @@ def pivots(candles: list[Candle], interval: str, left: int = 2, right: int = 2) 
     return sorted(out, key=lambda p: (p.known_t, p.t, p.kind))
 
 
+def leg_has_fvg(candles: list[Candle], start_index: int, end_index: int, kind: str) -> bool:
+    """Scan the displacement leg (origin candle to the confirming BOS candle,
+    inclusive) for a 3-candle Fair Value Gap in the zone's direction: candle
+    i's high below candle i+2's low (demand/bullish), or candle i's low above
+    candle i+2's high (supply/bearish). Reported-only quality signal - see
+    Zone.has_fvg."""
+    for i in range(start_index, min(end_index, len(candles) - 3) + 1):
+        c1, c3 = candles[i], candles[i + 2]
+        if kind == "demand" and c1.h < c3.l:
+            return True
+        if kind == "supply" and c1.l > c3.h:
+            return True
+    return False
+
+
 def source_zones(candles: list[Candle], interval: str) -> list[Zone]:
     """Build source-candle zones after a confirmed break of structure.
 
@@ -302,10 +323,11 @@ def source_zones(candles: list[Candle], interval: str) -> list[Zone]:
         if high <= low:
             continue
         known_t = confirming.t + span
+        fvg = leg_has_fvg(candles, source_index, j, kind)
         zones.append(Zone(
             id=f"{interval}-{kind}-{source_index}-{source.t}", kind=kind,
             source_tf=interval, t=source.t, known_t=known_t,
-            low=low, high=high, pivot_price=pivot_price,
+            low=low, high=high, pivot_price=pivot_price, has_fvg=fvg,
         ))
     return zones
 
@@ -332,6 +354,9 @@ def refined_zones(high_candles: list[Candle], high_tf: str,
             kind=parent.kind, source_tf=f"{high_tf}->{low_tf}", t=parent.t,
             known_t=parent.known_t, low=low, high=high,
             pivot_price=parent.pivot_price,
+            has_fvg=parent.has_fvg,  # FVG quality is checked at the zone's own
+            # origin timeframe (the high_tf parent), not the low_tf refinement -
+            # per the timeframe-matching rule (check FVG where the zone was born).
         ))
     return zones
 

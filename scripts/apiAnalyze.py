@@ -84,8 +84,16 @@ def analyze_scalp(symbol: str):
     active_supply = [z for z in zones if z.kind == "supply" and not z.invalidated and not z.consumed]
     near_demand = max(active_demand, key=lambda z: z.high, default=None)
     near_supply = min(active_supply, key=lambda z: z.low, default=None)
-    print(f"Nearest live demand zone: {f'{near_demand.low:.6f}-{near_demand.high:.6f}' if near_demand else 'none'}")
-    print(f"Nearest live supply zone: {f'{near_supply.low:.6f}-{near_supply.high:.6f}' if near_supply else 'none'}")
+    if near_demand:
+        print(f"Nearest live demand zone: {near_demand.low:.6f}-{near_demand.high:.6f}  "
+              f"(FVG {'present' if near_demand.has_fvg else 'absent'} - reported quality signal, not a gate)")
+    else:
+        print("Nearest live demand zone: none")
+    if near_supply:
+        print(f"Nearest live supply zone: {near_supply.low:.6f}-{near_supply.high:.6f}  "
+              f"(FVG {'present' if near_supply.has_fvg else 'absent'} - reported quality signal, not a gate)")
+    else:
+        print("Nearest live supply zone: none")
 
     if e9[i] is None or e20[i] is None or e9[i - 3] is None or e20[i - 3] is None:
         print("Not enough 5m data for EMA cross yet.")
