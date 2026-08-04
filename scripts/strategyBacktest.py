@@ -31,7 +31,7 @@ MS_MINUTE = 60_000
 INTERVAL_MS = {"5": 5 * MS_MINUTE, "15": 15 * MS_MINUTE, "60": 60 * MS_MINUTE,
                "240": 240 * MS_MINUTE, "D": 1_440 * MS_MINUTE}
 
-TEST_START = dt.datetime(2026, 5, 1, tzinfo=UTC)
+TEST_START = dt.datetime(2026, 5, 3, tzinfo=UTC)
 TEST_END = dt.datetime(2026, 8, 1, tzinfo=UTC) - dt.timedelta(milliseconds=1)
 WARMUP_START = TEST_START - dt.timedelta(days=61)
 
@@ -252,32 +252,86 @@ def pivots(candles: list[Candle], interval: str, left: int = 2, right: int = 2) 
     return sorted(out, key=lambda p: (p.known_t, p.t, p.kind))
 
 
-def refined_zones(high_candles: list[Candle], high_tf: str,
-                  low_candles: list[Candle], low_tf: str) -> list[Zone]:
-    high_pivots = pivots(high_candles, high_tf)
-    low_times = [c.t for c in low_candles]
-    high_span = INTERVAL_MS[high_tf]
+def source_zones(candles: list[Candle], interval: str) -> list[Zone]:
+    """Build source-candle zones after a confirmed break of structure.
+
+    Demand is the lower wick of the last red candle before a rise. Supply is
+    the full range of the last green candle before a fall. A rise/fall is
+    meaningful when it closes beyond the latest confirmed swing. The zone is
+    not usable until that break-of-structure candle closes.
+    """
+    span = INTERVAL_MS[interval]
+    ps = pivots(candles, interval)
+    highs = [p for p in ps if p.kind == "high"]
+    lows = [p for p in ps if p.kind == "low"]
+    high_known = [p.known_t for p in highs]
+    low_known = [p.known_t for p in lows]
     zones: list[Zone] = []
-    for number, pivot in enumerate(high_pivots):
-        start = bisect.bisect_left(low_times, pivot.t)
-        stop = bisect.bisect_left(low_times, pivot.t + high_span)
-        segment = low_candles[start:stop]
-        if not segment:
-            source = high_candles[pivot.candle_index]
-        elif pivot.kind == "low":
-            source = min(segment, key=lambda c: (c.l, c.t))
+    seen: set[tuple[str, int]] = set()
+    for j, confirming in enumerate(candles):
+        hi = bisect.bisect_right(high_known, confirming.t) - 1
+        lo = bisect.bisect_right(low_known, confirming.t) - 1
+        kind: Optional[str] = None
+        pivot_price: Optional[float] = None
+        if hi >= 0 and confirming.c > highs[hi].price:
+            kind, pivot_price = "demand", highs[hi].price
+        elif lo >= 0 and confirming.c < lows[lo].price:
+            kind, pivot_price = "supply", lows[lo].price
+        if kind is None:
+            continue
+        source_index: Optional[int] = None
+        for i in range(j - 1, max(-1, j - 4), -1):
+            candle = candles[i]
+            if kind == "demand" and candle.c < candle.o:
+                source_index = i
+                break
+            if kind == "supply" and candle.c > candle.o:
+                source_index = i
+                break
+        if source_index is None:
+            continue
+        source = candles[source_index]
+        identity = (kind, source.t)
+        if identity in seen:
+            continue
+        seen.add(identity)
+        if kind == "demand":
+            low, high, pivot_price = source.l, source.c, source.l
         else:
-            source = max(segment, key=lambda c: (c.h, -c.t))
-        if pivot.kind == "low":
-            low, high, kind = source.l, max(source.o, source.c), "demand"
-        else:
-            low, high, kind = min(source.o, source.c), source.h, "supply"
+            low, high, pivot_price = source.l, source.h, source.h
         if high <= low:
             continue
+        known_t = confirming.t + span
         zones.append(Zone(
-            id=f"{high_tf}-{low_tf}-{kind}-{number}-{pivot.t}", kind=kind,
-            source_tf=f"{high_tf}->{low_tf}", t=pivot.t, known_t=pivot.known_t,
-            low=low, high=high, pivot_price=pivot.price,
+            id=f"{interval}-{kind}-{source_index}-{source.t}", kind=kind,
+            source_tf=interval, t=source.t, known_t=known_t,
+            low=low, high=high, pivot_price=pivot_price,
+        ))
+    return zones
+
+
+def refined_zones(high_candles: list[Candle], high_tf: str,
+                  low_candles: list[Candle], low_tf: str) -> list[Zone]:
+    high_zones = source_zones(high_candles, high_tf)
+    low_zones = source_zones(low_candles, low_tf)
+    high_span = INTERVAL_MS[high_tf]
+    zones: list[Zone] = []
+    for number, parent in enumerate(high_zones):
+        candidates = [z for z in low_zones
+                      if z.kind == parent.kind
+                      and parent.t <= z.t < parent.t + high_span
+                      and z.known_t <= parent.known_t
+                      and z.low <= parent.high and z.high >= parent.low]
+        refined = max(candidates, key=lambda z: (z.t, z.known_t)) if candidates else parent
+        low = max(parent.low, refined.low) if candidates else parent.low
+        high = min(parent.high, refined.high) if candidates else parent.high
+        if high <= low:
+            low, high = parent.low, parent.high
+        zones.append(Zone(
+            id=f"{high_tf}-{low_tf}-{parent.kind}-{number}-{parent.t}",
+            kind=parent.kind, source_tf=f"{high_tf}->{low_tf}", t=parent.t,
+            known_t=parent.known_t, low=low, high=high,
+            pivot_price=parent.pivot_price,
         ))
     return zones
 
@@ -397,32 +451,17 @@ def run_intraday(symbol: str, frames: dict[str, list[Candle]], cost_pct: float) 
     zones = clone_zones(refined_zones(frames["240"], "240", frames["60"], "60"))
     zones.sort(key=lambda z: z.known_t)
     structure = StructureLookup(frames["D"], "D")
-    atr_lookup = SeriesLookup(frames["60"], "60", atr(frames["60"]))
+    atr_lookup = SeriesLookup(frames["240"], "240", atr(frames["240"]))
     active: list[Zone] = []
     zone_cursor = 0
     trades: list[Trade] = []
     pending: Optional[dict[str, Any]] = None
     position: Optional[dict[str, Any]] = None
-    last_day: Optional[dt.date] = None
 
     for i, candle in enumerate(candles):
         if candle.t > ms(TEST_END):
             break
         in_test = candle.t >= ms(TEST_START)
-        day = dt.datetime.fromtimestamp(candle.t / 1000, UTC).date()
-        if in_test and last_day is not None and day != last_day:
-            if position is not None:
-                prior = candles[i - 1]
-                gross_r = outcome_from_exit(position["direction"], position["entry"], position["stop"], prior.c)
-                trades.append(make_trade("Intraday", symbol, position["direction"], position["signal_t"],
-                                         position["entry_t"], prior.t + INTERVAL_MS["15"], position["entry"],
-                                         position["stop"], position["target"], position["rr"], prior.c,
-                                         "TIME EXIT", gross_r, 1.0, cost_pct, position["zone_tf"], position["confirmation"]))
-                position = None
-            pending = None
-        if in_test:
-            last_day = day
-
         while zone_cursor < len(zones) and zones[zone_cursor].known_t <= candle.t:
             active.append(zones[zone_cursor])
             zone_cursor += 1
@@ -504,7 +543,7 @@ def run_intraday(symbol: str, frames: dict[str, list[Candle]], cost_pct: float) 
             if not current_atr:
                 continue
             entry = zone.proximal
-            stop = zone.low - 0.10 * current_atr if direction == "long" else zone.high + 0.10 * current_atr
+            stop = zone.low - 0.50 * current_atr if direction == "long" else zone.high + 0.50 * current_atr
             opposite = [z for z in active if z.kind != kind and z.known_t <= candle.t and not z.invalidated]
             rr, target = choose_rr(entry, stop, direction, opposite)
             zone.consumed = True
@@ -517,11 +556,10 @@ def run_intraday(symbol: str, frames: dict[str, list[Candle]], cost_pct: float) 
 
     if position is not None and candles:
         final = next((c for c in reversed(candles) if c.t <= ms(TEST_END)), candles[-1])
-        gross_r = outcome_from_exit(position["direction"], position["entry"], position["stop"], final.c)
         trades.append(make_trade("Intraday", symbol, position["direction"], position["signal_t"],
                                  position["entry_t"], final.t + INTERVAL_MS["15"], position["entry"],
                                  position["stop"], position["target"], position["rr"], final.c,
-                                 "TIME EXIT", gross_r, 1.0, cost_pct, position["zone_tf"], position["confirmation"]))
+                                 "OPEN", 0.0, 1.0, 0.0, position["zone_tf"], position["confirmation"]))
     return trades
 
 
@@ -533,29 +571,16 @@ def run_scalp(symbol: str, frames: dict[str, list[Candle]], cost_pct: float) -> 
     zones = clone_zones(refined_zones(frames["60"], "60", frames["15"], "15"))
     zones.sort(key=lambda z: z.known_t)
     structure = StructureLookup(frames["240"], "240")
-    atr_lookup = SeriesLookup(frames["15"], "15", atr(frames["15"]))
+    atr_lookup = SeriesLookup(frames["240"], "240", atr(frames["240"]))
     active: list[Zone] = []
     zone_cursor = 0
     trades: list[Trade] = []
     position: Optional[dict[str, Any]] = None
-    last_day: Optional[dt.date] = None
 
     for i, candle in enumerate(candles):
         if candle.t > ms(TEST_END):
             break
         in_test = candle.t >= ms(TEST_START)
-        day = dt.datetime.fromtimestamp(candle.t / 1000, UTC).date()
-        if in_test and last_day is not None and day != last_day and position is not None:
-            prior = candles[i - 1]
-            gross_r = outcome_from_exit(position["direction"], position["entry"], position["stop"], prior.c)
-            trades.append(make_trade("Scalp", symbol, position["direction"], position["signal_t"],
-                                     position["entry_t"], prior.t + INTERVAL_MS["5"], position["entry"],
-                                     position["stop"], position["target"], position["rr"], prior.c,
-                                     "TIME EXIT", gross_r, 0.5, cost_pct, position["zone_tf"], "EMA+VWAP+zone"))
-            position = None
-        if in_test:
-            last_day = day
-
         while zone_cursor < len(zones) and zones[zone_cursor].known_t <= candle.t:
             active.append(zones[zone_cursor])
             zone_cursor += 1
@@ -566,10 +591,6 @@ def run_scalp(symbol: str, frames: dict[str, list[Candle]], cost_pct: float) -> 
                 zone.invalidated = True
             elif zone.kind == "supply" and candle.c > zone.high:
                 zone.invalidated = True
-            elif overlaps(candle, zone) and zone.touch_index is None:
-                zone.touch_index = i
-            if zone.touch_index is not None and i - zone.touch_index > 6:
-                zone.consumed = True
 
         # Replay warm-up candles so pre-period zones are not falsely treated as
         # untouched on the first test day.
@@ -580,15 +601,11 @@ def run_scalp(symbol: str, frames: dict[str, list[Candle]], cost_pct: float) -> 
             direction = position["direction"]
             stop_hit = candle.l <= position["stop"] if direction == "long" else candle.h >= position["stop"]
             target_hit = candle.h >= position["target"] if direction == "long" else candle.l <= position["target"]
-            age = i - position["entry_index"]
-            if stop_hit or target_hit or age >= 72:
+            if stop_hit or target_hit:
                 if stop_hit:
                     exit_price, result, gross_r = position["stop"], "SL", -1.0
                 elif target_hit:
                     exit_price, result, gross_r = position["target"], "TP", position["rr"]
-                else:
-                    exit_price, result = candle.c, "TIME EXIT"
-                    gross_r = outcome_from_exit(direction, position["entry"], position["stop"], exit_price)
                 trades.append(make_trade("Scalp", symbol, direction, position["signal_t"], position["entry_t"],
                                          candle.t + INTERVAL_MS["5"], position["entry"], position["stop"],
                                          position["target"], position["rr"], exit_price, result, gross_r,
@@ -610,7 +627,7 @@ def run_scalp(symbol: str, frames: dict[str, list[Candle]], cost_pct: float) -> 
         else:
             continue
         candidates = [z for z in active if z.kind == kind and not z.invalidated and not z.consumed
-                      and z.touch_index is not None and 0 <= i - z.touch_index <= 6]
+                      and (z.proximal <= candle.c if direction == "long" else z.proximal >= candle.c)]
         candidates.sort(key=lambda z: (abs(candle.c - z.proximal), -z.known_t))
         if not candidates:
             continue
@@ -619,7 +636,7 @@ def run_scalp(symbol: str, frames: dict[str, list[Candle]], cost_pct: float) -> 
         if not current_atr:
             continue
         entry = candle.c
-        stop = zone.low - 0.10 * current_atr if direction == "long" else zone.high + 0.10 * current_atr
+        stop = zone.low - 0.50 * current_atr if direction == "long" else zone.high + 0.50 * current_atr
         if direction == "long" and stop >= entry or direction == "short" and stop <= entry:
             zone.consumed = True
             continue
@@ -634,11 +651,10 @@ def run_scalp(symbol: str, frames: dict[str, list[Candle]], cost_pct: float) -> 
 
     if position is not None and candles:
         final = next((c for c in reversed(candles) if c.t <= ms(TEST_END)), candles[-1])
-        gross_r = outcome_from_exit(position["direction"], position["entry"], position["stop"], final.c)
         trades.append(make_trade("Scalp", symbol, position["direction"], position["signal_t"],
                                  position["entry_t"], final.t + INTERVAL_MS["5"], position["entry"],
                                  position["stop"], position["target"], position["rr"], final.c,
-                                 "TIME EXIT", gross_r, 0.5, cost_pct, position["zone_tf"], "EMA+VWAP+zone"))
+                                 "OPEN", 0.0, 0.5, 0.0, position["zone_tf"], "EMA+VWAP+zone"))
     return trades
 
 
@@ -675,22 +691,24 @@ def apply_portfolio_limits(trades: list[Trade], max_daily_loss_pct: float = 3.0,
 
 def stats(trades: list[Trade], accepted_only: bool = True) -> dict[str, Any]:
     selected = [t for t in trades if t.accepted or not accepted_only]
-    wins = [t for t in selected if t.net_r > 0]
-    losses = [t for t in selected if t.net_r < 0]
-    flats = [t for t in selected if abs(t.net_r) < 1e-12]
-    tp = [t for t in selected if t.outcome == "TP"]
-    sl = [t for t in selected if t.outcome == "SL"]
-    net = [t.net_r for t in selected]
+    open_trades = [t for t in selected if t.outcome == "OPEN"]
+    resolved = [t for t in selected if t.outcome != "OPEN"]
+    wins = [t for t in resolved if t.net_r > 0]
+    losses = [t for t in resolved if t.net_r < 0]
+    flats = [t for t in resolved if abs(t.net_r) < 1e-12]
+    tp = [t for t in resolved if t.outcome == "TP"]
+    sl = [t for t in resolved if t.outcome == "SL"]
+    net = [t.net_r for t in resolved]
     gross_profit = sum(x for x in net if x > 0)
     gross_loss = -sum(x for x in net if x < 0)
     equity = peak = drawdown = 0.0
-    for trade in sorted(selected, key=lambda t: t.exit_t):
+    for trade in sorted(resolved, key=lambda t: t.exit_t):
         equity += trade.net_r * trade.risk_pct
         peak = max(peak, equity)
         drawdown = max(drawdown, peak - equity)
-    count = len(selected)
+    count = len(resolved)
     return {
-        "trades": count, "wins": len(wins), "losses": len(losses), "flats": len(flats),
+        "trades": count, "open_trades": len(open_trades), "wins": len(wins), "losses": len(losses), "flats": len(flats),
         "success_rate": len(wins) / count if count else None,
         "failure_rate": len(losses) / count if count else None,
         "tp_rate": len(tp) / count if count else None,
@@ -698,7 +716,7 @@ def stats(trades: list[Trade], accepted_only: bool = True) -> dict[str, Any]:
         "avg_net_r": statistics.fmean(net) if net else None,
         "median_net_r": statistics.median(net) if net else None,
         "total_net_r": sum(net),
-        "portfolio_return_pct": sum(t.net_r * t.risk_pct for t in selected),
+        "portfolio_return_pct": sum(t.net_r * t.risk_pct for t in resolved),
         "profit_factor": gross_profit / gross_loss if gross_loss else None,
         "max_drawdown_pct": drawdown,
         "skipped_by_limits": sum(1 for t in trades if not t.accepted),
@@ -730,11 +748,11 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output", default="backtests/2026-07-31")
+    parser.add_argument("--output", default="backtests/2026-08-01-strategy-rerun")
     parser.add_argument("--symbols", nargs="*", default=unique_symbols())
-    parser.add_argument("--intraday-cost-pct", type=float, default=0.10,
+    parser.add_argument("--intraday-cost-pct", type=float, default=0.0,
                         help="Round-trip fees + slippage as percent of notional")
-    parser.add_argument("--scalp-cost-pct", type=float, default=0.14,
+    parser.add_argument("--scalp-cost-pct", type=float, default=0.0,
                         help="Round-trip fees + slippage as percent of notional")
     args = parser.parse_args()
     output = Path(args.output)
@@ -782,32 +800,35 @@ def main() -> None:
         "symbols": args.symbols, "excluded": ["BTCUSDT (ledger context-only)"],
         "intraday": {
             "structure": "1D last two confirmed fractal highs/lows (2 left, 2 right)",
-            "zones": "4H confirmed fractal wick-to-body zone, refined to extreme 1H candle",
+            "zones": "Last red 4H source candle before a bullish close above the latest confirmed swing high (lower-wick demand), or last green candle before a bearish close below the latest confirmed swing low (full-range supply), refined to a matching 1H source candle",
             "confirmation": "15m directional rejection or body-engulfing candle at first retest",
-            "entry": "limit at proximal/entry line until UTC day end",
-            "stop": "beyond distal/exit line by 0.10 x prior completed 1H ATR(14)",
+            "entry": "limit at proximal/entry line until filled or zone invalidation",
+            "stop": "beyond distal/exit line by 0.50 x prior completed 4H ATR(14)",
             "target": "2R if before next opposing zone; else 1.5R; otherwise skip",
             "risk": "1% per trade; 3% daily/open-risk portfolio caps",
+            "exit": "TP or SL only; positions still open at test end are unresolved",
             "cost_pct_round_trip": args.intraday_cost_pct,
         },
         "scalp": {
             "structure": "4H last two confirmed fractal highs/lows (2 left, 2 right)",
-            "zones": "1H confirmed fractal wick-to-body zone, refined to extreme 15m candle",
-            "confirmation": "5m 9/20 EMA cross; both slopes agree; daily UTC VWAP agrees; cross within 30m of first zone retest",
+            "zones": "Last red 1H source candle before a bullish close above the latest confirmed swing high (lower-wick demand), or last green candle before a bearish close below the latest confirmed swing low (full-range supply), refined to a matching 15m source candle",
+            "confirmation": "5m 9/20 EMA cross; both EMA slopes agree; daily UTC VWAP agrees; 4H trend agrees; nearest valid 15m-refined zone provides stop context",
             "entry": "market at crossover candle close",
-            "stop": "beyond 15m-refined distal line by 0.10 x prior completed 15m ATR(14)",
+            "stop": "beyond 15m-refined distal line by 0.50 x prior completed 4H ATR(14)",
             "target": "2R if before next opposing zone; else 1.5R; otherwise skip",
             "risk": "0.5% per trade; 3% daily/open-risk portfolio caps",
             "vwap_reset": "00:00 UTC daily",
-            "max_hold": "6 hours or UTC day end, whichever comes first",
+            "max_hold": "None; TP or SL only; positions still open at test end are unresolved",
             "cost_pct_round_trip": args.scalp_cost_pct,
         },
         "conservative_rules": [
-            "No lookahead: pivots become available only after two right-side candles close",
+            "No lookahead: a source zone becomes available only after its displacement-confirmation candle closes",
             "A zone is consumed after its first retest/confirmation window",
             "If stop and target touch within the same candle, stop is counted first",
             "Only one position per symbol per strategy; global 3% simultaneous risk cap",
-            "Time exits are marked to market and included in net success/failure rates",
+            "No forced time exits; unresolved positions are excluded from success/failure and return",
+            "Liquidation is not modelled because leverage and margin mode were not specified; the stop is assumed to execute first",
+            "Trading costs are ignored at the user's request",
         ],
     }
     output.mkdir(parents=True, exist_ok=True)

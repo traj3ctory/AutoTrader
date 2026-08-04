@@ -1,0 +1,9 @@
+{
+  "5m_cross+same_direction_slopes": 21031,
+  "+daily_vwap": 13071,
+  "+4h_trend": 4071,
+  "+nearest_refined_zone": 3978,
+  "+valid_4h_atr_stop": 3978,
+  "+next_zone_allows_1.5R_or_2R": 1073,
+  "executed_after_position_and_risk_limits": 108
+}
