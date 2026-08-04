@@ -6,7 +6,9 @@ This handover explains how to continue the TradingView analysis system on a new 
 
 AutoTrader remembers. TradingView displays.
 
-TradingView/Pine is not the source of truth because it can lose, hide, duplicate, or cache old maps when switching symbols. The source of truth is the local ledger file.
+TradingView/Pine is not the memory layer because it can lose, hide, duplicate, or cache old maps when switching symbols. The local ledger file is the memory layer.
+
+As of 2026-08-03, TradingView is also no longer the primary *analysis* input. `scripts/apiAnalyze.py` (Bybit API - zones, structure, signal, R:R) is now primary; TradingView is used only for a catalyst/news check and the final Pine paste-and-verify display. See "Source Of Truth" in `ANALYZE_PROMPT.md` for the full rule and why it changed (repeated render failures vs. a Bybit pipeline that never once failed across a 3-month backtest).
 
 ## Files To Move Together
 
@@ -72,6 +74,16 @@ AutoTrader/
 - This file.
 - Read it first when moving device/thread.
 
+`scripts/apiAnalyze.py`
+
+- The primary live analysis engine (2026-08-03). Imports `strategyBacktest.py`'s zone/structure/signal functions directly (not reimplemented), so a live read can never drift from what the 3-month backtest actually validated.
+- Computes 4H/1D structure, 1H->15m (Intraday) or 1H->15m->5m (Scalp) zones with an `has_fvg` quality flag, the 5m EMA/VWAP/slope signal, and entry/SL/TP/R:R.
+- TradingView is now the fallback for structural reads, used only if this can't run for a coin.
+
+`scripts/strategyBacktest.py` / `scripts/scalpBacktestV3.py`
+
+- The backtest engines behind every current rule in `ANALYZE_PROMPT.md`'s Scalp Entry Rule and Timeframe Rules sections (zone construction, FVG detection, the short-side gates, the tuned time-stop, the rejected session filter). Re-run before changing any scalp/zone rule again - multiple rules this project tried and shipped without testing turned out to be actively harmful once actually backtested.
+
 ## Current Ledger Entries
 
 Do not trust this file for coin lists or setup states; it goes stale. The current coin list, per-setup state, and `analyzed_at` timestamps live only in `SETUP_LEDGER.json` — read it directly.
@@ -124,12 +136,12 @@ Adding or removing a coin from the ledger is never automatic from any of these t
 
 Keep active `setups` lean, target roughly 5-6 coins for real day-to-day attention, with a hard ceiling of 10-15 before hygiene is overdue regardless. This is a scannable watchlist, not an archive. The moment a setup goes dead (SL tagged, TP tagged, missed, invalidated), journal it with a mistake tag and delete it from `setups` in the same pass — do not let dead entries accumulate. A bloated `setups` object makes every priority check slower and defeats the point of the ledger being glanceable. `Pine` script size scales with active-setup count (~2.3KB per coin in the ternary chains); this is not a near-term technical limit, but ledger hygiene matters well before script size would.
 
-Current core watchlist (2026-07-24), pruned from a prior 18-coin list:
+Structural picks that don't drift (unlike the actual coin list/states - see "Current Ledger Entries" above, read `SETUP_LEDGER.json` directly rather than trusting a snapshot here):
 
-- **HYPE, XRP** — designated scalp pair. Picked from live Bybit ticker data (spread, 24h range, turnover), not guesswork - see the scalp comparison in journal/chat history if the reasoning needs revisiting. BTC/ETH were considered but ruled out for scalping specifically due to low % volatility relative to the account size being sized against, not because they're untradeable in general.
+- **HYPE, XRP** — designated scalp pair. Picked from live Bybit ticker data (spread, 24h range, turnover), not guesswork - see the scalp comparison in journal/chat history if the reasoning needs revisiting. BTC/ETH were considered but ruled out for scalping specifically due to low % volatility relative to the account size being sized against, not because they're untradeable in general. Note: a core-6 *slot* being empty (e.g. HYPE's, open since a 2026-07-27 stop-out) does not remove a coin's scalp-pair designation - those are separate concepts, checked via `monthly-scalp-review`, not the ledger's `setups` list.
 - **DOGE** — scalp fallback, kept specifically for its low per-unit price (fine position-size granularity on a smaller account), used only if HYPE/XRP setups go cold.
-- **JTO, AVAX, ZEC** — Intraday candidates, kept because each was closest to a live trigger at prune time (JTO: reclaim holding; AVAX: live demand-zone test; ZEC: near-miss thesis worth continued attention).
-- **BTC, ETH** — never trade candidates in this ledger. Used only as the `btc_eth_filter` confidence check on every other coin's analysis, exactly as they always have been. This is unchanged by anything above; they were never going to get `setups` entries regardless of scalp planning. As of 2026-07-27, BTC also has a `context_watch` entry (see Level-Crossing Alerts above) - key S/R levels only, no trade fields, so the poller can flag a market-wide move early. This does not change BTC's never-trade status.
+- **BTC, ETH** — never trade candidates in this ledger. Used only as the `btc_eth_filter` confidence check on every other coin's analysis. BTC also has a `context_watch` entry (see Level-Crossing Alerts above) - key S/R levels only, no trade fields, so the poller can flag a market-wide move early. This does not change BTC's never-trade status.
+- The remaining core-6 Intraday slots (currently JTO, AVAX, ZEC, LIT per the ledger as of early August - check `SETUP_LEDGER.json` for the live list, this drifts) rotate based on which coin is closest to a live trigger, per `daily-mover-scan`'s swap-suggestion logic.
 
 ## Timeframe Stacks
 
@@ -147,18 +159,17 @@ When the user says:
 Analyze COIN
 ```
 
-Do this:
+Do this (order CORRECTED 2026-08-03 to match the Source Of Truth flip - API first, TradingView for news + display only):
 
-1. Open/switch TradingView to the requested Bybit perpetual symbol.
-2. Read `SETUP_LEDGER.json`.
-3. Find the coin entry if it exists.
-4. Inspect the live TradingView chart.
-5. Decide if the old ledger setup is still valid, missed, invalidated, active, or needs refresh.
-6. Update `SETUP_LEDGER.json` before drawing.
-7. Render the current coin only using `AUTOTRADER_TRADE_MAP_TEMPLATE.pine` or a TradingView map.
-8. Verify chart map matches the ledger.
-9. Close Pine Editor/panels.
-10. Final answer uses the required output format.
+1. Read `SETUP_LEDGER.json` for the coin's prior state.
+2. Run `python3 scripts/apiAnalyze.py SYMBOL` - this is the primary structural read (4H/1D structure, 1H->15m/15m->5m zones with FVG quality flag, signal, computed entry/SL/TP/R:R). Fall back to a TradingView chart read only if this can't run for the coin.
+3. Check TradingView's news panel for a catalyst read - the API has no news feed.
+4. Decide if the old ledger setup is still valid, missed, invalidated, active, or needs refresh.
+5. Update `SETUP_LEDGER.json` before drawing.
+6. Render the current coin only using `AUTOTRADER_TRADE_MAP_TEMPLATE.pine`.
+7. On the user's "confirm," verify the rendered TradingView chart matches the ledger (Post-Drawing Verification Gate) - this is the one TradingView step that's still mandatory, since it's the user's own display, not an analysis input.
+8. Close Pine Editor/panels.
+9. Final answer uses the required output format.
 
 ## Current Pine Handoff Process
 
@@ -326,7 +337,7 @@ Ledger memory -> validity gate -> generated multi-symbol renderer -> verificatio
 
 Do not move to auto-trading (orders placed without a human confirming each one) until:
 
-- At least 30 setups counted toward the gate: correct-thesis analyses plus user-confirmed taken trades (one record counts once). Check `SCORECARD.json`'s `summary.reviewed_setups`/`correct_thesis`/`trades_taken` for the current count - as of the last count it was 3/30, nowhere close.
+- At least 30 setups counted toward the gate: correct-thesis analyses plus user-confirmed taken trades (one record counts once). Check `SCORECARD.json`'s `summary.reviewed_setups`/`correct_thesis`/`trades_taken` for the current count directly - this drifts every session, do not trust a number written here (raw fields as of 2026-08-03: 11 reviewed, 3 correct-thesis, 3 trades-taken; still well short of 30 either way).
 - No repeated confusion between entry, reclaim, and active trade.
 - Setup outcomes are tracked as Win, Loss, Missed, No Trade, or Invalidated.
 - Alerts can be expressed as strict pass/fail rules.
