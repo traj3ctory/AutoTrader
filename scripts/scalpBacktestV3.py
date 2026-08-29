@@ -113,7 +113,7 @@ def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: boo
                 t = sb.make_trade("Scalp", symbol, direction, position["signal_t"], position["entry_t"],
                                    candle.t + sb.INTERVAL_MS["5"], position["entry"], position["orig_stop"],
                                    position["target"], position["rr"], exit_price, result, gross_r,
-                                   0.5 * size_mult, cost_pct, position["zone_tf"], "EMA+VWAP+zone")
+                                   0.5 * size_mult, cost_pct, position["zone_tf"], "EMA+zone")
                 trades.append(t)
                 position = None
             continue
@@ -129,9 +129,13 @@ def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: boo
         longs_ok, shorts_ok, size_mult = session_rule(candle.t) if session_filter else (True, True, 1.0)
 
         direction = kind = None
-        if bull_cross and bull_slope and candle.c > vwaps[i] and bias4h == "bullish" and longs_ok:
+        # 2026-08-26: VWAP confirmation gate REMOVED (it was stale here long after the
+        # 2026-08-25 doc correction) and 4H downgraded from hard gate to counter-trend-only.
+        # Measured over 17 coins / 3 months: VWAP-on+4H-hard +0.247 avgR, VWAP-off+4H-hard
+        # +0.391, VWAP-off+4H-soft +0.455 (48.1% win). VWAP is context for reporting only.
+        if bull_cross and bull_slope and bias4h != "bearish" and longs_ok:
             direction, kind = "long", "demand"
-        elif bear_cross and bear_slope and candle.c < vwaps[i] and bias4h == "bearish" and shorts_ok:
+        elif bear_cross and bear_slope and bias4h != "bullish" and shorts_ok:
             if short_gates:
                 bias1d = structure_1d.at(candle.t)
                 if bias1d not in ("bearish", "range"):
@@ -171,7 +175,7 @@ def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: boo
         trades.append(sb.make_trade("Scalp", symbol, position["direction"], position["signal_t"],
                                      position["entry_t"], final.t + sb.INTERVAL_MS["5"], position["entry"],
                                      position["orig_stop"], position["target"], position["rr"], final.c,
-                                     "OPEN", 0.0, 0.5, 0.0, position["zone_tf"], "EMA+VWAP+zone"))
+                                     "OPEN", 0.0, 0.5, 0.0, position["zone_tf"], "EMA+zone"))
     return trades
 
 

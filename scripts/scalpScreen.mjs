@@ -12,12 +12,9 @@
 // TradingView still does the final structural zone confirmation and Pine
 // rendering.
 //
-// Gates (hard, per user decision 2026-07-30): a coin fails a gate = capped
-// at Watch Only for that side, same severity class as the existing HTF veto.
-//   - VWAP: no long below 24h rolling VWAP, no short above it.
-//   - Directional efficiency (1H, last 8 candles): < 0.4 = CHOPPY, scalp
-//     entries capped at Watch Only regardless of structure (objective
-//     version of the Candle-Shape-Judgment Rule).
+// VWAP and directional efficiency are reported context only. Neither is a
+// scalp confirmation requirement or veto. Structure, zone reaction, the
+// closed 5m EMA cross/slope, and the documented short-side gates decide.
 //
 // Usage: node scripts/scalpScreen.mjs HYPEUSDT XRPUSDT DOGEUSDT
 
@@ -145,12 +142,12 @@ async function screen(symbol) {
   const effLong = directionalEfficiency(c1h, 8);
 
   // Signal timeframe is 5m, per the corrected Scalp Entry Rule (4H trend ->
-  // 1H zone -> 15m refinement -> 5m EMA/VWAP/entry). 15m is zone-refinement
+  // 1H zone -> 15m refinement -> 5m EMA/slope/entry). 15m is zone-refinement
   // only and never produces the cross itself.
   const signal = emaCrossSignal(c5m, 3);
 
   const vwapBias = vwap == null ? "N/A" : price > vwap ? "LONG-OK" : "SHORT-OK";
-  const effGate = effLong >= EFFICIENCY_GATE ? "TRENDING (pass)" : "CHOPPY (fail - Watch Only cap)";
+  const effGate = effLong >= EFFICIENCY_GATE ? "TRENDING (context)" : "CHOPPY (context)";
 
   return {
     symbol, price,
@@ -176,9 +173,9 @@ for (const symbol of symbols) {
   console.log(`\n===== ${r.symbol} =====`);
   console.log(`Price: ${r.price}`);
   console.log(`4H ATR%: ${r.atr4hPct?.toFixed(2)}%  (SL buffer basis: ~50% of this beyond structure)`);
-  console.log(`Session VWAP (00:00 UTC reset): ${r.vwap?.toFixed(6)}  -> GATE: ${r.vwapBias}`);
+  console.log(`Session VWAP (00:00 UTC reset): ${r.vwap?.toFixed(6)}  -> CONTEXT: ${r.vwapBias}`);
   console.log(`9 EMA 1H (trend reference only): ${r.ema9_1h?.toFixed(6)} (price ${r.priceVsEma1h})`);
-  console.log(`Directional efficiency (1H, 8c): ${r.directionalEfficiency.toFixed(2)} -> GATE: ${r.effGate}`);
+  console.log(`Directional efficiency (1H, 8c): ${r.directionalEfficiency.toFixed(2)} -> CONTEXT: ${r.effGate}`);
   console.log(`5m EMA 9/20 (SIGNAL TIMEFRAME): cross=${r.signal.cross}, slope=${r.signal.slope}`);
   console.log(`  -> Entry trigger valid ONLY if this 5m cross occurred at/immediately after a reaction at the 15m-refined zone. A bare cross with no zone is not a signal.`);
   console.log(`Nearest 4H supply: ${r.nearSupply.join(", ") || "none in window"}`);

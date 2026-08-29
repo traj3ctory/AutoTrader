@@ -27,6 +27,18 @@ The normal output format is allowed only after TradingView chart marking and ver
 - Still check TradingView's news feed for a catalyst read before finalizing - the API has no news source, and the Catalyst Gate below still applies.
 - Chart-read fallback (rare, only if `apiAnalyze.py` cannot run for a coin): give TradingView a short pause to paint before reading it - wait a few seconds after opening/switching before the first screenshot. The one-retry-cap still applies here: ONE retry, full stop - reload, new tab, timeframe switch, symbol-hop-and-back all count as the same attempt budget. If still blank after that, stop and state a `CHART NOT MARKED` limitation rather than escalating through more techniques.
 
+### TradingView Failure Recovery Phase (added 2026-08-25)
+
+When a TradingView read comes back broken - blank canvas, candles stuck on the previous symbol while the price ticker/header already updated, or (with a direct URL navigation) the whole saved layout dropping its watchlist/news panel - the recovery step is exactly one of these two, never anything more elaborate:
+
+1. **Reload the tab** (`F5` / navigate to the same URL and confirm the "Leave site?" dialog) - this is the only move that has actually recovered a stuck chart this session. Symbol search, watchlist double-click, and re-typing the ticker in the top-left box all reliably update the price header/ticker but do NOT reliably repaint the candle series - do not treat a fresh price number as proof the chart switched; check that the candle shapes themselves changed before trusting the read.
+2. **Focus the tab/canvas** (click into the chart area, or bring the tab forward) before re-checking - some renders resolve once the page actually has focus, not just after a wait.
+3. **Try again** - re-run the read itself (fresh screenshot, then the news check) once reload+focus are done. A reload alone isn't the recovery; confirming the chart actually repainted and pulling the read from it is the point of the pass.
+
+Do a reload-and-focus-and-try-again pass before declaring `CHART NOT MARKED` / `CHART VERIFICATION FAILED` - this still counts as the ONE retry under the existing cap, not an extra attempt. If the user explicitly says "try again" (or "reload and focus," or equivalent) after a stated failure, that instruction opens a fresh attempt budget for that same coin - it is not burning a second retry against the original cap.
+
+Prefer switching symbols via the in-page symbol search (click the ticker box top-left, type, select) over a direct URL navigation with a new `symbol=` query param - a direct nav has been observed to drop the saved chart layout entirely (watchlist and news panel gone, blank canvas, reload not always sufficient), which is a worse failure mode than a stuck-symbol repaint.
+
 ### Light Pass Mode - DISABLED
 
 Light Pass Mode previously allowed skipping the full timeframe re-derivation and the Pine regenerate/paste/summary/image steps when nothing had crossed since the last read. The user found this confusing - they expect the same full output (full timeframe stack, ledger update, regenerated Pine script copied to clipboard, plain-English summary, image) every time they say `Analyze [coin]`, whether or not anything changed since the last pass. This mode is off. If a future session wants to re-enable a shortcut path, it must be requested explicitly by the user first, not assumed from context.
@@ -57,7 +69,7 @@ CHANGED 2026-08-03: Bybit API is now primary for analysis; TradingView is displa
 
 Use this source hierarchy:
 
-1. `scripts/apiAnalyze.py SYMBOL` (or the coin's live equivalent) - reuses the exact zone-detection, structure, and signal functions from the backtest, live. This is the primary analysis engine: 4H/1D structure, 1H->15m refined zones, 5m EMA/VWAP/slope signal, computed entry/SL/TP/R:R.
+1. `scripts/apiAnalyze.py SYMBOL` (or the coin's live equivalent) - reuses the exact zone-detection, structure, and signal functions from the backtest, live. This is the primary analysis engine: 4H/1D structure, 1H->15m refined zones, 5m EMA/slope signal, VWAP context, and computed entry/SL/TP/R:R.
 2. `SETUP_LEDGER.json` for remembered setup state, prior levels, position status, and journal history.
 3. TradingView, for exactly two things: (a) a catalyst/news check (the API has no news feed), and (b) the final Pine paste-and-verify display step - this is for the user's own chart, not an analysis input. A catalyst/news-check visit is read-only: do not clear, hide, remove, or otherwise touch any existing AutoTrader Trade Map drawing while just checking the news panel. The Chart Cleanup Gate below only applies when actually drawing/redrawing a map after a real ledger update - never during a passive news glance.
 4. TradingView chart reading as a structural analysis input is now the FALLBACK, used only if `apiAnalyze.py` cannot run (e.g. a coin missing from Bybit's API, a data gap) - not the default path.
@@ -151,9 +163,18 @@ If the chart has stale or conflicting drawings, mark the state as `Stale Map / N
 First decide the trade type:
 
 - Normal intraday/day trade: use 1D -> 4H -> 1H, with entry planned on 1H, refined to 15m for the confirmation candle (rejection: full body closes outside the zone with a long wick inside it; OR engulfing: full body covers the previous candle's body). Limit order at the zone's entry line.
-- Scalp: use 4H -> 1H -> 15m -> 5m. 4H sets trend, 1H draws the zone, 15m refines it - 5m is where the 9/20 EMA cross, VWAP, and the actual entry live (see Scalp Entry Rule below), at market price.
+- Scalp: use 4H -> 1H -> 15m -> 5m. 4H sets trend, 1H draws the zone, 15m refines it - 5m is where the 9/20 EMA cross, slope confirmation, and the actual entry live (see Scalp Entry Rule below), at market price. VWAP may be reported as context but is never a confirmation requirement or veto.
 
-Mandatory scalp HTF veto:
+4H rules for scalps - there are TWO separate ones, do not conflate them (clarified 2026-08-26 after a session where "4H bullish" was quoted as a short veto without either rule actually being stated):
+
+**(a) 4H direction = guidance, NOT a hard gate** (changed 2026-08-26, backtest-validated). 4H structure blocks only OUTRIGHT COUNTER-TREND entries:
+
+- No long when 4H reads `bearish`. No short when 4H reads `bullish`.
+- A `range`/neutral 4H does NOT block either direction.
+- Do NOT require 4H to match the trade direction. The old hard form (`4H must be bullish to long`) was measured worse: over 17 coins / 3 months at the validated v4 config, hard gate = +0.391 avgR / 42.6% win, counter-trend-only = +0.455 avgR / 48.1% win across 33 more trades. Turning 4H off entirely was worse still (+0.305 avgR) - it added 52 low-quality trades. Guidance beats both extremes.
+- Because 4H structure is derived from CONFIRMED swing pivots, it lags sharp reversals by design: it can still read `bullish` hours after price action has broken down. That is a known limitation, not a bug - state it when it is load-bearing on a call rather than presenting the tag as current truth.
+
+**(b) Mandatory 4H ZONE veto** (unchanged - this is about proximity to drawn 4H zones, not trend direction):
 
 - Before mapping any scalp, mark 4H supply/demand first.
 - A scalp long into overhead 4H supply, or a scalp short into 4H demand, is capped at Watch Only unless the setup is explicitly a reaction trade at that 4H zone.
@@ -168,14 +189,14 @@ Scalp API pre-screen (added 2026-07-30; downgraded from hard gates to reported c
 - The script's 4H ATR% is the SL-buffer basis for the SL Buffer Calibration Rule below - use it instead of re-deriving ATR by hand from chart candles.
 - Always proceed to the full chart-based structural read (4H veto, zones, liquidity, dual-activation). The pre-screen supplies context and the ATR buffer; it no longer decides whether a coin is worth a chart pass.
 
-Scalp Entry Rule (v4, 2026-08-01 - backtest-validated, see `scripts/scalpBacktestV3.py` and `backtests/2026-07-31/`; CORRECTED 2026-08-03 - a documentation error previously said the cross was on 15m, but the actual backtested code has always computed it on 5m. This section now matches the code and the user's stated flow: 4H trend -> 1H zone -> 15m refinement -> 5m EMA/VWAP/entry): the entry trigger is a 9/20 EMA cross on 5m - NOT 15m. 15m is the zone-refinement timeframe only, never the signal timeframe.
+Scalp Entry Rule (v4, 2026-08-01 - backtest-validated, see `scripts/scalpBacktestV3.py` and `backtests/2026-07-31/`; corrected 2026-08-25 to remove the stale VWAP confirmation gate): the entry trigger is a 9/20 EMA cross on 5m - NOT 15m. 15m is the zone-refinement timeframe only, never the signal timeframe.
 
 - Cross: 9 EMA crosses above 20 EMA on the 5m chart = long signal; 9 crosses below 20 = short signal.
-- VWAP confirmation: long needs price above the session VWAP (computed on 5m), short needs price below it. VWAP resets every day (00:00 UTC anchor) - do not use a rolling window.
+- VWAP is reported context only. It is not part of scalp confirmation, does not validate either side, and must never veto an otherwise valid setup.
 - Slope confirmation: after the cross, both EMAs (on 5m) must be sloping in the trade's direction.
 - Zone alignment is MANDATORY, not a soft preference: the 5m cross must occur at or immediately after a reaction (retest/rejection) at the 15m-refined zone (itself drawn from a 1H zone). This was tested both ways - zone-required trades hold the edge; the framework's earlier "consider" wording undersold how load-bearing this is. No zone, no trade, regardless of how clean the cross looks. If price has already moved away from the zone by the time the 5m candle confirms the cross, that candle no longer qualifies as "at or immediately after" - treat it as a missed signal, not a chase; wait for a retest or a fresh reaction.
 - The confirming candle must be a CLOSED 5m candle, not a live/forming one.
-- Shorts only, two extra required gates (longs are unaffected by either): 1D structure must also read bearish or range/neutral (not just 4H) before a short is valid, AND a micro-structure break on the same 5m signal timeframe (price breaking the prior 5-candle swing low) must confirm right at the signal. Backtest result: adding these turned shorts from a net loser (-0.032R avg, -1.13R total over the test period) into a net winner (+0.140R avg, positive total) with no cost to longs. Keep both, permanently.
+- Shorts only, two extra required gates (longs are unaffected by either): 1D structure must read bearish or range/neutral before a short is valid - this is ON TOP OF the 4H counter-trend rule above (4H must not read `bullish`), and the two are separate checks on separate timeframes - AND a micro-structure break on the same 5m signal timeframe (price breaking the prior 5-candle swing low) must confirm right at the signal. Backtest result: adding these turned shorts from a net loser (-0.032R avg, -1.13R total over the test period) into a net winner (+0.140R avg, positive total) with no cost to longs. Keep both, permanently.
 - Entry at market price (not a limit order - this is the scalp/Intraday distinction: Intraday uses a limit at the zone edge, Scalp chases the confirmed cross at market).
 - SL beyond the zone's exit line (the far edge, not the entry edge), buffered by the SL Buffer Calibration Rule's ATR method.
 - TP at the prior peak/swing before the move, or the nearest opposing 15m zone, whichever is closer - respect the TP Zone Validity Rule (near edge only).
@@ -318,7 +339,7 @@ Watch Only:
 Conditional Trade - Reduced Size:
 
 - See the Conditional (Reduced-Size) Tier in Trade Rules. TP1 is sub-floor but within the defined reduced-size band (1.5-2R Intraday / 1.2-1.5R Scalp), every other gate passes, and the trigger has actually confirmed.
-- Trade candidate at half normal risk (0.75% instead of 1.5%), not full size.
+- Trade candidate at half normal risk (half the Risk Context per-trade figure for the trade type - Scalp 0.25% instead of 0.5%, Intraday 0.5% instead of 1%), not full size.
 
 Skip / No Trade:
 
@@ -801,7 +822,7 @@ A setup whose TP1 (off the conservative entry edge) falls in the 1.5R-2R range (
 - Catalyst is Clear or News Risk-with-a-defined-cap, not an active veto-level event.
 - BTC/ETH filter is Aligned or Mixed, not strongly Conflicting.
 
-If all four hold, rate the setup `Conditional Trade - Reduced Size` and state explicitly in `final_action`: position size is half the user's normal risk (0.75% of available balance instead of 1.5%, per the Risk Context section), because R:R is genuine but sub-floor. This tier does not apply to setups below 1.5R (Intraday) / 1.2R (Scalp) - those remain Skip / No Trade regardless of how clean the other gates are. This tier never overrides Vulnerable/Too-Tight SL, an unconfirmed trigger, or a hard catalyst veto.
+If all four hold, rate the setup `Conditional Trade - Reduced Size` and state explicitly in `final_action`: position size is half the user's normal risk for that trade type per the Risk Context section (Scalp 0.25% instead of 0.5%; Intraday 0.5% instead of 1%), because R:R is genuine but sub-floor. This tier does not apply to setups below 1.5R (Intraday) / 1.2R (Scalp) - those remain Skip / No Trade regardless of how clean the other gates are. This tier never overrides Vulnerable/Too-Tight SL, an unconfirmed trigger, or a hard catalyst veto.
 - Store rr_tp1 and rr_tp2 in the ledger record for every setup.
 - Do not force a trade.
 - If no clean setup exists, say WAIT.

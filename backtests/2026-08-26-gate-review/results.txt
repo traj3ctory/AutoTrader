@@ -1,0 +1,8 @@
+Symbols: 17   Window: 2026-05-03 -> 2026-07-31   cost 0.14%/side
+
+VARIANT                                   n   win%    avgR   totalR             longs            shorts
+------------------------------------------------------------------------------------------------------------
+1_current_code   (VWAP on,  4H hard)    131  38.2%   0.247    32.42  n=104 avgR= 0.273  n=27  avgR= 0.151
+2_doc_today      (VWAP off, 4H hard)    129  42.6%   0.391    50.44  n=100 avgR= 0.384  n=29  avgR= 0.415
+3_YOUR_PROPOSAL  (VWAP off, 4H off )    181  42.0%   0.305    55.25  n=148 avgR= 0.307  n=33  avgR= 0.297
+4_middle         (VWAP off, 4H soft)    162  48.1%   0.455    73.70  n=128 avgR= 0.438  n=34  avgR= 0.520

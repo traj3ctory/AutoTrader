@@ -12,6 +12,18 @@ const FLOORS = {
   Scalp: { tp1: 1.5, band: [2.5, 3.5] },
   Intraday: { tp1: 2.0, band: [3.0, 4.0] },
 };
+// Conditional (Reduced-Size) Tier per ANALYZE_PROMPT.md's Trade Rules: a
+// setup whose TP1 falls in this band (below the hard floor but not far
+// below it) is a valid reduced-risk trade candidate, not an automatic
+// Watch Only downgrade - but only when the ledger's own setup_rating
+// already says so, meaning the four reduced-size gates (SL Safe, trigger
+// confirmed, catalyst non-veto, BTC/ETH not Conflicting) were already
+// checked when the ledger was written. This script does not re-check
+// those gates itself; it only trusts a rating the ledger has already set.
+const REDUCED_BAND = {
+  Scalp: [1.2, 1.5],
+  Intraday: [1.5, 2.0],
+};
 const STALE_MS = { Scalp: 12 * 3600 * 1000, Intraday: 24 * 3600 * 1000 };
 
 const q = (value) => JSON.stringify(String(value ?? ""));
@@ -46,6 +58,12 @@ const shortDir = (proposed) => {
   return s.replace(/^Proposed\s*/i, "") || "Wait";
 };
 
+// "Conditional Trade - Reduced Size" is too long next to a direction word
+// on the compact Pine card - shorten it to "Conditional (Reduced Size)"
+// there; every other rating displays as-is.
+const shortRating = (effRating) =>
+  /reduced.size/i.test(effRating) ? "Conditional (Reduced Size)" : effRating;
+
 const derived = new Map();
 for (const setup of setups) {
   const isShort = String(setup.direction || "").toLowerCase().includes("short");
@@ -65,10 +83,19 @@ for (const setup of setups) {
   const rr1 = rr(setup.tp?.[0]);
   const rr2 = rr(setup.tp?.[1]);
   const floors = FLOORS[setup.trade_type] || FLOORS.Intraday;
+  const reducedBand = REDUCED_BAND[setup.trade_type] || REDUCED_BAND.Intraday;
   const rawEntry = isShort ? setup.entry?.low : setup.entry?.high;
   const hasEntry = rawEntry != null && setup.sl != null && Number.isFinite(edge) && Number.isFinite(Number(setup.sl));
 
-  const failTp1 = !(rr1 >= floors.tp1 - 1e-9);
+  const rating = String(setup.setup_rating || "");
+  const isReducedRating = /reduced.size/i.test(rating);
+  const belowFloor = !(rr1 >= floors.tp1 - 1e-9);
+  const inReducedBand = rr1 >= reducedBand[0] - 1e-9 && rr1 < floors.tp1 - 1e-9;
+  // Below the hard floor is only a real failure when it's also below the
+  // reduced-size band's own floor, or the ledger hasn't actually rated this
+  // setup as reduced-size - a plain R:R shortfall the ledger hasn't
+  // accounted for still gets capped, same as before.
+  const failTp1 = belowFloor && !(inReducedBand && isReducedRating);
   // TP2 being undefined is a valid single-target setup, not a band violation.
   const warnTp2 = Number.isFinite(rr2) && !(rr2 >= floors.band[0] - 1e-9 && rr2 <= floors.band[1] + 1e-9);
   const suffix = failTp1
@@ -84,7 +111,6 @@ for (const setup of setups) {
   const rrText = hasEntry ? `${rr1.toFixed(1)}R / ${rr2Text}${suffix}` : "N/A - no entry yet";
   const rrColor = !hasEntry ? "gray" : failTp1 ? "red" : warnTp2 ? "orange" : "green";
 
-  const rating = String(setup.setup_rating || "");
   const effRating = failTp1 && !/skip/i.test(rating) ? "Watch Only" : rating;
   if (!hasEntry) {
     // No entry/SL defined yet is expected (e.g. post-spike, waiting for a
@@ -93,6 +119,11 @@ for (const setup of setups) {
     console.warn(
       `[R:R] ${setup.coin}: TP1 ${rr1.toFixed(2)}R is below the ${setup.trade_type} floor ` +
         `${floors.tp1}R — rating capped at Watch Only.`
+    );
+  } else if (inReducedBand && isReducedRating) {
+    console.log(
+      `[R:R] ${setup.coin}: TP1 ${rr1.toFixed(2)}R is in the reduced-size band ` +
+        `${reducedBand[0]}-${floors.tp1}R — keeping "Conditional Trade - Reduced Size" per ledger.`
     );
   } else if (warnTp2) {
     console.warn(
@@ -121,8 +152,15 @@ for (const setup of setups) {
       ? "green"
       : "blue";
 
+  // A confirmed reduced-size trade is a direction call ("Long"/"Short"),
+  // not a proposed/wait state - use the ledger's own direction field
+  // rather than parsing proposed_type, which still reads "Proposed Wait"
+  // on setups that have since triggered.
+  const isReducedEff = /reduced.size/i.test(effRating);
+  const planDir = isReducedEff ? setup.direction || "Wait" : shortDir(setup.proposed_type);
+
   derived.set(setup.coin, {
-    planText: `${shortDir(setup.proposed_type)} - ${effRating}`,
+    planText: `${planDir} - ${shortRating(effRating)}`,
     planColor,
     rrText,
     rrColor,
