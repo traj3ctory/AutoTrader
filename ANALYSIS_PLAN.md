@@ -31,7 +31,7 @@ Before running the full Analyze Command Contract below, check whether a fresh An
 
 When the user says `Analyze [coin]`, execute this flow:
 
-1. Open or switch to the TradingView chart for the coin.
+1. Run `python3 scripts/apiAnalyze.py SYMBOL --trade-type both` for the coin (primary read since 2026-08-03; TradingView is opened only for the news check and the final Pine display).
 2. Read the coin's existing entry from `SETUP_LEDGER.json`, if any.
 3. Clean or inspect existing drawings and Pine maps.
 4. If stale/conflicting objects exist, classify the chart as `Stale Map / Needs Cleanup`.
@@ -62,14 +62,16 @@ The 1D read specifically is not optional or skippable just because the ledger al
 
 Allowed source order:
 
-1. Visible TradingView chart.
+CHANGED 2026-11-16 to match the Source Of Truth section of `ANALYZE_PROMPT.md` (flipped 2026-08-03; this gate was never updated and still said chart-first):
+
+1. `scripts/apiAnalyze.py` - replays the backtest engines on live Bybit data; its verdict (`VALID` / `ENGINE IN TRADE` / `ENGINE ORDER STILL RESTING` / `NO SIGNAL`) is the signal read, and only `VALID` is a tested entry.
 2. `SETUP_LEDGER.json` for remembered per-coin setup state.
-3. TradingView tab candle stream/page data.
-4. External APIs only if the user explicitly requests.
+3. TradingView for the catalyst/news check and the final Pine paste-and-verify display only.
+4. TradingView chart reading as a structural input only as a stated fallback when `apiAnalyze.py` cannot run for the coin.
 
 If source access is limited, state the limitation.
 
-Do not default to external API/kline pulls as the working source for an Analyze, even when TradingView is technically reachable - this is exactly the judgment call that caused the 2026-07-28 incident: a round of re-Analyzes on DOGE/AVAX/ZEC/JTO leaned on Bybit API kline data instead of opening the actual chart, and as a direct result JTO's real 10-day-old daily support zone (0.538-0.556, three prior touches) never got read and was missing from the ledger until the user caught it. API data is a supplement for a source-access gap the user has been told about, or something the user explicitly asks for - never the default move for a fresh Analyze.
+SUPERSEDED 2026-08-03 (kept for history; the lesson that still applies is that higher-timeframe zones must be read, which the engine's 1D/4H/1H pass now does): Do not default to external API/kline pulls as the working source for an Analyze, even when TradingView is technically reachable - this is exactly the judgment call that caused the 2026-07-28 incident: a round of re-Analyzes on DOGE/AVAX/ZEC/JTO leaned on Bybit API kline data instead of opening the actual chart, and as a direct result JTO's real 10-day-old daily support zone (0.538-0.556, three prior touches) never got read and was missing from the ledger until the user caught it. API data is a supplement for a source-access gap the user has been told about, or something the user explicitly asks for - never the default move for a fresh Analyze.
 
 ## Gate 1A: Ledger Check
 
@@ -237,7 +239,7 @@ Before finalizing levels:
 - Check every TP against the TP Zone Validity Rule in `ANALYZE_PROMPT.md`: no TP may span more than one demand/supply zone. Fix TP1 first if it's wrong - a TP that skips through an untested zone and lands in a second one is not a real target, no matter how good the resulting R:R looks.
 - Calculate R:R from the conservative entry-zone edge (entry high for longs, entry low for shorts), never the midpoint.
 
-Floors: Scalp TP1 >= 1.5R with TP2 in the 2.5-3.5R band; Intraday TP1 >= 2R with TP2 in the 3-4R band. If proper SL puts TP1 below the floor, mark WAIT / SKIP. If TP2 has no structural level inside the band, the setup does not fit the template.
+Tested exit (noted 2026-11-16): both engines exit the full position at a fixed 2R, or 1.5R when that is all the room before the next opposing zone; TP2 bands and the reduced-size tier below are untested discretion and must be labelled so. Floors: Scalp TP1 >= 1.5R with TP2 in the 2.5-3.5R band; Intraday TP1 >= 2R with TP2 in the 3-4R band. If proper SL puts TP1 below the floor, mark WAIT / SKIP. If TP2 has no structural level inside the band, the setup does not fit the template.
 
 ## Gate 8: Setup Rating Check
 

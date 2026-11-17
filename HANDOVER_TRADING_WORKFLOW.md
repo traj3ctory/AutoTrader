@@ -24,7 +24,8 @@ Move these files as a set:
 - `scripts/checkAlerts.mjs`
 - `scripts/scalpScreen.mjs`
 - `scripts/strategyBacktest.py` and `scripts/scalpBacktestV3.py` (backtest engines behind the current Scalp Entry Rule in `ANALYZE_PROMPT.md` - re-run before changing scalp rules again)
-- `scripts/apiAnalyze.py` (2026-08-03 - the primary live analysis engine now; imports `strategyBacktest.py`'s zone/structure/signal functions directly so a live read can never drift from what was backtested. TradingView is now display/news only - see Source Of Truth in `ANALYZE_PROMPT.md`)
+- `scripts/signalScan.py` (2026-11-16 - frequent scanner behind the `engine-signal-scan` scheduled task; same engines as `apiAnalyze.py`, prints only signals new since the last run, state in the gitignored `.signal_state.json`; `--notify` raises a macOS notification so it can also run from cron/launchd without a Claude session)
+- `scripts/apiAnalyze.py` (2026-08-03 - the primary live analysis engine; rewritten 2026-11-16 after the first version was found to apply different rules from the backtest (+0.117 avgR replayed vs +0.455 tested). It now replays `run_scalp_v3`/`run_intraday` themselves over 150 days of closed 5m candles cached in `backtests/live/data/`. Flags: several symbols, `--ledger`, `--summary`, `--trade-type scalp|intraday|both`. Only a `VALID` verdict is a tested entry. TradingView is display/news only - see Source Of Truth in `ANALYZE_PROMPT.md`)
 - `backtests/` (results only - raw candle cache under `backtests/*/data/` is gitignored and rebuilds from Bybit on demand)
 - `WATCHLIST_TIER2.md`
 - `AUTOTRADER_TRADE_MAP_TEMPLATE.pine`
@@ -102,7 +103,7 @@ Finding a good candidate here does not add it to the ledger automatically, and a
 
 ## Monthly Scalp Review (Scheduled Task)
 
-`monthly-scalp-review` runs the 1st of each month at 09:00 local. Source of truth is `scheduled-tasks/monthly-scalp-review/SKILL.md` in this repo. Confirms HYPE (primary), XRP (primary), and DOGE (fallback) are still the best scalp picks.
+`monthly-scalp-review` runs the 1st of each month at 09:00 local. Source of truth is `scheduled-tasks/monthly-scalp-review/SKILL.md` in this repo. Confirms ZEC (primary), XRP (primary), and SOL (fallback) are still the best scalp picks.
 
 - Pulls fresh Bybit ticker data (spread, 24h range, turnover, per-unit price) for the current picks plus a comparison set of other liquid coins.
 - Deliberately NOT sourced from mover-scan hits - momentum-driven candidates tend to be thin/volatile, which is close to the opposite of good scalp microstructure (tight spread, deep liquidity). BTC/ETH are included for reference only and are not re-litigated as candidates each month - they were already ruled out for insufficient volatility relative to smaller-account position sizing, a settled decision.
@@ -128,7 +129,7 @@ Three scheduled tasks now run the routine layer of this workflow (a fourth, `wee
 |---|---|---|---|
 | `level-alert-check` | Every 30 min, 08:00-22:59 daily | Live Bybit price vs. levels already in `SETUP_LEDGER.json` | Silent unless a level actually crosses, then flags it and suggests `Analyze [coin]` |
 | `daily-mover-scan` | Weekdays 10:05 | Core 6 (light touch) + Bybit-wide movers + `WATCHLIST_TIER2.md` | Three jobs: (1) light re-verify the core 6, updating the ledger only if something actually changed, (2) find new outside candidates, (3) maintain the tier-2 watchlist and suggest core-6 swaps when a core coin is stale AND a real replacement exists |
-| `monthly-scalp-review` | 1st of month, 09:00 | HYPE/XRP/DOGE vs. fresh Bybit spread/turnover/range data | Confirms the scalp picks still lead on liquidity/execution criteria - deliberately NOT sourced from mover-scan, since momentum and good scalp microstructure tend to pull in opposite directions |
+| `monthly-scalp-review` | 1st of month, 09:00 | ZEC/XRP/SOL vs. fresh Bybit spread/turnover/range data | Confirms the scalp picks still lead on liquidity/execution criteria - deliberately NOT sourced from mover-scan, since momentum and good scalp microstructure tend to pull in opposite directions |
 
 Adding or removing a coin from the ledger is never automatic from any of these tasks - they recommend; the user (or a live `Analyze` session) makes the actual ledger write. If a coin is added, the one-in-one-out discipline from the original prune (18 coins down to a 5-6 target) should be applied again rather than letting the list creep back up.
 
@@ -138,8 +139,8 @@ Keep active `setups` lean, target roughly 5-6 coins for real day-to-day attentio
 
 Structural picks that don't drift (unlike the actual coin list/states - see "Current Ledger Entries" above, read `SETUP_LEDGER.json` directly rather than trusting a snapshot here):
 
-- **HYPE, XRP** — designated scalp pair. Picked from live Bybit ticker data (spread, 24h range, turnover), not guesswork - see the scalp comparison in journal/chat history if the reasoning needs revisiting. BTC/ETH were considered but ruled out for scalping specifically due to low % volatility relative to the account size being sized against, not because they're untradeable in general. Note: a core-6 *slot* being empty (e.g. HYPE's, open since a 2026-07-27 stop-out) does not remove a coin's scalp-pair designation - those are separate concepts, checked via `monthly-scalp-review`, not the ledger's `setups` list.
-- **DOGE** — scalp fallback, kept specifically for its low per-unit price (fine position-size granularity on a smaller account), used only if HYPE/XRP setups go cold.
+- **ZEC, XRP** — designated scalp pair (changed 2026-10-04 from HYPE/XRP after a live-data review: HYPE's spread widened to 0.0111% and turnover fell to $69.4M, while ZEC showed a 0.0007% spread, $230.6M turnover, 4.76% range). Picked from live Bybit ticker data (spread, 24h range, turnover), not guesswork - see the scalp comparison in journal/chat history if the reasoning needs revisiting. BTC/ETH were considered but ruled out for scalping specifically due to low % volatility relative to the account size being sized against, not because they're untradeable in general. Note: a core-6 *slot* being empty (e.g. HYPE's, open since a 2026-07-27 stop-out) does not remove a coin's scalp-pair designation - those are separate concepts, checked via `monthly-scalp-review`, not the ledger's `setups` list.
+- **SOL** — scalp fallback (changed 2026-10-04 from DOGE: $403.6M turnover and 0.0082% spread beat DOGE's $61.7M / 0.0105%), used only if ZEC/XRP setups go cold. HYPE and DOGE stay on watch as backups (DOGE for its low per-unit price / fine position-size granularity). SOL is not in the ledger `setups`; it needs a full Analyze pass before any entry.
 - **BTC, ETH** — never trade candidates in this ledger. Used only as the `btc_eth_filter` confidence check on every other coin's analysis. BTC also has a `context_watch` entry (see Level-Crossing Alerts above) - key S/R levels only, no trade fields, so the poller can flag a market-wide move early. This does not change BTC's never-trade status.
 - The remaining core-6 Intraday slots (currently JTO, AVAX, ZEC, LIT per the ledger as of early August - check `SETUP_LEDGER.json` for the live list, this drifts) rotate based on which coin is closest to a live trigger, per `daily-mover-scan`'s swap-suggestion logic.
 
@@ -162,7 +163,7 @@ Analyze COIN
 Do this (order CORRECTED 2026-08-03 to match the Source Of Truth flip - API first, TradingView for news + display only):
 
 1. Read `SETUP_LEDGER.json` for the coin's prior state.
-2. Run `python3 scripts/apiAnalyze.py SYMBOL` - this is the primary structural read (4H/1D structure, 1H->15m/15m->5m zones with FVG quality flag, signal, computed entry/SL/TP/R:R). Fall back to a TradingView chart read only if this can't run for the coin.
+2. Run `python3 scripts/apiAnalyze.py SYMBOL --trade-type both` - this is the primary structural read: it replays the backtest engines and prints the engine verdict (`VALID` / `ENGINE IN TRADE` / `ENGINE ORDER STILL RESTING` / `NO SIGNAL` with the blocking gates), 4H/1D structure, and the engine's entry/SL/TP/R:R. Fall back to a TradingView chart read only if this can't run for the coin.
 3. Check TradingView's news panel for a catalyst read - the API has no news feed.
 4. Decide if the old ledger setup is still valid, missed, invalidated, active, or needs refresh.
 5. Update `SETUP_LEDGER.json` before drawing.

@@ -1,207 +1,314 @@
 #!/usr/bin/env python3
-"""Live, API-first analysis - the primary decision engine per the 2026-08-03
-Source Of Truth change (Bybit API first, TradingView for news + final
-display only). Reuses the EXACT zone-detection, structure, and signal
-functions from strategyBacktest.py (imported directly, not reimplemented) so
-a live read can never silently drift from what was actually backtested.
-
-Prints: 4H trend, the nearest 1H->15m refined zone to current price, whether
-price is currently reacting at it, the 5m EMA9/20 signal (cross/slope) at
-that zone, VWAP context, and - if every condition in the Scalp Entry Rule
-is met - a computed entry/SL/TP/R:R ready to drop into SETUP_LEDGER.json.
-
-Usage: python3 scripts/apiAnalyze.py XRPUSDT [--trade-type scalp|intraday]
-"""
+# Live read that replays the backtested engines themselves over fresh Bybit candles.
+# Usage: python3 scripts/apiAnalyze.py SYMBOL [SYMBOL ...] [--trade-type scalp|intraday|both] [--ledger] [--summary]
+import datetime as dt
+import gzip
+import json
 import sys
 import time
 import urllib.parse
-import urllib.request
-import json
-from pathlib import Path
 from dataclasses import asdict
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 import strategyBacktest as sb  # noqa: E402
+import scalpBacktestV3 as v3  # noqa: E402
 
-MICRO_LOOKBACK = 5
-
-
-def fetch_live(symbol: str, interval: str, limit: int = 300):
-    query = urllib.parse.urlencode({
-        "category": "linear", "symbol": symbol, "interval": interval, "limit": limit,
-    })
-    with urllib.request.urlopen(f"https://api.bybit.com/v5/market/kline?{query}", timeout=20) as r:
-        data = json.load(r)
-    if data.get("retCode") != 0:
-        raise RuntimeError(f"{symbol} {interval}: {data.get('retMsg')}")
-    rows = sorted(data["result"]["list"], key=lambda x: int(x[0]))
-    return [sb.Candle(t=int(x[0]), o=float(x[1]), h=float(x[2]), l=float(x[3]),
-                       c=float(x[4]), v=float(x[5])) for x in rows]
+ROOT = Path(__file__).resolve().parent.parent
+CACHE_DIR = ROOT / "backtests" / "live" / "data"
+HISTORY_DAYS = 150
+WARMUP_DAYS = 61
+COST_PCT = 0.14
+TIME_STOP_CANDLES = 72
+TIME_STOP_MIN_R = -0.3
+DAY_MS = 86_400_000
+FIVE_MS = sb.INTERVAL_MS["5"]
 
 
-def micro_break(candles, i, direction):
-    if i < MICRO_LOOKBACK + 1:
-        return False
-    window = candles[i - MICRO_LOOKBACK:i]
-    if direction == "short":
-        return candles[i].l < min(c.l for c in window)
-    return candles[i].h > max(c.h for c in window)
+def hhmm(t_ms):
+    return time.strftime("%m-%d %H:%M", time.gmtime(t_ms / 1000))
 
 
-def analyze_scalp(symbol: str):
-    c5 = fetch_live(symbol, "5", 300)
-    c15 = fetch_live(symbol, "15", 200)
-    c60 = fetch_live(symbol, "60", 200)
-    c240 = fetch_live(symbol, "240", 100)
-    cD = fetch_live(symbol, "D", 60)
+def load_history(symbol):
+    # Closed 5m candles for the last HISTORY_DAYS, cached on disk and topped up incrementally.
+    now_ms = int(time.time() * 1000)
+    start_ms = now_ms - HISTORY_DAYS * DAY_MS
+    cache_path = CACHE_DIR / f"{symbol}_5m.json.gz"
+    rows = {}
+    if cache_path.exists():
+        with gzip.open(cache_path, "rt", encoding="utf-8") as handle:
+            rows = {r["t"]: sb.Candle(**r) for r in json.load(handle) if r["t"] >= start_ms}
+    # A cache that starts late was built with a shorter window, so refetch it in full.
+    if rows and min(rows) > start_ms + DAY_MS:
+        rows = {}
+    stop_at = max(rows) if rows else start_ms
+    cursor = now_ms
+    while cursor >= stop_at:
+        query = urllib.parse.urlencode({"category": "linear", "symbol": symbol, "interval": "5",
+                                        "limit": 1000, "end": cursor})
+        # Bybit intermittently answers "svc error" under load, so retry before giving up.
+        for attempt in range(5):
+            data = sb.request_json(f"https://api.bybit.com/v5/market/kline?{query}")
+            if data.get("retCode") == 0:
+                break
+            time.sleep(1.5 * (attempt + 1))
+        else:
+            raise RuntimeError(f"{symbol}: Bybit error {data.get('retMsg')}")
+        page = data.get("result", {}).get("list", [])
+        if not page:
+            break
+        oldest = cursor
+        for item in page:
+            t = int(item[0])
+            oldest = min(oldest, t)
+            # Skip the still-forming candle: the engines only ever saw closed candles.
+            if t >= start_ms and t + FIVE_MS <= now_ms:
+                rows[t] = sb.Candle(t=t, o=float(item[1]), h=float(item[2]), l=float(item[3]),
+                                    c=float(item[4]), v=float(item[5]))
+        if oldest >= cursor or oldest <= stop_at:
+            break
+        cursor = oldest - 1
+        time.sleep(0.05)
+    candles = sorted(rows.values(), key=lambda c: c.t)
+    if not candles:
+        raise RuntimeError(f"{symbol}: no candles returned")
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    with gzip.open(cache_path, "wt", encoding="utf-8") as handle:
+        json.dump([asdict(c) for c in candles], handle, separators=(",", ":"))
+    return candles
 
-    zones = sb.clone_zones(sb.refined_zones(c60, "60", c15, "15"))
-    zones.sort(key=lambda z: z.known_t)
-    for z in zones:
-        if z.kind == "demand" and c5[-1].c < z.low:
-            z.invalidated = True
-        elif z.kind == "supply" and c5[-1].c > z.high:
-            z.invalidated = True
 
-    structure_4h = sb.StructureLookup(c240, "240")
-    structure_1d = sb.StructureLookup(cD, "D")
-    atr_lookup = sb.SeriesLookup(c240, "240", sb.atr(c240))
+def build_frames(five):
+    frames = {"5": five}
+    for interval in ("15", "60", "240", "D"):
+        frames[interval] = sb.aggregate(five, interval)
+    # Drop a partial last 15m bucket so the intraday engine never confirms on an unclosed candle.
+    if (five[-1].t + FIVE_MS) % sb.INTERVAL_MS["15"] != 0:
+        frames["15"] = frames["15"][:-1]
+    return frames
+
+
+def set_window(five):
+    # Point the engines' replay window at the live history: warm-up first, then signal replay to now.
+    span_days = (five[-1].t - five[0].t) / DAY_MS
+    warmup = min(WARMUP_DAYS, span_days * 0.67)
+    sb.TEST_START = dt.datetime.fromtimestamp(five[0].t / 1000, sb.UTC) + dt.timedelta(days=warmup)
+    sb.TEST_END = dt.datetime.fromtimestamp(five[-1].t / 1000, sb.UTC)
+    return span_days, span_days - warmup
+
+
+def replay_line(trades, replay_days):
+    done = [t for t in trades if t.outcome != "OPEN"]
+    if not done:
+        return f"Engine replay, last {replay_days:.0f}d: 0 closed trades"
+    wins = sum(1 for t in done if t.net_r > 0)
+    total = sum(t.net_r for t in done)
+    last = done[-1]
+    return (f"Engine replay, last {replay_days:.0f}d: {len(done)} closed, {wins} won, {total:+.2f}R net of "
+            f"{COST_PCT}% cost | last: {last.direction} {last.outcome} {last.net_r:+.2f}R, exit {hhmm(last.exit_t)} UTC")
+
+
+def unreal_r(position, price):
+    risk = abs(position["entry"] - position.get("orig_stop", position["stop"]))
+    move = price - position["entry"] if position["direction"] == "long" else position["entry"] - price
+    return move / risk if risk else 0.0
+
+
+def zone_txt(zone):
+    if zone is None:
+        return "none"
+    return f"{zone.low:.6g}-{zone.high:.6g} (FVG {'present' if zone.has_fvg else 'absent'})"
+
+
+def scalp_reference(direction, active, price, atr_now):
+    # The zone, stop and target the engine would use if a valid cross closed at the current price.
+    kind = "demand" if direction == "long" else "supply"
+    cands = [z for z in active if z.kind == kind and not z.invalidated and not z.consumed
+             and (z.proximal <= price if direction == "long" else z.proximal >= price)]
+    cands.sort(key=lambda z: (abs(price - z.proximal), -z.known_t))
+    if not cands or not atr_now:
+        return None, None, None, None
+    zone = cands[0]
+    stop = zone.low - 0.5 * atr_now if direction == "long" else zone.high + 0.5 * atr_now
+    opposite = [z for z in active if z.kind != kind and not z.invalidated]
+    rr, target = sb.choose_rr(price, stop, direction, opposite)
+    return zone, stop, rr, target
+
+
+def analyze_scalp(symbol, frames, span_days, replay_days, summary):
+    c5 = frames["5"]
+    state = {}
+    trades = v3.run_scalp_v3(symbol, frames, COST_PCT, short_gates=True, time_stop=True,
+                             time_stop_candles=TIME_STOP_CANDLES, time_stop_min_r=TIME_STOP_MIN_R,
+                             state_out=state)
+    active, position = state["active"], state["position"]
+    i = len(c5) - 1
+    price, now_t = c5[i].c, c5[i].t
     closes = [c.c for c in c5]
     e9, e20 = sb.ema(closes, 9), sb.ema(closes, 20)
-    vwaps = sb.daily_vwap(c5)
-    i = len(c5) - 1
-    price = c5[i].c
-    now_t = c5[i].t
-
-    bias4h = structure_4h.at(now_t)
-    bias1d = structure_1d.at(now_t)
-    print(f"\n===== {symbol} — LIVE API ANALYSIS (Scalp) =====")
-    print(f"Price: {price}")
-    print(f"4H structure: {bias4h}   |   1D structure: {bias1d}")
-    print(f"Session VWAP (5m, resets 00:00 UTC): {vwaps[i]:.6f}  ({'ABOVE' if price > vwaps[i] else 'BELOW'})")
-
-    active_demand = [z for z in zones if z.kind == "demand" and not z.invalidated and not z.consumed]
-    active_supply = [z for z in zones if z.kind == "supply" and not z.invalidated and not z.consumed]
-    near_demand = max(active_demand, key=lambda z: z.high, default=None)
-    near_supply = min(active_supply, key=lambda z: z.low, default=None)
-    if near_demand:
-        print(f"Nearest live demand zone: {near_demand.low:.6f}-{near_demand.high:.6f}  "
-              f"(FVG {'present' if near_demand.has_fvg else 'absent'} - reported quality signal, not a gate)")
-    else:
-        print("Nearest live demand zone: none")
-    if near_supply:
-        print(f"Nearest live supply zone: {near_supply.low:.6f}-{near_supply.high:.6f}  "
-              f"(FVG {'present' if near_supply.has_fvg else 'absent'} - reported quality signal, not a gate)")
-    else:
-        print("Nearest live supply zone: none")
-
-    if e9[i] is None or e20[i] is None or e9[i - 3] is None or e20[i - 3] is None:
-        print("Not enough 5m data for EMA cross yet.")
-        return
+    bias4h = sb.StructureLookup(frames["240"], "240").at(now_t)
+    bias1d = sb.StructureLookup(frames["D"], "D").at(now_t)
+    atr_now = sb.SeriesLookup(frames["240"], "240", sb.atr(frames["240"])).at(now_t)
+    vwap = sb.daily_vwap(c5)[i]
 
     bull_cross = e9[i - 1] <= e20[i - 1] and e9[i] > e20[i]
     bear_cross = e9[i - 1] >= e20[i - 1] and e9[i] < e20[i]
-    bull_slope = e9[i] > e9[i - 3]
-    bear_slope = e9[i] < e9[i - 3]
+    bull_slope = e9[i] > e9[i - 1] and e20[i] > e20[i - 1]
+    bear_slope = e9[i] < e9[i - 1] and e20[i] < e20[i - 1]
 
-    # Report the STANDING EMA order and when it last flipped - not only whether a
-    # flip happened on this exact candle (added 2026-08-26). A bare "cross: none"
-    # previously hid a real cross that had fired 19 candles earlier and was still
-    # the live state, which made the output look like nothing had happened.
-    state = "BULL-ordered (9 above 20)" if e9[i] > e20[i] else "BEAR-ordered (9 below 20)"
-    last_flip = None
+    if position is not None:
+        age = i - position["entry_index"]
+        side = position["direction"].upper()
+        levels = (f"entry {position['entry']:.6g}, SL {position['orig_stop']:.6g}, "
+                  f"TP {position['target']:.6g}, R:R {position['rr']}")
+        if age == 0:
+            cost_r = COST_PCT / 100 * position["entry"] / abs(position["entry"] - position["orig_stop"])
+            verdict = f"VALID {side} - cross closed {hhmm(position['signal_t'] + FIVE_MS)} UTC: {levels}, cost ~{cost_r:.2f}R"
+        else:
+            stop_note = " (time-stop moved SL to breakeven)" if position["stop"] != position["orig_stop"] else ""
+            verdict = (f"ENGINE IN TRADE - {side} signalled {hhmm(position['signal_t'] + FIVE_MS)} UTC, {age} candles ago: "
+                       f"{levels}{stop_note}; now {unreal_r(position, price):+.2f}R. A late entry is not the tested trade.")
+    else:
+        verdict = "NO SIGNAL on the last closed 5m candle"
+
+    if summary:
+        print(f"{symbol:14} SCALP    {price:<12.6g} 4H {bias4h:8} 1D {bias1d:8} {verdict}")
+        return
+
+    print(f"\n===== {symbol} - LIVE ENGINE READ (Scalp, backtest v4 rules) =====")
+    print(f"Last closed 5m candle: {hhmm(now_t + FIVE_MS)} UTC   Price: {price:.6g}   History: {span_days:.0f}d")
+    if span_days < HISTORY_DAYS - 2:  # short history means fewer known zones
+        print(f"WARNING: only {span_days:.0f}d of history (engine was tested on 150d) - zone state is less reliable")
+    print(f"4H structure: {bias4h}   |   1D structure: {bias1d}")
+    print(f"Session VWAP (context only, not a gate): {vwap:.6g} ({'price above' if price > vwap else 'price below'})")
+
+    order = "BULL-ordered (9 above 20)" if e9[i] > e20[i] else "BEAR-ordered (9 below 20)"
+    flip_txt = "no cross found in history"
     for j in range(i, 0, -1):
         if None in (e9[j], e20[j], e9[j - 1], e20[j - 1]):
             break
         if (e9[j - 1] <= e20[j - 1]) != (e9[j] <= e20[j]):
-            last_flip = j
+            flip_dir = "BULLISH" if e9[j] > e20[j] else "BEARISH"
+            flip_txt = f"last cross {flip_dir}, closed {hhmm(c5[j].t + FIVE_MS)} UTC ({i - j} candles ago)"
             break
-    if last_flip is not None:
-        flip_dir = "BULLISH" if e9[last_flip] > e20[last_flip] else "BEARISH"
-        ago = i - last_flip
-        flip_t = time.strftime("%H:%M", time.gmtime(c5[last_flip].t / 1000))
-        flip_txt = (f"last cross {flip_dir} @ {flip_t} UTC "
-                    f"({ago} candle{'s' if ago != 1 else ''} ago)")
-    else:
-        flip_txt = "no cross found in window"
-    fresh_txt = ("FRESH CROSS THIS CANDLE" if (bull_cross or bear_cross)
-                 else "no new cross this candle")
-    slope_txt = "UP" if bull_slope else "DOWN" if bear_slope else "FLAT"
-    print(f"5m EMA 9/20: {state}   slope: {slope_txt}")
-    print(f"             {flip_txt}   |   {fresh_txt}")
+    slope = "UP (both EMAs)" if bull_slope else "DOWN (both EMAs)" if bear_slope else "MIXED"
+    print(f"5m EMA 9/20: {order}   slope: {slope}   |   {flip_txt}")
 
-    # 4H trend relationship, stated explicitly for BOTH directions every run, so a
-    # blocked setup always says which side the trend is on rather than going silent.
-    def trend_vs(direction: str) -> str:
-        aligned = "bullish" if direction == "long" else "bearish"
-        against = "bearish" if direction == "long" else "bullish"
-        if bias4h == aligned:
-            return "TREND SUPPORTS"
-        if bias4h == against:
-            return "COUNTER-TREND -> blocked"
-        return "TREND NEUTRAL (allowed, not supporting)"
-
-    print(f"4H trend vs LONG:  {trend_vs('long')}")
-    print(f"4H trend vs SHORT: {trend_vs('short')}")
-
-    reacting_at_demand = near_demand and near_demand.low <= price <= near_demand.high * 1.004
-    reacting_at_supply = near_supply and near_supply.high >= price >= near_supply.low * 0.996
-
-    # 4H is DIRECTIONAL GUIDANCE, not a hard gate (changed 2026-08-26, backtest-validated).
-    # It blocks only outright counter-trend entries; a range/neutral 4H does NOT block.
-    # 17 coins / 3 months: hard gate +0.391 avgR vs soft gate +0.455 avgR, and soft also
-    # lifted win rate 42.6% -> 48.1% while taking 33 more trades. Do not restore the hard
-    # `== "bullish"` / `== "bearish"` form without a fresh test showing it beats soft.
-    verdict = "WATCH ONLY — no valid signal right now"
-    if bull_cross and bull_slope and bias4h != "bearish" and reacting_at_demand:
-        risk = price - (near_demand.low - 0.5 * atr_lookup.at(now_t))
-        opposite = [z for z in zones if z.kind == "supply" and not z.invalidated]
-        rr, target = sb.choose_rr(price, price - risk, "long", opposite)
-        if rr:
-            verdict = f"VALID LONG — entry {price:.6f}, SL {price-risk:.6f}, TP {target:.6f}, R:R {rr}"
-        else:
-            verdict = "Zone/cross/slope align for LONG but no R:R-clearing target found — no trade"
-    elif bear_cross and bear_slope and bias4h != "bullish" and reacting_at_supply:
-        if bias1d not in ("bearish", "range") or not micro_break(c5, i, "short"):
-            verdict = "Bearish cross+slope+zone align, but 1D structure or 5m micro-break gate fails — no short"
-        else:
-            risk = (near_supply.high + 0.5 * atr_lookup.at(now_t)) - price
-            opposite = [z for z in zones if z.kind == "demand" and not z.invalidated]
-            rr, target = sb.choose_rr(price, price + risk, "short", opposite)
-            if rr:
-                verdict = f"VALID SHORT — entry {price:.6f}, SL {price+risk:.6f}, TP {target:.6f}, R:R {rr}"
-            else:
-                verdict = "Zone/cross/slope/1D/micro-break all align for SHORT but no R:R-clearing target — no trade"
     print(f"\nVERDICT: {verdict}")
+    for direction, crossed, sloped in (("long", bull_cross, bull_slope), ("short", bear_cross, bear_slope)):
+        against = "bearish" if direction == "long" else "bullish"
+        zone, stop, rr, target = scalp_reference(direction, active, price, atr_now)
+        blocks = []
+        if not crossed:
+            blocks.append("no 9/20 cross on the last closed candle")
+        if not sloped:
+            blocks.append("both EMAs not sloping in direction")
+        if bias4h == against:
+            blocks.append(f"4H counter-trend (4H reads {bias4h})")
+        if direction == "short":
+            if bias1d not in ("bearish", "range"):
+                blocks.append(f"1D structure gate (1D reads {bias1d})")
+            if not v3.micro_break(c5, i, "short"):
+                blocks.append("no 5m micro-structure break")
+        side_txt = "below" if direction == "long" else "above"
+        kind = "demand" if direction == "long" else "supply"
+        if zone is None:
+            blocks.append(f"no live unused {kind} zone {side_txt} price")
+            ref = f"reference {kind} zone: none"
+        else:
+            if rr is None:
+                blocks.append("no room for 1.5R before the next opposing zone")
+            plan = f"TP {target:.6g} ({rr}R)" if rr else "no qualifying target"
+            ref = f"reference {kind} zone {zone_txt(zone)} -> if a cross closed here: SL {stop:.6g}, {plan}"
+        status = "all gates pass" if not blocks else "blocked by: " + "; ".join(blocks)
+        print(f"  {direction.upper():5} {status}")
+        print(f"        {ref}")
+    print(replay_line(trades, replay_days))
 
-    # Name the blocking gate rather than reporting a silent "no signal". Today's
-    # failure mode was saying nothing while a cross existed and a gate suppressed
-    # it, leaving the user to spot it on the chart themselves.
-    if verdict.startswith("WATCH ONLY"):
-        for direction, crossed, sloped, reacting in (
-            ("LONG", bull_cross, bull_slope, reacting_at_demand),
-            ("SHORT", bear_cross, bear_slope, reacting_at_supply),
-        ):
-            blocks = []
-            if not crossed:
-                blocks.append("no fresh 5m cross this candle")
-            if not sloped:
-                blocks.append("slope not in direction")
-            if not reacting:
-                blocks.append("price not reacting at the refined zone")
-            if trend_vs(direction.lower()).startswith("COUNTER"):
-                blocks.append(f"4H counter-trend (4H reads {bias4h})")
-            if direction == "SHORT":
-                if bias1d not in ("bearish", "range"):
-                    blocks.append(f"1D structure gate (1D reads {bias1d})")
-                if not micro_break(c5, i, "short"):
-                    blocks.append("no 5m micro-structure break")
-            print(f"  {direction} blocked by: " + "; ".join(blocks) if blocks
-                  else f"  {direction}: all gates pass")
+
+def analyze_intraday(symbol, frames, span_days, replay_days, summary):
+    c15 = frames["15"]
+    state = {}
+    trades = sb.run_intraday(symbol, frames, COST_PCT, state_out=state)
+    active, pending, position = state["active"], state["pending"], state["position"]
+    last = c15[-1]
+    i = len(c15) - 1
+    price, now_t = last.c, last.t
+    bias = sb.StructureLookup(frames["D"], "D").at(now_t)
+    span15 = sb.INTERVAL_MS["15"]
+
+    if position is not None:
+        side = position["direction"].upper()
+        verdict = (f"ENGINE IN TRADE - {side} filled {hhmm(position['entry_t'])} UTC: entry {position['entry']:.6g}, "
+                   f"SL {position['stop']:.6g}, TP {position['target']:.6g}, R:R {position['rr']}; "
+                   f"now {unreal_r(position, price):+.2f}R. A late entry is not the tested trade.")
+    elif pending is not None:
+        side = pending["direction"].upper()
+        age = (now_t - pending["signal_t"]) // span15
+        gap = abs(pending["entry"] - price) / price * 100
+        label = f"VALID {side}" if age <= 4 else f"ENGINE ORDER STILL RESTING - {side}"
+        verdict = (f"{label} - {pending['confirmation']} closed {hhmm(pending['signal_t'] + span15)} UTC "
+                   f"({age} candles ago): limit {pending['entry']:.6g} ({gap:.1f}% from price), SL {pending['stop']:.6g}, "
+                   f"TP {pending['target']:.6g}, R:R {pending['rr']}; cancel if SL trades before the fill")
+    else:
+        verdict = "NO SIGNAL on the last closed 15m candle"
+
+    if summary:
+        print(f"{symbol:14} INTRADAY {price:<12.6g} 1D {bias:8} {'':11} {verdict}")
+        return
+
+    print(f"\n===== {symbol} - LIVE ENGINE READ (Intraday, backtest rules) =====")
+    print(f"Last closed 15m candle: {hhmm(now_t + span15)} UTC   Price: {price:.6g}   History: {span_days:.0f}d")
+    print(f"1D structure: {bias}")
+    print(f"\nVERDICT: {verdict}")
+    for direction, kind in (("long", "demand"), ("short", "supply")):
+        live = [z for z in active if z.kind == kind and not z.invalidated and not z.consumed]
+        live.sort(key=lambda z: abs(price - z.proximal))
+        nearest = live[0] if live else None
+        blocks = []
+        if bias == "range":
+            blocks.append("1D structure is range (engine trades neither side)")
+        elif (bias == "bullish") != (direction == "long"):
+            blocks.append(f"1D structure ({bias}) opposes {direction}")
+        touched = [z for z in live if z.touch_index is not None and 0 <= i - z.touch_index <= 4]
+        if not touched:
+            blocks.append(f"no unused {kind} zone first touched within the last 4 closed 15m candles")
+        elif not any(sb.rejection(last, z, direction) or sb.engulfing(c15[-2], last, z, direction) for z in touched):
+            blocks.append("touched zone has no rejection/engulfing on the last closed 15m candle")
+        status = "all gates pass" if not blocks else "blocked by: " + "; ".join(blocks)
+        print(f"  {direction.upper():5} {status}")
+        print(f"        nearest unused {kind} zone: {zone_txt(nearest)}")
+    print(replay_line(trades, replay_days))
+
+
+def main():
+    args = sys.argv[1:]
+    trade_type = "scalp"
+    if "--trade-type" in args:
+        at = args.index("--trade-type")
+        trade_type = args[at + 1].lower()
+        del args[at:at + 2]
+    summary = "--summary" in args
+    symbols = [a.upper().replace(".P", "") for a in args if not a.startswith("--")]
+    if "--ledger" in args:
+        ledger = json.loads((ROOT / "SETUP_LEDGER.json").read_text())
+        symbols += [s.replace(".P", "") for s in ledger["setups"] if s.replace(".P", "") not in symbols]
+    if not symbols or trade_type not in ("scalp", "intraday", "both"):
+        print("Usage: python3 scripts/apiAnalyze.py SYMBOL [SYMBOL ...] "
+              "[--trade-type scalp|intraday|both] [--ledger] [--summary]")
+        sys.exit(1)
+    for symbol in symbols:
+        try:
+            five = load_history(symbol)
+            frames = build_frames(five)
+            span_days, replay_days = set_window(five)
+            if trade_type in ("scalp", "both"):
+                analyze_scalp(symbol, frames, span_days, replay_days, summary)
+            if trade_type in ("intraday", "both"):
+                analyze_intraday(symbol, frames, span_days, replay_days, summary)
+        except Exception as exc:
+            print(f"{symbol}: ANALYSIS FAILED - {exc}")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python3 scripts/apiAnalyze.py SYMBOL")
-        sys.exit(1)
-    analyze_scalp(sys.argv[1])
+    main()

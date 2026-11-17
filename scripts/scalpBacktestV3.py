@@ -57,7 +57,7 @@ def micro_break(candles, i: int, direction: str) -> bool:
     return candles[i].h > swing_high
 
 
-def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: bool = False, session_filter: bool = False, time_stop: bool = False, time_stop_candles: int = TIME_STOP_CANDLES_DEFAULT, time_stop_min_r: float = TIME_STOP_MIN_R_DEFAULT) -> list:
+def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: bool = False, session_filter: bool = False, time_stop: bool = False, time_stop_candles: int = TIME_STOP_CANDLES_DEFAULT, time_stop_min_r: float = TIME_STOP_MIN_R_DEFAULT, state_out: Optional[dict] = None) -> list:
     candles = frames["5"]
     closes = [c.c for c in candles]
     e9, e20 = sb.ema(closes, 9), sb.ema(closes, 20)
@@ -169,6 +169,10 @@ def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: boo
                     "entry_index": i, "entry": entry, "stop": stop, "orig_stop": stop, "target": target,
                     "rr": rr, "zone_tf": zone.source_tf, "size_mult": size_mult,
                     "breakeven_applied": False}
+
+    # Live-read hook: exposes end-of-replay zone and position state, no effect on trades.
+    if state_out is not None:
+        state_out.update(active=active, position=position)
 
     if position is not None and candles:
         final = next((c for c in reversed(candles) if c.t <= sb.ms(sb.TEST_END)), candles[-1])

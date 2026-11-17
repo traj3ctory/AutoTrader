@@ -471,7 +471,8 @@ def make_trade(strategy: str, symbol: str, direction: str, signal_t: int,
                  gross_r, gross_r - cost_r, risk_pct, cost_pct, zone_tf, confirmation)
 
 
-def run_intraday(symbol: str, frames: dict[str, list[Candle]], cost_pct: float) -> list[Trade]:
+def run_intraday(symbol: str, frames: dict[str, list[Candle]], cost_pct: float,
+                 state_out: Optional[dict] = None) -> list[Trade]:
     candles = frames["15"]
     zones = clone_zones(refined_zones(frames["240"], "240", frames["60"], "60"))
     zones.sort(key=lambda z: z.known_t)
@@ -578,6 +579,10 @@ def run_intraday(symbol: str, frames: dict[str, list[Candle]], cost_pct: float) 
                        "target": target, "rr": rr, "zone_tf": zone.source_tf,
                        "confirmation": confirmation, "zone": zone}
             break
+
+    # Live-read hook: exposes end-of-replay zone, pending-order and position state.
+    if state_out is not None:
+        state_out.update(active=active, pending=pending, position=position)
 
     if position is not None and candles:
         final = next((c for c in reversed(candles) if c.t <= ms(TEST_END)), candles[-1])

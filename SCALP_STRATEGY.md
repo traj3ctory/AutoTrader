@@ -1,9 +1,15 @@
-# Scalp Strategy (v5 — 2026-08-26)
+# Scalp Strategy (v6 — 2026-11-16)
 
 Single source of truth for the scalp path. Supersedes the loose written version that carried a
 stale VWAP gate and no stated 4H rule. Every gate below is marked **MEASURED** (backtested on this
 repo's data) or **ASSUMED** (carried on judgement, never tested) so it is always obvious which
 parts are load-bearing evidence and which are convention.
+
+**v6 change (2026-11-16):** the written rules had drifted from what the backtest engine actually
+does. This version restates the zone rule (§2), the target (§6) and the caveats (§10) so they
+describe the tested engine, and `scripts/apiAnalyze.py` now replays that engine live. **When this
+document and the engine verdict disagree, the engine verdict wins** - it is the only thing with
+measured results behind it.
 
 ---
 
@@ -21,15 +27,23 @@ zones, not to fire trades.
 
 ---
 
-## 2. Entry trigger — all four required
+## 2. Entry trigger — all five required
 
 1. **Cross** — 9 EMA crosses 20 EMA on the **5m**. Above = long, below = short.
 2. **Closed candle** — the confirming 5m candle must be closed, never live/forming.
 3. **Slope** — both EMAs sloping in the trade's direction after the cross.
-4. **Zone alignment (mandatory)** — the cross must occur *at, or immediately after,* a
-   reaction/retest at the 15m-refined zone. No zone, no trade, regardless of how clean the cross
-   looks. If price has already travelled away from the zone by the time the candle closes, it is a
-   **missed signal, not a chase** — wait for a retest.
+4. **Zone anchor (mandatory)  [MEASURED]** — a live, **unused** 15m-refined zone (drawn from a 1H
+   zone) must exist on the correct side of price when the cross closes: demand with its near edge
+   at or below price for a long, supply with its near edge at or above price for a short. The
+   nearest such zone anchors the stop. No zone, no trade. A zone is **consumed after one signal**
+   and is dead once price closes through it - neither can anchor another trade.
+   Price does **not** have to be reacting inside the zone. The earlier wording ("at, or immediately
+   after, a reaction/retest at the zone") was never what the engine tested, and when measured on
+   the same data it was far worse: **+0.058 avgR** for the reaction requirement vs **+0.455** for
+   the anchor rule. Do not reinstate it.
+5. **One position per symbol** — while the engine is in a trade on a coin, new crosses on that coin
+   are ignored. A cross that closed several candles ago is **a missed signal, not a chase**; the
+   tested trade was the entry at that candle's close and nothing later.
 
 Entry is at **market price** (this is the scalp/intraday distinction: Intraday uses a limit at the
 zone edge; scalp takes the confirmed cross at market).
@@ -117,14 +131,15 @@ Do not restore any of these as hard gates without a fresh backtest showing posit
   it is not a real invalidation point — skip to the **next real structural level**. If that pushes
   R:R below floor, the trade does not qualify: **reduce size or skip it. Never shrink the stop to
   make the math work.**
-- **TP** — prior peak/swing before the move, or the nearest opposing 15m zone, whichever is *closer*.
-- **TP zone validity** — every TP sits at the **near edge** of its zone, never inside it, never past
-  its far edge. TP1 has no precondition. TP2+ only count as real targets once the zone before them
-  is confirmed broken (a close through, holding) — until then they are stretch targets and must not
-  be used for the R:R floor check.
-- **R:R floor** — 1:1.5 minimum, 1:2 preferred.
+- **TP  [MEASURED]** — a single fixed target: **2R** if the nearest live opposing zone leaves at
+  least 2R of room, otherwise **1.5R** if it leaves 1.5R, otherwise **no trade**. The whole position
+  exits at that target. This is the only exit the backtest ever used.
+- **R:R floor** — 1:1.5 minimum, 1:2 preferred (same rule, stated as a floor).
+- **Structural targets, TP2 and partial exits  [ASSUMED]** — placing TP at a prior swing, running a
+  TP2 inside an R band, or scaling out at TP1 were never backtested. They may be used as discretion,
+  but the measured results in this document do not describe them.
 
-### Managing a trade whose TP1 R:R is thin
+### Managing a trade whose TP1 R:R is thin  [ASSUMED]
 
 | TP1 R:R | Action |
 |---|---|
@@ -176,8 +191,22 @@ severe regression, because it cuts off winners that simply hadn't resolved yet.
 - **Sample size is modest.** The numbers in §3 come from 129–181 trades over one 3-month window on
   17 coins. Four variants were compared and the best selected, so some of the margin may be
   selection effect. Treat +0.455 avgR as directional evidence, not a promise.
-- **Costs matter.** All figures are net of 0.14%/side. An earlier ungated baseline measured +0.033R
-  — inside noise and fully consumed by fees. Small edges do not survive contact with slippage.
+- **+0.455 is the top of its own range.** The engine holds one position per coin and consumes
+  zones, so which trades fire depends on where the replay starts. Shifting the start by 0–14 days
+  on the same data gives **+0.26 to +0.455 avgR** - always positive, but +0.455 is the best case.
+- **Out of sample the edge is much smaller.** With the rules frozen, 2026-08-01 to 2026-11-15
+  (`backtests/2026-11-16-oos/`) measured **+0.143 avgR, 36.4% win, 195 trades** on the original 17
+  coins and **+0.123 avgR, 170 trades** on the current ledger coins. By month: Aug +0.134,
+  Sep +0.045, Oct −0.001, Nov +0.723 (almost all shorts). Plan around roughly +0.1R per trade with
+  flat months, not +0.45R.
+- **Costs matter.** All figures are net of **0.14% round trip** (charged once per trade - earlier
+  versions of this document said "per side", which overstated it). Real fees plus slippage above
+  that eat directly into a +0.1R edge. An earlier ungated baseline measured +0.033R — inside noise
+  and fully consumed by fees.
+- **The live analyzer used to apply different rules.** Until 2026-11-16 `apiAnalyze.py` required
+  price inside the zone, used a different slope test and read the still-forming candle. Replayed on
+  the backtest data that version scored **+0.117 avgR** (121 trades). Signals it produced before
+  that date were not the tested trade.
 - **Base rate.** Across markets, consistent retail profitability runs roughly 3–15% depending on
   study and instrument. A system that says "no trade" most of the day is behaving correctly.
 
@@ -185,8 +214,15 @@ severe regression, because it cuts off winners that simply hadn't resolved yet.
 
 ## 11. Execution flow (per coin)
 
-1. `python3 scripts/apiAnalyze.py SYMBOL` — **live read, every time**, before any opinion is formed.
-   Never analyse from a previous reading or a cached ledger entry.
+1. `python3 scripts/apiAnalyze.py SYMBOL` (or `--ledger --summary` for every ledger coin, add
+   `--trade-type both` for the intraday engine too) — **live read, every time**, before any opinion
+   is formed. It replays the backtest engine over 150 days of closed candles and prints one of:
+   - `VALID LONG/SHORT` — the signal closed on the last closed candle; levels shown are the tested trade.
+   - `ENGINE IN TRADE` — the signal was earlier; entering now is **not** the tested trade.
+   - `ENGINE ORDER STILL RESTING` (intraday) — an old limit that never filled; treat as stale.
+   - `NO SIGNAL` — with the gate blocking each side named.
+   Only `VALID` is a tested entry. Signals close on 5m candles, so a read taken minutes later will
+   already show `ENGINE IN TRADE`.
 2. `node scripts/scalpScreen.mjs SYMBOL` — 4H ATR% for the stop buffer + context values.
 3. TradingView: 4H structure & zones → 1H zone → 15m refine → 5m EMAs. One persistent tab; switch
    symbols via the symbol-search box, **never** a URL nav with a new `symbol=` param.

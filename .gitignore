@@ -2,3 +2,4 @@
 .alert_state.json
 backtests/*/data/
 scripts/__pycache__/
+.signal_state.json

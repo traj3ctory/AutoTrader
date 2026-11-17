@@ -1,0 +1,15 @@
+Window: 2026-08-01 -> 2026-11-15 (out-of-sample, rules frozen 2026-08-26)
+
+Scalp v4, cost 0.14% [original 17]           n= 195 win= 36.4% avgR=  0.143 totalR=   27.92   longs n=152  avgR=  0.134   shorts n=43   avgR=  0.177
+Intraday, cost 0 [original 17]               n=  47 win= 46.8% avgR=  0.340 totalR=   16.00   longs n=23   avgR=  0.413   shorts n=24   avgR=  0.271
+Intraday, cost 0.14% [original 17]           n=  47 win= 46.8% avgR=  0.282 totalR=   13.23   longs n=23   avgR=  0.358   shorts n=24   avgR=  0.208
+
+Scalp v4, cost 0.14% [current ledger 16]     n= 170 win= 34.7% avgR=  0.123 totalR=   20.89   longs n=120  avgR=  0.084   shorts n=50   avgR=  0.217
+Intraday, cost 0 [current ledger 16]         n=  35 win= 40.0% avgR=  0.143 totalR=    5.00   longs n=17   avgR= -0.147   shorts n=18   avgR=  0.417
+Intraday, cost 0.14% [current ledger 16]     n=  35 win= 40.0% avgR=  0.074 totalR=    2.58   longs n=17   avgR= -0.210   shorts n=18   avgR=  0.341
+
+Per-month, scalp v4, all symbols:
+  2026-08                                    n= 127 win= 36.2% avgR=  0.134 totalR=   16.98   longs n=103  avgR=  0.229   shorts n=24   avgR= -0.275
+  2026-09                                    n=  97 win= 32.0% avgR=  0.045 totalR=    4.38   longs n=90   avgR=  0.074   shorts n=7    avgR= -0.323
+  2026-10                                    n=  61 win= 31.1% avgR= -0.001 totalR=   -0.03   longs n=38   avgR= -0.193   shorts n=23   avgR=  0.317
+  2026-11                                    n=  23 win= 52.2% avgR=  0.723 totalR=   16.64   longs n=2    avgR= -1.040   shorts n=21   avgR=  0.891
