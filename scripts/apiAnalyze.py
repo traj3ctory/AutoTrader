@@ -21,6 +21,7 @@ WARMUP_DAYS = 61
 COST_PCT = 0.14
 TIME_STOP_CANDLES = 72
 TIME_STOP_MIN_R = -0.3
+LATE_ENTRY_CANDLES = 12
 DAY_MS = 86_400_000
 FIVE_MS = sb.INTERVAL_MS["5"]
 
@@ -32,7 +33,9 @@ def hhmm(t_ms):
 def load_history(symbol):
     # Closed 5m candles for the last HISTORY_DAYS, cached on disk and topped up incrementally.
     now_ms = int(time.time() * 1000)
-    start_ms = now_ms - HISTORY_DAYS * DAY_MS
+    # Anchor the start to a month boundary so the replay path only shifts once a month, not every run.
+    floor = dt.datetime.fromtimestamp((now_ms - HISTORY_DAYS * DAY_MS) / 1000, sb.UTC)
+    start_ms = int(floor.replace(day=1, hour=0, minute=0, second=0, microsecond=0).timestamp() * 1000)
     cache_path = CACHE_DIR / f"{symbol}_5m.json.gz"
     rows = {}
     if cache_path.exists():
@@ -166,8 +169,10 @@ def analyze_scalp(symbol, frames, span_days, replay_days, summary):
             verdict = f"VALID {side} - cross closed {hhmm(position['signal_t'] + FIVE_MS)} UTC: {levels}, cost ~{cost_r:.2f}R"
         else:
             stop_note = " (time-stop moved SL to breakeven)" if position["stop"] != position["orig_stop"] else ""
+            tail = ("Late entry with the same SL/TP tested equal up to 12 candles." if age <= LATE_ENTRY_CANDLES
+                    else "Too old to enter: only entries within 12 candles were tested.")
             verdict = (f"ENGINE IN TRADE - {side} signalled {hhmm(position['signal_t'] + FIVE_MS)} UTC, {age} candles ago: "
-                       f"{levels}{stop_note}; now {unreal_r(position, price):+.2f}R. A late entry is not the tested trade.")
+                       f"{levels}{stop_note}; now {unreal_r(position, price):+.2f}R. {tail}")
     else:
         verdict = "NO SIGNAL on the last closed 5m candle"
 

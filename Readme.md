@@ -8,9 +8,8 @@
 | `confirm`             | After you paste the Pine script, verifies the visible TradingView card, zones, levels, state and timestamp.                |
 
 Background (all scheduled tasks, see matching sections in `HANDOVER_TRADING_WORKFLOW.md`):
-- `level-alert-check` (every 30 min, 08:00-22:59 daily) — polls Bybit prices against every level in `SETUP_LEDGER.json`, including the `context_watch` block (currently BTC's key S/R levels, flagged separately as `(context)` - never a trade candidate, no Pine slot). Silent unless a level actually crosses.
+- `level-alert-check` (every 30 min, 08:00-22:59 daily) — polls Bybit prices against every level in `SETUP_LEDGER.json`, including the `context_watch` block (currently BTC's key S/R levels, flagged separately as `(context)` - never a trade candidate, no Pine slot). The same run also calls `scripts/signalScan.py`, which replays the backtest engines and reports any new signal on a ledger coin (scalp signals up to 60 minutes old, which tested equal to entering at the signal close). Silent unless a level crosses or a signal fires.
 - `daily-mover-scan` (weekdays at 10:05) — three jobs in one run: light re-verify of the core 6, outside-mover discovery (including an intraday-range-mover pass alongside the 24h% scan, so a coin with a real intraday sweep/bounce isn't missed just because its net 24h% is small), and `WATCHLIST_TIER2.md` maintenance (incl. suggesting core-6 swaps when warranted).
-- `engine-signal-scan` (every 5 min, 08:00-22:59 daily) — runs `scripts/signalScan.py`: replays the backtest engines for every ledger coin and reports only brand-new tested signals (scalp within 3 closed 5m candles, intraday limit within 4 closed 15m candles). Silent otherwise; never places orders.
 - `monthly-scalp-review` (1st, 09:00) — re-checks ZEC/XRP/SOL against fresh liquidity/spread data.
 
 ```
@@ -63,7 +62,7 @@ substitute for a fresh `scripts/apiAnalyze.py` live read.
 Then inspect every scheduled-tasks/*/SKILL.md file and inspect whatever
 scheduled-task/automation mechanism is available in this environment
 (list existing ones first). For each of daily-mover-scan, level-alert-check,
-engine-signal-scan and monthly-scalp-review: if it's missing, register it using that file's
+and monthly-scalp-review: if it's missing, register it using that file's
 frontmatter for the schedule and its body as the task's instructions,
 verbatim. If it's already registered, compare the live version against
 the repo file and update it only if they differ, using the repo file as

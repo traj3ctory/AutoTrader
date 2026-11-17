@@ -42,8 +42,15 @@ zones, not to fire trades.
    the same data it was far worse: **+0.058 avgR** for the reaction requirement vs **+0.455** for
    the anchor rule. Do not reinstate it.
 5. **One position per symbol** — while the engine is in a trade on a coin, new crosses on that coin
-   are ignored. A cross that closed several candles ago is **a missed signal, not a chase**; the
-   tested trade was the entry at that candle's close and nothing later.
+   are ignored. **Late entry  [MEASURED 2026-11-17]** — entering up to 12 candles (60 minutes) after the
+   signal, keeping the engine's original SL and TP, scored the same as entering at the signal close
+   (in-sample +0.455 vs +0.44 to +0.50; out-of-sample +0.123 vs +0.12 to +0.13). The stop sits half a
+   4H ATR beyond the zone, so a few 5m candles barely move the R. Past 60 minutes is untested: treat
+   it as a missed signal. Never widen the stop or move the target to compensate for a late fill.
+   **The one-position rule stays  [MEASURED]** — signals that fire while the engine is already in a
+   trade on that coin were weaker (out-of-sample +0.072 avgR all coins, −0.025 on the core 6 + SOL,
+   vs +0.123 / +0.211 for the engine), so `ENGINE IN TRADE` hiding a later cross is not a lost edge.
+   See `backtests/2026-11-17-live-fit/`.
 
 Entry is at **market price** (this is the scalp/intraday distinction: Intraday uses a limit at the
 zone edge; scalp takes the confirmed cross at market).

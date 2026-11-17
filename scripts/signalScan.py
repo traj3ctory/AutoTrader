@@ -11,7 +11,7 @@ import apiAnalyze as live
 sb, v3 = live.sb, live.v3
 ROOT = Path(__file__).resolve().parent.parent
 STATE_PATH = ROOT / ".signal_state.json"
-SCALP_MAX_AGE = 3
+SCALP_MAX_AGE = 12
 INTRADAY_MAX_AGE = 4
 STATE_KEEP_MS = 3 * live.DAY_MS
 SPAN15 = sb.INTERVAL_MS["15"]
@@ -38,7 +38,7 @@ def scan_scalp(symbol, frames):
         return None
     side = position["direction"].upper()
     drift = live.unreal_r(position, c5[-1].c)
-    late = "on the last closed candle" if age == 0 else f"{age} candle(s) ago - a late entry is not the tested trade"
+    late = "on the last closed candle" if age == 0 else f"{age} candle(s) ago - late entry with the same SL/TP tested equal up to 12 candles"
     text = (f"{symbol} SCALP {side} - cross closed {live.hhmm(position['signal_t'] + live.FIVE_MS)} UTC ({late}): "
             f"entry {position['entry']:.6g}, SL {position['orig_stop']:.6g}, TP {position['target']:.6g}, "
             f"R:R {position['rr']}; price now {c5[-1].c:.6g} ({drift:+.2f}R from entry)")

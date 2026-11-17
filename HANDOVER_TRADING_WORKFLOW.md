@@ -24,7 +24,7 @@ Move these files as a set:
 - `scripts/checkAlerts.mjs`
 - `scripts/scalpScreen.mjs`
 - `scripts/strategyBacktest.py` and `scripts/scalpBacktestV3.py` (backtest engines behind the current Scalp Entry Rule in `ANALYZE_PROMPT.md` - re-run before changing scalp rules again)
-- `scripts/signalScan.py` (2026-11-16 - frequent scanner behind the `engine-signal-scan` scheduled task; same engines as `apiAnalyze.py`, prints only signals new since the last run, state in the gitignored `.signal_state.json`; `--notify` raises a macOS notification so it can also run from cron/launchd without a Claude session)
+- `scripts/signalScan.py` (2026-11-16 - signal scanner run as Part 2 of the `level-alert-check` scheduled task every 30 minutes; same engines as `apiAnalyze.py`, prints only signals new since the last run, state in the gitignored `.signal_state.json`; `--notify` raises a macOS notification so it can also run from cron/launchd without a Claude session)
 - `scripts/apiAnalyze.py` (2026-08-03 - the primary live analysis engine; rewritten 2026-11-16 after the first version was found to apply different rules from the backtest (+0.117 avgR replayed vs +0.455 tested). It now replays `run_scalp_v3`/`run_intraday` themselves over 150 days of closed 5m candles cached in `backtests/live/data/`. Flags: several symbols, `--ledger`, `--summary`, `--trade-type scalp|intraday|both`. Only a `VALID` verdict is a tested entry. TradingView is display/news only - see Source Of Truth in `ANALYZE_PROMPT.md`)
 - `backtests/` (results only - raw candle cache under `backtests/*/data/` is gitignored and rebuilds from Bybit on demand)
 - `WATCHLIST_TIER2.md`

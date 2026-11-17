@@ -1,0 +1,36 @@
+in-sample May-Jul - all coins with data
+  engine as tested (entry at signal close)       n= 162 win= 48.1% avgR=  0.455 totalR=   73.70
+  entered 1 candle(s) late, same SL/TP           n= 162 win= 46.9% avgR=  0.444 totalR=   71.93
+  entered 3 candle(s) late, same SL/TP           n= 162 win= 46.9% avgR=  0.457 totalR=   74.11
+  entered 6 candle(s) late, same SL/TP           n= 161 win= 48.4% avgR=  0.453 totalR=   72.98
+  entered 12 candle(s) late, same SL/TP          n= 159 win= 49.7% avgR=  0.498 totalR=   79.17
+  no one-position rule: all signals              n= 534 win= 42.1% avgR=  0.344 totalR=  183.78
+    of which fired while engine was in a trade   n= 356 win= 41.9% avgR=  0.343 totalR=  121.99
+
+in-sample May-Jul - core 6 + SOL
+  engine as tested (entry at signal close)       n=  47 win= 51.1% avgR=  0.582 totalR=   27.36
+  entered 1 candle(s) late, same SL/TP           n=  47 win= 48.9% avgR=  0.556 totalR=   26.11
+  entered 3 candle(s) late, same SL/TP           n=  47 win= 48.9% avgR=  0.502 totalR=   23.60
+  entered 6 candle(s) late, same SL/TP           n=  47 win= 48.9% avgR=  0.501 totalR=   23.53
+  entered 12 candle(s) late, same SL/TP          n=  47 win= 51.1% avgR=  0.577 totalR=   27.12
+  no one-position rule: all signals              n= 178 win= 41.6% avgR=  0.335 totalR=   59.59
+    of which fired while engine was in a trade   n= 117 win= 42.7% avgR=  0.342 totalR=   39.96
+
+out-of-sample Aug-Nov - all coins with data
+  engine as tested (entry at signal close)       n= 308 win= 35.1% avgR=  0.123 totalR=   37.97
+  entered 1 candle(s) late, same SL/TP           n= 308 win= 35.4% avgR=  0.136 totalR=   41.94
+  entered 3 candle(s) late, same SL/TP           n= 308 win= 35.1% avgR=  0.123 totalR=   37.81
+  entered 6 candle(s) late, same SL/TP           n= 307 win= 35.2% avgR=  0.131 totalR=   40.09
+  entered 12 candle(s) late, same SL/TP          n= 298 win= 35.6% avgR=  0.134 totalR=   39.94
+  no one-position rule: all signals              n= 937 win= 33.0% avgR=  0.082 totalR=   76.99
+    of which fired while engine was in a trade   n= 617 win= 32.6% avgR=  0.072 totalR=   44.47
+
+out-of-sample Aug-Nov - core 6 + SOL
+  engine as tested (entry at signal close)       n=  69 win= 39.1% avgR=  0.211 totalR=   14.56
+  entered 1 candle(s) late, same SL/TP           n=  69 win= 39.1% avgR=  0.232 totalR=   15.98
+  entered 3 candle(s) late, same SL/TP           n=  69 win= 39.1% avgR=  0.210 totalR=   14.49
+  entered 6 candle(s) late, same SL/TP           n=  68 win= 38.2% avgR=  0.280 totalR=   19.07
+  entered 12 candle(s) late, same SL/TP          n=  67 win= 40.3% avgR=  0.403 totalR=   26.99
+  no one-position rule: all signals              n= 228 win= 32.5% avgR=  0.057 totalR=   12.93
+    of which fired while engine was in a trade   n= 165 win= 29.1% avgR= -0.025 totalR=   -4.18
+
