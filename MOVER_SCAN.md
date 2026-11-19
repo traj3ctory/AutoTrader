@@ -1,40 +1,40 @@
-# Bybit mover scan — 2026-10-28T09:16:47.133Z
+# Bybit mover scan — 2026-11-18T09:18:50.399Z
 
 ## Top 10 gainers (24h)
-EVAAUSDT.P       +141.69%  turnover $66.5M  price 1.3032
-XANUSDT.P        +53.44%  turnover $17.4M  price 0.011809
-APRUSDT.P        +42.77%  turnover $58.7M  price 0.0494
-BLESSUSDT.P      +38.13%  turnover $6.1M  price 0.011517
-HAEDALUSDT.P     +36.65%  turnover $29.3M  price 0.03173
-BTWUSDT.P        +26.23%  turnover $32.1M  price 1.76973
-LABUSDT.P        +18.16%  turnover $3.7M  price 0.04749
-INITUSDT.P       +17.94%  turnover $15.0M  price 0.18407
-DOSUSDT.P        +17.90%  turnover $4.7M  price 0.2812
-PONSUSDT.P       +17.73%  turnover $20.2M  price 0.2882
+MMTUSDT.P        +122.27%  turnover $88.6M  price 0.2525
+BREVUSDT.P       +71.54%  turnover $225.1M  price 0.0985
+PIPPINUSDT.P     +52.72%  turnover $14.8M  price 0.01683
+ZKPUSDT.P        +24.20%  turnover $6.5M  price 0.03752
+ICNTUSDT.P       +19.92%  turnover $15.7M  price 0.2848
+FHEUSDT.P        +18.38%  turnover $9.3M  price 0.01662
+PIEVERSEUSDT.P   +16.42%  turnover $22.3M  price 2.208
+USUALUSDT.P      +12.83%  turnover $5.9M  price 0.01114
+ZILUSDT.P        +12.83%  turnover $3.6M  price 0.00102
+COHRUSDT.P       +11.88%  turnover $3.8M  price 223.43
 
 ## Top 10 losers (24h)
-PTBUSDT.P        -33.17%  turnover $3.9M  price 0.0001604
-AKEUSDT.P        -31.61%  turnover $33.3M  price 0.020162
-QUSDT.P          -30.36%  turnover $105.0M  price 0.0584
-CAPUSDT.P        -17.89%  turnover $17.5M  price 0.0883
-NILUSDT.P        -16.73%  turnover $19.4M  price 0.08325
-AXISUSDT.P       -14.65%  turnover $7.0M  price 0.2231
-SOXSUSDT.P       -13.21%  turnover $42.3M  price 41.45
-IRYSUSDT.P       -9.27%  turnover $19.7M  price 0.023247
-HOODUSDT.P       -6.31%  turnover $9.5M  price 87.33
-DGAIUSDT.P       -5.82%  turnover $41.8M  price 0.7903
+RAREUSDT.P       -17.43%  turnover $9.2M  price 0.011771
+LONGXIAUSDT.P    -16.66%  turnover $8.7M  price 0.01391
+HUMAUSDT.P       -14.65%  turnover $10.0M  price 0.00711
+AXISUSDT.P       -12.83%  turnover $7.8M  price 0.0931
+BTWUSDT.P        -11.32%  turnover $21.4M  price 0.44428
+SOXSUSDT.P       -11.00%  turnover $117.4M  price 54.39
+ZROUSDT.P        -10.30%  turnover $12.8M  price 1.3381
+EVAAUSDT.P       -9.38%  turnover $32.7M  price 3.7504
+MAGMAUSDT.P      -8.31%  turnover $3.6M  price 0.2384
+JCTUSDT.P        -8.05%  turnover $7.9M  price 0.002011
 
 ## Intraday range movers (net 24h% small, but swung hard within the day)
-QUSDT.P          range 69.1% (H 0.08776 / L 0.04739)  net -30.36%  turnover $105.0M  price 0.0584
-PTBUSDT.P        range 62.6% (H 0.0002518 / L 0.0001514)  net -33.17%  turnover $3.9M  price 0.0001604
-AKEUSDT.P        range 54.1% (H 0.030088 / L 0.019182)  net -31.61%  turnover $33.3M  price 0.020162
-BEATUSDT.P       range 31.0% (H 0.10999 / L 0.08047)  net +14.66%  turnover $20.6M  price 0.09521
-JCTUSDT.P        range 30.4% (H 0.009162 / L 0.006781)  net +10.98%  turnover $35.1M  price 0.007841
-ACUUSDT.P        range 28.8% (H 0.15633 / L 0.1171)  net +16.04%  turnover $5.9M  price 0.13603
-1000TAGUSDT.P    range 25.3% (H 0.8495 / L 0.6688)  net +4.69%  turnover $7.0M  price 0.7148
-GRVTUSDT.P       range 25.1% (H 0.26081 / L 0.20368)  net +10.34%  turnover $7.1M  price 0.22791
-PUFFERUSDT.P     range 23.8% (H 0.03617 / L 0.0283)  net +14.00%  turnover $5.2M  price 0.03307
-BANKUSDT.P       range 23.6% (H 0.03353 / L 0.02658)  net +5.64%  turnover $8.9M  price 0.02942
+EVAAUSDT.P       range 36.0% (H 4.4068 / L 3.0567)  net -9.38%  turnover $32.7M  price 3.7504
+FHEUSDT.P        range 35.6% (H 0.01983 / L 0.01391)  net +18.38%  turnover $9.3M  price 0.01662
+BLESSUSDT.P      range 34.1% (H 0.013125 / L 0.009512)  net -5.60%  turnover $21.5M  price 0.010599
+ICNTUSDT.P       range 33.8% (H 0.3232 / L 0.2268)  net +19.92%  turnover $15.7M  price 0.2848
+LONGXIAUSDT.P    range 28.8% (H 0.01731 / L 0.0133)  net -16.66%  turnover $8.7M  price 0.01391
+SOXSUSDT.P       range 27.6% (H 65.49 / L 50.46)  net -11.00%  turnover $117.4M  price 54.39
+ARIAUSDT.P       range 27.3% (H 0.25915 / L 0.19062)  net +10.31%  turnover $25.2M  price 0.25094
+AAOIUSDT.P       range 26.2% (H 50.02 / L 39.34)  net -7.70%  turnover $6.1M  price 40.77
+MAGMAUSDT.P      range 25.5% (H 0.2711 / L 0.2102)  net -8.31%  turnover $3.6M  price 0.2384
+KAVAUSDT.P       range 25.3% (H 0.03263 / L 0.02531)  net +10.97%  turnover $6.1M  price 0.02892
 
 Filters: USDT perps only, BTC/ETH excluded (market filters not candidates), min $3M 24h turnover.
 Range-mover filters: 24h high-low span >= 8% of price, net 24h% move <= 60% of that range (i.e. it round-tripped rather than trending).

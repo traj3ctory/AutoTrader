@@ -4,10 +4,12 @@ Coins worth keeping an eye on that are NOT in `SETUP_LEDGER.json`'s core 6 (HYPE
 
 | Coin | Added | Why it's here | Last note |
 | --- | --- | --- | --- |
-| PUMPFUNUSDT.P | 2026-10-13 | TradingView-watchlist find: aligned bullish 4H/1D, price on 0.004977-0.005013 demand | 2026-10-28 API: Watch Only; 4H/1D still not aligned, no fresh bullish cross at demand. |
+| PUMPFUNUSDT.P | 2026-10-13 | TradingView-watchlist find: aligned bullish 4H/1D, price on 0.004977-0.005013 demand | 2026-11-18 price-only: 0.002714 (-3.7% on day), TradingView-list glance; no fresh structure read |
 | INITUSDT.P | 2026-10-23 | Job 2 find: +14.2% on a 28% range, 4H bullish / 1D range, $16.6M | 2026-10-28 API: Watch Only, no fresh bullish cross at demand. |
-| MAGMAUSDT.P | 2026-10-23 | Job 2 find: aligned bullish 4H/1D, $44.5M turnover, but -20% on a 36% range | 2026-10-28 API: thin ($5.3M turnover), 4H bearish, Watch Only; first to drop next pass. |
 | JCTUSDT.P | 2026-10-28 | Job 2 find: liquid ($35M), +11% on a 30% range, range/range, demand 0.006444-0.007025 mapped | 2026-10-28 API: Watch Only, needs a fresh cross at demand. |
+| PIEVERSEUSDT.P | 2026-11-18 | Job 2 find: +16.4% on $22M, 4H/1D bullish, engine LONG signalled 07:20 UTC but past the 12-candle late-entry window | 2026-11-18 API: Watch Only; demand 2.1156-2.1308 below price, no fresh cross since 07:20 UTC. Missed entry, not a trade. |
+
+**2026-11-18**: Added PIEVERSEUSDT.P (Job 2: aligned bullish 4H/1D, $22M turnover, +16.4%); dropped MAGMAUSDT.P (-8.3%, $3.6M turnover, 4H bearish, flagged last pass as first to drop). Rest of Job 2 shortlist (ICNT, FHE, ARIA, KAVA, ZKP, USUAL) read NO SIGNAL, not added. List 4 rows.
 
 **2026-11-17**: Ledger pruned back to the core 6 plus SOL at the user's request. ALGO, AERO, AAVE, BROCCOLI, BCH, XPL, ZRO, ARK and LYN were removed from `SETUP_LEDGER.json` (all NO POSITION, most last analyzed Aug-Sep) and were NOT added here; they are no longer polled or scanned. The seven kept coins were refreshed from the engine read only (no news check).
 
