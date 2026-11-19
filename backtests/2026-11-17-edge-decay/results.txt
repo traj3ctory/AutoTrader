@@ -1,0 +1,33 @@
+IS: n=162 avgR=0.455 win=48.1% outcomes={'BE': 16, 'SL': 68, 'TP': 78}
+OOS: n=308 avgR=0.123 win=35.1% outcomes={'BE': 43, 'SL': 157, 'TP': 108}
+
+slice                             IS n  IS avgR  OOS n  OOS avgR  verdict
+dir=long                           128    0.438    233     0.089  
+dir=short                           34    0.520     75     0.229  strong in both
+rr=1.5                              36    0.243     59    -0.017  sign flips - noise
+rr=2.0                             126    0.516    249     0.157  
+b4=bearish                          26    0.505     37     0.133  
+b4=bullish                          69    0.604    107     0.230  strong in both
+b4=range                            67    0.282    164     0.051  
+b1=bearish                          48    0.584    112     0.071  
+b1=bullish                          45    0.356    115     0.084  
+b1=range                            69    0.430     81     0.251  strong in both
+stop=mid 1.5-3%                     21    0.297     64     0.022  
+stop=tight <1.5%                    13    1.316     24     0.115  small sample
+stop=wide >3%                      128    0.394    220     0.154  
+hour=Asia 00-08                     62    0.593    127     0.119  
+hour=EU 08-16                       53    0.492     86     0.375  strong in both
+hour=US 16-24                       47    0.231     95    -0.099  sign flips - noise
+zone_tf=60->15                     162    0.455    308     0.123  
+
+Per coin (OOS vs IS, coins with >=8 trades in each):
+  AKEUSDT        IS n= 17 avgR=  0.721   OOS n= 12 avgR=  0.657
+  AVAXUSDT       IS n= 11 avgR=  0.958   OOS n= 10 avgR=  0.143
+  BNBUSDT        IS n= 12 avgR=  0.431   OOS n= 13 avgR=  0.233
+  FARTCOINUSDT   IS n=  8 avgR=  0.842   OOS n= 12 avgR= -0.116
+  LITUSDT        IS n= 10 avgR=  0.030   OOS n= 18 avgR= -0.026
+  SOONUSDT       IS n=  8 avgR= -0.222   OOS n=  9 avgR=  0.022
+  UAIUSDT        IS n= 12 avgR= -0.487   OOS n= 10 avgR= -0.459
+  UNIUSDT        IS n=  8 avgR=  0.516   OOS n= 14 avgR=  0.328
+  USUSDT         IS n= 16 avgR=  1.046   OOS n= 13 avgR=  0.097
+  ZECUSDT        IS n=  8 avgR=  0.040   OOS n= 10 avgR=  1.179

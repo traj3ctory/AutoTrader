@@ -1,0 +1,28 @@
+== core 6 + SOL: signals from 2026-09-05 to 2026-11-15, replay start shifted 0-28 days from 2026-08-01
+  start + 0d:  36 signals,  36 shared with +0d,   0 extra,   0 missing
+  start + 3d:  32 signals,  32 shared with +0d,   0 extra,   4 missing
+  start + 7d:  40 signals,  34 shared with +0d,   6 extra,   2 missing
+  start +14d:  44 signals,  33 shared with +0d,  11 extra,   3 missing
+  start +21d:  46 signals,  30 shared with +0d,  16 extra,   6 missing
+  start +28d:  53 signals,  27 shared with +0d,  26 extra,   9 missing
+  union 63 signals; present in all 6 starts: 23 (37%)
+    stable signals   n=  23 win= 34.8% avgR=  0.081 totalR=    1.86
+    unstable signals n=  40 win= 40.0% avgR=  0.258 totalR=   10.30
+    all signals, start + 0d: n=  36 win= 38.9% avgR=  0.180 totalR=    6.49
+    all signals, start +14d: n=  44 win= 38.6% avgR=  0.161 totalR=    7.07
+    all signals, start +28d: n=  53 win= 35.8% avgR=  0.117 totalR=    6.19
+
+== all coins with data: signals from 2026-09-05 to 2026-11-15, replay start shifted 0-28 days from 2026-08-01
+  start + 0d: 169 signals, 169 shared with +0d,   0 extra,   0 missing
+  start + 3d: 167 signals, 165 shared with +0d,   2 extra,   4 missing
+  start + 7d: 175 signals, 166 shared with +0d,   9 extra,   3 missing
+  start +14d: 187 signals, 162 shared with +0d,  25 extra,   7 missing
+  start +21d: 188 signals, 158 shared with +0d,  30 extra,  11 missing
+  start +28d: 193 signals, 148 shared with +0d,  45 extra,  21 missing
+  union 232 signals; present in all 6 starts: 138 (59%)
+    stable signals   n= 138 win= 32.6% avgR=  0.085 totalR=   11.71
+    unstable signals n=  94 win= 35.1% avgR=  0.103 totalR=    9.72
+    all signals, start + 0d: n= 169 win= 34.3% avgR=  0.120 totalR=   20.29
+    all signals, start +14d: n= 187 win= 33.7% avgR=  0.100 totalR=   18.70
+    all signals, start +28d: n= 193 win= 34.2% avgR=  0.098 totalR=   18.86
+

@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 
 import apiAnalyze as live
+import riskGuard
 
 sb, v3 = live.sb, live.v3
 ROOT = Path(__file__).resolve().parent.parent
@@ -90,6 +91,7 @@ def main():
 
     if fresh:
         print(f"NEW ENGINE SIGNALS ({len(fresh)}):")
+        print(f"  {riskGuard.line()}")
         for line in fresh:
             print(f"  {line}")
         if notify:

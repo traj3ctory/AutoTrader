@@ -172,6 +172,7 @@ severe regression, because it cuts off winners that simply hadn't resolved yet.
 - **Max daily loss 3%.**
 - **Max 1–2 open trades.**
 - **Stop after 2 consecutive losses.**
+- **Enforced by `scripts/riskGuard.py`** from the user's `RISK_LOG.json` (log each trade taken, fill `r` on close). A locked state caps every setup at Watch Only.
 
 > Research consensus is that position sizing and risk control determine long-run outcome more than
 > entry signals — one study found systematic sizing rules gave a **47% higher 3-year survival rate**
@@ -210,6 +211,20 @@ severe regression, because it cuts off winners that simply hadn't resolved yet.
   versions of this document said "per side", which overstated it). Real fees plus slippage above
   that eat directly into a +0.1R edge. An earlier ungated baseline measured +0.033R — inside noise
   and fully consumed by fees.
+- **Which trades fire depends on where the replay starts (measured 2026-11-17).** Shifting the
+  replay start 0-28 days on the core 6 + SOL, only 37% of signals appear under every start (59% across
+  all coins). The unstable ones are not worse: stable signals +0.081 avgR, unstable +0.258 (core) and
+  +0.085 vs +0.103 (all coins). So the engine's expectancy holds whichever set fires; the live replay
+  start is anchored to the first of the month so the scanner is self-consistent, and it is not meant
+  to reproduce one particular backtest's trade list. `backtests/2026-11-17-path-dependence/`.
+- **The out-of-sample drop is broad, not one bad slice (measured 2026-11-17).** Splitting 470 trades
+  by direction, R:R, 4H and 1D structure, stop width, session, and coin, no slice with 15+ trades in
+  both windows was negative in both. Shorts (+0.229 OOS) held up better than longs (+0.089), the EU
+  session (+0.375) beat the US session (-0.099, but it was positive in-sample), and UAI was negative in
+  both windows (not a ledger coin). With ~17 slices tested, a couple would look striking by chance, so
+  **no new gate was added**; the earlier rejected session filter stays rejected.
+  `backtests/2026-11-17-edge-decay/`. Practical read: expect about +0.12R per trade, i.e. roughly
+  +0.06% of balance per scalp at 0.5% risk, with months that are flat or negative.
 - **The live analyzer used to apply different rules.** Until 2026-11-16 `apiAnalyze.py` required
   price inside the zone, used a different slope test and read the still-forming candle. Replayed on
   the backtest data that version scored **+0.117 avgR** (121 trades). Signals it produced before

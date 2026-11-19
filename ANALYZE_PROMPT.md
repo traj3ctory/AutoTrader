@@ -852,15 +852,16 @@ Also state the activation basis:
 
 ## Risk Context
 
-Position size is optional unless the user asks.
+Position size: every trade proposal states the risk percentage and the notional-to-balance ratio for its stop distance (`scripts/riskGuard.py` `size_line`). The balance itself stays the user's to apply.
 
 Per-trade risk (corrected 2026-08-01 - was a flat 1.5% for everything, which didn't match either strategy doc): Intraday 1% of available balance per trade; Scalp 0.5% per trade.
 
-Optional risk rules:
+Mandatory risk rules (CHANGED 2026-11-17 - these were labelled optional and nothing tracked them):
 
-- Max 1-2 open trades.
-- Max daily loss 3%.
-- Stop after 2 losses in a row.
+- Max 2 open trades.
+- Max daily loss 3% (sum of closed R x risk% for the day, day rolling over at midnight UTC+1).
+- Stop for the day after 2 losses in a row.
+- The user logs every trade actually taken in `RISK_LOG.json` (open with `closed` and `r` null, filled on close). `python3 scripts/riskGuard.py` reads it and exits non-zero when locked; `scripts/signalScan.py` prints its state with every new signal. While it reports `RISK LOCKED`, no analysis may rate a setup Trade-Worthy or Conditional - cap at Watch Only and state the lock reason. The guard only knows what is logged, so an unlogged trade is invisible to it.
 
 ## Output Format
 

@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "principle": "Log every trade actually taken. Leave closed and r null while it is open; fill both when it closes. r is the net result in R (negative for a loss).",
+  "trades": []
+}
