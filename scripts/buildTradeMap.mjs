@@ -416,8 +416,8 @@ if barstate.islast
 var table t = table.new(position.top_right, 2, 6, border_width=1)
 
 cell(int row, string leftTxt, string rightTxt, color bg) =>
-    table.cell(t, 0, row, leftTxt, text_color=color.white, bgcolor=color.rgb(55, 65, 81))
-    table.cell(t, 1, row, rightTxt, text_color=color.white, bgcolor=bg)
+    table.cell(t, 0, row, leftTxt, text_color=color.white, bgcolor=color.rgb(55, 65, 81), text_size=size.small)
+    table.cell(t, 1, row, rightTxt, text_color=color.white, bgcolor=bg, text_size=size.small)
 
 if barstate.islast
     table.clear(t, 0, 0, 1, 5)
@@ -429,7 +429,7 @@ if barstate.islast
         stateColor = str.contains(setupState, "INVALID") or plState == "UR LOSS" ? red : plState == "UR PROFIT" or str.contains(setupState, "ACTIVE") ? green : orange
         cell(0, "Coin", coin + " - " + tradeType, neutral)
         cell(1, "Plan", planText, colorOf(planColorName))
-        cell(2, "State", setupState + " - " + plState, stateColor)
+        cell(2, "State", str.replace_all(setupState + " - " + plState, "; ", "\\n"), stateColor)
         cell(3, "R:R", rrText, colorOf(rrColorName))
         cell(4, "Updated", updatedTxt, updatedColor)
         if liveEvent != "" and not na(liveTime)
