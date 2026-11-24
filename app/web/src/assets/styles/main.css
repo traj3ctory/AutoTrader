@@ -1,0 +1,24 @@
+@import "tailwindcss";
+@import "./theme.css";
+
+@theme {
+  --color-surface-canvas: var(--surface-canvas);
+  --color-surface-panel: var(--surface-panel);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-border-subtle: var(--border-subtle);
+  --color-ink-primary: var(--ink-primary);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-muted: var(--ink-muted);
+  --color-accent-brand: var(--accent-brand);
+  --color-accent-bull: var(--accent-bull);
+  --color-accent-bear: var(--accent-bear);
+  --color-accent-warn: var(--accent-warn);
+}
+
+.no_scrollbar {
+  scrollbar-width: none;
+}
+
+.no_scrollbar::-webkit-scrollbar {
+  display: none;
+}

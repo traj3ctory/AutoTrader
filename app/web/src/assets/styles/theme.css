@@ -1,0 +1,13 @@
+:root {
+  --surface-canvas: #0b0f17;
+  --surface-panel: #111827;
+  --surface-elevated: #182235;
+  --border-subtle: #243047;
+  --ink-primary: #f3f4f6;
+  --ink-secondary: #9ca3af;
+  --ink-muted: #6b7280;
+  --accent-brand: #3b82f6;
+  --accent-bull: #22c55e;
+  --accent-bear: #ef4444;
+  --accent-warn: #f59e0b;
+}

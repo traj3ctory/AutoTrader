@@ -4,10 +4,17 @@ Coins worth keeping an eye on that are NOT in `SETUP_LEDGER.json`'s core 6 (HYPE
 
 | Coin | Added | Why it's here | Last note |
 | --- | --- | --- | --- |
-| PUMPFUNUSDT.P | 2026-10-13 | TradingView-watchlist find: aligned bullish 4H/1D, price on 0.004977-0.005013 demand | 2026-11-18 price-only: 0.002714 (-3.7% on day), TradingView-list glance; no fresh structure read |
-| INITUSDT.P | 2026-10-23 | Job 2 find: +14.2% on a 28% range, 4H bullish / 1D range, $16.6M | 2026-10-28 API: Watch Only, no fresh bullish cross at demand. |
-| JCTUSDT.P | 2026-10-28 | Job 2 find: liquid ($35M), +11% on a 30% range, range/range, demand 0.006444-0.007025 mapped | 2026-10-28 API: Watch Only, needs a fresh cross at demand. |
-| PIEVERSEUSDT.P | 2026-11-18 | Job 2 find: +16.4% on $22M, 4H/1D bullish, engine LONG signalled 07:20 UTC but past the 12-candle late-entry window | 2026-11-18 API: Watch Only; demand 2.1156-2.1308 below price, no fresh cross since 07:20 UTC. Missed entry, not a trade. |
+| PIEVERSEUSDT.P | 2026-11-18 | Job 2 find: aligned bullish 4H/1D, $107M turnover, +39.4% | 2026-11-24 API (scalp): NO SIGNAL at 3.0801; 4H bearish, 1D bullish; SHORT blocked by 1D bullish, no live demand zone below price. Down -14.8% on the day. Watch for a fresh cross at demand. |
+| PHAROSUSDT.P | 2026-11-19 | Job 2/TV find: 1D bullish, 4H range, 37.7% range, $8.5M | 2026-11-24 API (scalp): NO SIGNAL at 0.6041; 4H bearish, 1D range. LONG reference demand 0.5690-0.5698 (FVG) sits ~6% below price, no 1.5R room before supply. Watch for a pullback to demand plus a bullish cross. |
+| BLESSUSDT.P | 2026-11-19 | Job 2 find: 1D bullish, 4H range, +10% on 29.7% range, $14.7M | 2026-11-24 API (scalp): NO SIGNAL at 0.018142 (up from 0.01118 on 11-19); 4H and 1D bullish. Reference demand 0.01411-0.01472 is ~20% below price with no 1.5R room. Watch only, no chase. |
+| EVAAUSDT.P | 2026-11-19 | Job 2 find: 4H bullish, 1D range, +14.9% on 38.4% range, $25.0M | 2026-11-24 API (scalp): NO SIGNAL at 2.513 after a -26% session; 4H bearish, 1D bullish. Earlier 11-18 LONG (entry 3.609) is long past, not a trade. Watch only, no chase; candidate for drop if still cold next pass. |
+| ARIAUSDT.P | 2026-11-24 | Job 2 find: 4H and 1D bullish, 37.1% intraday range, net +2.3%, $69M turnover | 2026-11-24 API: scalp NO SIGNAL at 0.33506; intraday NO SIGNAL. LONG reference demand 0.30898-0.31011 (FVG), supply 0.3378-0.3685 directly overhead. Watch for a pullback to demand plus a bullish cross. |
+
+**2026-11-24 (daily-mover-scan)**: Added ARIAUSDT.P (Job 2 intraday range mover, bullish 4H/1D, no trigger yet). Kept PIEVERSE, PHAROS, BLESS and EVAA as Watch Only with refreshed API notes; no row dropped (EVAA flagged for a drop check next pass). Job 2 shortlist (OROCHI, CYS, SNXX, ELSA) read Skip or Watch-without-trigger, not added; OROCHI's scalp LONG is a late-tested entry now underwater, not chased. Job 4 TradingView list (FARTCOIN, KAITO, PUMPFUN, KMNO, LAB, LINK) read NO SIGNAL; nothing added. List now 5 rows.
+
+**2026-11-19 (daily-mover-scan, later pass)**: Added EVAAUSDT.P (Job 2 mover: 4H bullish, 1D range, $25M; its scalp LONG is missed, not chased). Kept PIEVERSE, PHAROS and BLESS as Watch Only with refreshed notes. List now 4 rows. Job 2 shortlist (MMT, SENT, BTW, ICNT, PIPPIN, HUMA) read NO SIGNAL or stale resting orders (BTW limit 63.6% away, HUMA limit 25.9% away), not added. Job 4 TradingView list (FARTCOIN, KAITO, PUMPFUN, KMNO, LAB, LINK) read Skip; KMNO was previously dropped here and PUMPFUN was dropped 11-19.
+
+**2026-11-19**: Added PHAROSUSDT.P and BLESSUSDT.P (1D bullish, no signal); dropped PUMPFUNUSDT.P (4H/1D bearish, thesis broken), INITUSDT.P and JCTUSDT.P (both 1D bearish, no live structure). List 3 rows. MMT, ZKC read NO SIGNAL (1D bearish); PIPPIN (+60%), IRYS (+52%) pre-filtered as parabolic; BREV (-26%, 59% range) collapse/round-trip noise; ZKP long signal stale (169 candles).
 
 **2026-11-18**: Added PIEVERSEUSDT.P (Job 2: aligned bullish 4H/1D, $22M turnover, +16.4%); dropped MAGMAUSDT.P (-8.3%, $3.6M turnover, 4H bearish, flagged last pass as first to drop). Rest of Job 2 shortlist (ICNT, FHE, ARIA, KAVA, ZKP, USUAL) read NO SIGNAL, not added. List 4 rows.
 

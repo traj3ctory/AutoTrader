@@ -1,0 +1,15 @@
+Backtest window: cached ~90d out-of-warmup across 52 symbols (cost 0.14% round-trip)
+
+=== ALL CACHED CRYPTO SYMBOLS ===
+1. Baseline v4 (EMA cross hard gate)       n=619 win= 35.9% avgR= +0.142 totalR= +87.72
+2. Zone-Entry (5m rej/eng, EMA ignored)    n=317 win= 39.4% avgR= +0.237 totalR= +75.17
+   -> slice: EMA supporting                n= 93 win= 35.5% avgR= +0.199 totalR= +18.51
+   -> slice: EMA not supporting            n=224 win= 41.1% avgR= +0.253 totalR= +56.66
+3. Zone-Entry + EMA aligned gate           n=111 win= 36.9% avgR= +0.222 totalR= +24.65
+
+=== CORE 7 LEDGER COINS (XRP,HYPE,DOGE,JTO,AVAX,ZEC,SOL) ===
+1. Baseline v4 (EMA cross hard gate)       n= 74 win= 39.2% avgR= +0.222 totalR= +16.44
+2. Zone-Entry (5m rej/eng, EMA ignored)    n= 44 win= 29.5% avgR= -0.128 totalR=  -5.62
+   -> slice: EMA supporting                n= 12 win= 25.0% avgR= -0.237 totalR=  -2.84
+   -> slice: EMA not supporting            n= 32 win= 31.2% avgR= -0.087 totalR=  -2.78
+3. Zone-Entry + EMA aligned gate           n= 14 win= 28.6% avgR= -0.138 totalR=  -1.94

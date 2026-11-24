@@ -5,10 +5,35 @@ const ledger = JSON.parse(fs.readFileSync(ledgerPath, "utf8"));
 
 const ACTIVE = new Set(Object.keys(ledger.setups || {}));
 const EXCLUDE = new Set(["BTCUSDT", "ETHUSDT"]); // market filters, not candidates
+const NON_CRYPTO_TYPES = new Set(["stock", "ETF", "commodity", "forex"]);
 const TOP_N = 10;
 const MIN_TURNOVER_USD = 3_000_000; // filter out illiquid/thin symbols
 
-const res = await fetch("https://api.bybit.com/v5/market/tickers?category=linear");
+async function fetchNonCryptoSymbols() {
+  const excluded = new Set();
+  let cursor = "";
+  do {
+    const qs = new URLSearchParams({ category: "linear", limit: "1000" });
+    if (cursor) qs.set("cursor", cursor);
+    const res = await fetch(`https://api.bybit.com/v5/market/instruments-info?${qs}`);
+    const payload = await res.json();
+    if (payload.retCode !== 0) {
+      throw new Error(`Bybit instruments-info error: ${payload.retMsg}`);
+    }
+    for (const item of payload.result?.list || []) {
+      if (NON_CRYPTO_TYPES.has(item.symbolType)) {
+        excluded.add(item.symbol);
+      }
+    }
+    cursor = payload.result?.nextPageCursor || "";
+  } while (cursor);
+  return excluded;
+}
+
+const [nonCryptoSymbols, res] = await Promise.all([
+  fetchNonCryptoSymbols(),
+  fetch("https://api.bybit.com/v5/market/tickers?category=linear"),
+]);
 const data = await res.json();
 if (data.retCode !== 0) {
   console.error("Bybit API error:", data.retMsg);
@@ -20,7 +45,7 @@ const NET_TO_RANGE_MAX = 0.6; // net 24h move must be under this fraction of the
 
 const rows = data.result.list
   .filter((t) => t.symbol.endsWith("USDT"))
-  .filter((t) => !EXCLUDE.has(t.symbol))
+  .filter((t) => !EXCLUDE.has(t.symbol) && !nonCryptoSymbols.has(t.symbol))
   .filter((t) => Number(t.turnover24h) >= MIN_TURNOVER_USD)
   .map((t) => {
     const lastPrice = Number(t.lastPrice);
@@ -80,7 +105,7 @@ const lines = [
   `## Intraday range movers (net 24h% small, but swung hard within the day)`,
   ...(sweepCandidates.length ? sweepCandidates.map(fmtSweep) : ["(none this run)"]),
   "",
-  `Filters: USDT perps only, BTC/ETH excluded (market filters not candidates), min $${(MIN_TURNOVER_USD / 1e6).toFixed(0)}M 24h turnover.`,
+  `Filters: crypto USDT perps only (BTC/ETH and Bybit stock/ETF/commodity/forex perps excluded), min $${(MIN_TURNOVER_USD / 1e6).toFixed(0)}M 24h turnover.`,
   `Range-mover filters: 24h high-low span >= ${RANGE_PCT_MIN}% of price, net 24h% move <= ${NET_TO_RANGE_MAX * 100}% of that range (i.e. it round-tripped rather than trending).`,
   "This is a candidate shortlist only. No analysis, ledger writes, or chart drawing happens here — run `Analyze [coin]` on whichever ones look worth a real read.",
 ];

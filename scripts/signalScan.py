@@ -102,6 +102,8 @@ def main():
         print("No new signals.")
     if failed:
         print(f"Scan failed for {len(failed)} coin(s): " + " | ".join(failed))
+        if len(failed) == len(symbols):
+            sys.exit(1)
 
 
 if __name__ == "__main__":
