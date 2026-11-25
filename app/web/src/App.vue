@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useAnalyzerStore } from "./stores/useAnalyzerStore";
 import { AppView, CopyTarget, LoadState, SidebarTab } from "./types/analyzer";
+import type { INullable, RiskPrefillPayload } from "./types/common";
 import TopBar from "./components/TopBar.vue";
 import TradeableBanner from "./components/TradeableBanner.vue";
 import CandleChart from "./components/CandleChart.vue";
@@ -15,7 +16,7 @@ const activeView = ref<AppView>(AppView.Analyzer);
 const sidebarTab = ref<SidebarTab>(SidebarTab.Movers);
 const moversCollapsed = ref(false);
 const riskCollapsed = ref(false);
-const riskPrefill = ref<{ coin: string; type: string; entry: number; stop: number } | null>(null);
+const riskPrefill = ref<INullable<RiskPrefillPayload>>(null);
 
 const isBusy = computed(
   () =>
@@ -26,9 +27,9 @@ const isBusy = computed(
     store.dashboardState === LoadState.Loading
 );
 
-function handleSelectCoin(symbol: string) {
+function handleSelectCoin(symbol: string, tf?: string) {
   activeView.value = AppView.Analyzer;
-  store.analyzeCoin({ symbol });
+  store.analyzeCoin({ symbol, tf });
 }
 
 function handleChangeView(view: AppView) {
@@ -38,7 +39,7 @@ function handleChangeView(view: AppView) {
   }
 }
 
-function handlePrefillRisk(payload: { coin: string; type: string; entry: number; stop: number }) {
+function handlePrefillRisk(payload: RiskPrefillPayload) {
   riskPrefill.value = payload;
   riskCollapsed.value = false;
   sidebarTab.value = SidebarTab.Risk;
@@ -56,6 +57,9 @@ function restartScanTimer() {
     scanTimer = window.setInterval(() => {
       if (store.scanState !== LoadState.Loading) {
         void store.runScan();
+      }
+      if (store.analyzeState !== LoadState.Loading) {
+        void store.analyzeCoin({ symbol: store.selectedSymbol, tf: store.selectedTf });
       }
     }, mins * 60_000);
   }
@@ -138,6 +142,7 @@ onBeforeUnmount(() => {
           @update-balance="(val) => (store.accountBalance = val)"
           @copy-setup="(text) => store.copySetup({ text, target: CopyTarget.Setup })"
           @copy-pine="store.copyCurrentPine({ rebuild: false })"
+          @sync-ledger="store.syncToLedger({ symbol: store.selectedSymbol })"
           @prefill-risk="handlePrefillRisk"
         />
       </div>
@@ -146,6 +151,7 @@ onBeforeUnmount(() => {
         <TradeableBanner
           :scan-result="store.scanResult"
           :signal-history="store.signalHistory"
+          :risk="store.risk"
           :scan-state="store.scanState"
           :copied-target="store.copiedTarget"
           @select-coin="handleSelectCoin"
@@ -203,6 +209,7 @@ onBeforeUnmount(() => {
           ]"
           @open-trade="(payload) => store.logOpenTrade(payload)"
           @close-trade="(payload) => store.logCloseTrade(payload)"
+          @clear-trades="store.clearTrades()"
           @toggle-collapse="riskCollapsed = !riskCollapsed"
         />
       </aside>

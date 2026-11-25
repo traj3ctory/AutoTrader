@@ -1,7 +1,16 @@
 import { computed, ref, watch } from "vue";
 import { defineStore } from "pinia";
+import {
+  DEFAULT_AUTO_SCAN_MINUTES,
+  DEFAULT_BALANCE_USD,
+  SCAN_TIMEOUT_MS,
+  STORAGE_KEYS,
+} from "../constants/analyzer";
+import { useCopyFeedback } from "../composables/useCopyFeedback";
+import { useRiskActions } from "../composables/useRiskActions";
+import { useScanAlerts } from "../composables/useScanAlerts";
 import { appRequest } from "../utils/appRequest";
-import { playTradeAlert } from "../utils/soundAlert";
+import { readStoredNumber, readStoredString, writeStoredNumber, writeStoredString } from "../utils/storage";
 import {
   CopyTarget,
   LoadState,
@@ -14,9 +23,7 @@ import {
   type SignalHistoryEntry,
   type TradeRecord,
 } from "../types/analyzer";
-
-const SCAN_TIMEOUT_MS = 90_000;
-const COPY_RESET_MS = 2_000;
+import type { INullable } from "../types/common";
 
 export const useAnalyzerStore = defineStore("analyzer", () => {
   const overviewState = ref<LoadState>(LoadState.Idle);
@@ -26,55 +33,23 @@ export const useAnalyzerStore = defineStore("analyzer", () => {
   const dashboardState = ref<LoadState>(LoadState.Idle);
   const errorMessage = ref("");
 
-  const overview = ref<OverviewResponse | null>(null);
-  const analysis = ref<AnalyzeResponse | null>(null);
-  const scanResult = ref<ScanResponse | null>(null);
-  const movers = ref<MoversPayload | null>(null);
-  const dashboard = ref<DashboardResponse | null>(null);
-  const risk = ref<RiskStatus | null>(null);
+  const overview = ref<INullable<OverviewResponse>>(null);
+  const analysis = ref<INullable<AnalyzeResponse>>(null);
+  const scanResult = ref<INullable<ScanResponse>>(null);
+  const movers = ref<INullable<MoversPayload>>(null);
+  const dashboard = ref<INullable<DashboardResponse>>(null);
+  const risk = ref<INullable<RiskStatus>>(null);
   const trades = ref<TradeRecord[]>([]);
   const signalHistory = ref<SignalHistoryEntry[]>([]);
 
-  const STORAGE_KEYS = {
-    symbol: "autotrader_selected_symbol",
-    tf: "autotrader_selected_tf",
-    balance: "autotrader_account_balance",
-  };
-
-  function readStoredString({ key, fallback }: { key: string; fallback: string }): string {
-    try {
-      return window.localStorage.getItem(key) || fallback;
-    } catch {
-      return fallback;
-    }
-  }
-
-  function readStoredNumber({ key, fallback }: { key: string; fallback: number }): number {
-    try {
-      const raw = Number(window.localStorage.getItem(key));
-      return Number.isFinite(raw) && raw > 0 ? raw : fallback;
-    } catch {
-      return fallback;
-    }
-  }
-
   const selectedSymbol = ref(readStoredString({ key: STORAGE_KEYS.symbol, fallback: "XRPUSDT" }));
   const selectedTf = ref(readStoredString({ key: STORAGE_KEYS.tf, fallback: "15" }));
-  const accountBalance = ref(readStoredNumber({ key: STORAGE_KEYS.balance, fallback: 1000 }));
-  const copiedTarget = ref<CopyTarget>(CopyTarget.None);
-  const soundEnabled = ref(true);
-  const autoScanMinutes = ref(5);
-  const seenTradeableKeys = new Set<string>();
+  const accountBalance = ref(readStoredNumber({ key: STORAGE_KEYS.balance, fallback: DEFAULT_BALANCE_USD }));
+  const { copiedTarget, flashCopied, copyToClipboard } = useCopyFeedback();
+  const { soundEnabled, toggleSound, alertOnNewTradeable } = useScanAlerts();
+  const autoScanMinutes = ref(DEFAULT_AUTO_SCAN_MINUTES);
 
-  watch(accountBalance, (val) => {
-    try {
-      if (Number.isFinite(val) && val >= 0) {
-        window.localStorage.setItem(STORAGE_KEYS.balance, String(val));
-      }
-    } catch {
-      // ignore storage errors
-    }
-  });
+  watch(accountBalance, (value) => writeStoredNumber({ key: STORAGE_KEYS.balance, value }));
 
   const ledgerSymbols = computed(() => {
     const setups = overview.value?.setups || {};
@@ -87,17 +62,6 @@ export const useAnalyzerStore = defineStore("analyzer", () => {
       .map((key) => key.replace(".P", ""))
       .filter((sym) => !core.has(sym));
   });
-
-  async function copyToClipboard({ text, target }: { text: string; target: CopyTarget }) {
-    if (!text) return;
-    await navigator.clipboard.writeText(text);
-    copiedTarget.value = target;
-    window.setTimeout(() => {
-      if (copiedTarget.value === target) {
-        copiedTarget.value = CopyTarget.None;
-      }
-    }, COPY_RESET_MS);
-  }
 
   async function loadOverview() {
     overviewState.value = LoadState.Loading;
@@ -121,12 +85,8 @@ export const useAnalyzerStore = defineStore("analyzer", () => {
     const nextTf = tf || selectedTf.value;
     selectedSymbol.value = nextSym;
     selectedTf.value = nextTf;
-    try {
-      window.localStorage.setItem(STORAGE_KEYS.symbol, nextSym);
-      window.localStorage.setItem(STORAGE_KEYS.tf, nextTf);
-    } catch {
-      // ignore storage errors
-    }
+    writeStoredString({ key: STORAGE_KEYS.symbol, value: nextSym });
+    writeStoredString({ key: STORAGE_KEYS.tf, value: nextTf });
     analyzeState.value = LoadState.Loading;
     errorMessage.value = "";
     try {
@@ -153,22 +113,7 @@ export const useAnalyzerStore = defineStore("analyzer", () => {
         params: extraSymbols ? { symbols: extraSymbols } : undefined,
         timeout: SCAN_TIMEOUT_MS,
       });
-      let hasNewSignal = false;
-      const nextKeys = new Set<string>();
-      for (const item of data.tradeable) {
-        const key = `${item.symbol}:${item.mode}`;
-        nextKeys.add(key);
-        if (!seenTradeableKeys.has(key)) {
-          hasNewSignal = true;
-        }
-      }
-      seenTradeableKeys.clear();
-      for (const key of nextKeys) {
-        seenTradeableKeys.add(key);
-      }
-      if (hasNewSignal && soundEnabled.value) {
-        playTradeAlert();
-      }
+      alertOnNewTradeable({ scan: data, coreSymbols: ledgerSymbols.value });
       scanResult.value = data;
       risk.value = data.risk;
       if (data.signalHistory) {
@@ -184,13 +129,6 @@ export const useAnalyzerStore = defineStore("analyzer", () => {
     }
   }
 
-  function toggleSound() {
-    soundEnabled.value = !soundEnabled.value;
-    if (soundEnabled.value) {
-      playTradeAlert();
-    }
-  }
-
   async function refreshMovers() {
     moversState.value = LoadState.Loading;
     errorMessage.value = "";
@@ -201,7 +139,13 @@ export const useAnalyzerStore = defineStore("analyzer", () => {
         timeout: SCAN_TIMEOUT_MS,
       });
       movers.value = data;
+      if (data.tvWatchlist && overview.value) {
+        overview.value = { ...overview.value, tvWatchlist: data.tvWatchlist };
+      }
       moversState.value = LoadState.Ready;
+      if (data.tvWatchlist && scanState.value !== LoadState.Loading) {
+        void runScan();
+      }
     } catch (err) {
       moversState.value = LoadState.Error;
       errorMessage.value = err instanceof Error ? err.message : "Mover refresh failed";
@@ -240,30 +184,22 @@ export const useAnalyzerStore = defineStore("analyzer", () => {
     }
   }
 
-  async function logOpenTrade(payload: {
-    coin: string;
-    type: string;
-    entry: number;
-    stop: number;
-    risk_pct?: number;
-  }) {
-    const res = await appRequest<{ risk: RiskStatus; trades: TradeRecord[] }>({
-      url: "/risk/open",
-      method: "POST",
-      data: payload,
-    });
-    risk.value = res.risk;
-    trades.value = res.trades;
-  }
+  const { logOpenTrade, logCloseTrade, clearTrades } = useRiskActions({ risk, trades });
 
-  async function logCloseTrade(payload: { coin: string; r: number; fill_price?: number }) {
-    const res = await appRequest<{ risk: RiskStatus; trades: TradeRecord[] }>({
-      url: "/risk/close",
-      method: "POST",
-      data: payload,
-    });
-    risk.value = res.risk;
-    trades.value = res.trades;
+  async function syncToLedger({ symbol }: { symbol: string }) {
+    errorMessage.value = "";
+    try {
+      await appRequest<{ ok: boolean; ticker: string; ledgerUpdated: string }>({
+        url: "/ledger/sync",
+        method: "POST",
+        data: { symbol },
+        timeout: SCAN_TIMEOUT_MS,
+      });
+      flashCopied(CopyTarget.Ledger);
+      await loadOverview();
+    } catch (err) {
+      errorMessage.value = err instanceof Error ? err.message : "Failed to sync ledger";
+    }
   }
 
   return {
@@ -299,5 +235,7 @@ export const useAnalyzerStore = defineStore("analyzer", () => {
     copySetup,
     logOpenTrade,
     logCloseTrade,
+    clearTrades,
+    syncToLedger,
   };
 });

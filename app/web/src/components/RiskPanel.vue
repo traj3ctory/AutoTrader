@@ -1,17 +1,21 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import type { RiskStatus, TradeRecord } from "../types/analyzer";
+import type { CloseTradePayload, INullable, OpenTradePayload, RiskPrefillPayload } from "../types/common";
+import { buildClosePayload, buildOpenPayload } from "../utils/riskForms";
+import { findCorrelatedOpenTrades } from "../utils/riskHelpers";
 
 const props = defineProps<{
-  risk: RiskStatus | null;
+  risk: INullable<RiskStatus>;
   trades: TradeRecord[];
-  prefill: { coin: string; type: string; entry: number; stop: number } | null;
+  prefill: INullable<RiskPrefillPayload>;
   collapsed: boolean;
 }>();
 
 const emit = defineEmits<{
-  openTrade: [payload: { coin: string; type: string; entry: number; stop: number }];
-  closeTrade: [payload: { coin: string; r: number; fill_price?: number }];
+  openTrade: [payload: OpenTradePayload];
+  closeTrade: [payload: CloseTradePayload];
+  clearTrades: [];
   toggleCollapse: [];
 }>();
 
@@ -19,6 +23,7 @@ const coin = ref("ZECUSDT.P");
 const tradeType = ref("scalp");
 const entry = ref("");
 const stop = ref("");
+const target = ref("");
 
 const closeCoin = ref("");
 const closeR = ref("");
@@ -33,43 +38,43 @@ watch(
     tradeType.value = next.type;
     entry.value = String(next.entry);
     stop.value = String(next.stop);
+    target.value = next.target != null ? String(next.target) : "";
   }
 );
 
 function submitOpen() {
-  riskError.value = "";
-  const entryNum = Number(entry.value);
-  const stopNum = Number(stop.value);
-  if (!coin.value.trim() || !Number.isFinite(entryNum) || !Number.isFinite(stopNum)) {
-    riskError.value = "Enter coin, entry, and stop.";
-    return;
-  }
-  emit("openTrade", {
-    coin: coin.value.trim(),
-    type: tradeType.value,
-    entry: entryNum,
-    stop: stopNum,
-  });
+  const { payload, error } = buildOpenPayload({ coin: coin.value, type: tradeType.value, entry: entry.value, stop: stop.value, target: target.value });
+  riskError.value = error ?? "";
+  if (!payload) return;
+  emit("openTrade", payload);
   entry.value = "";
   stop.value = "";
+  target.value = "";
 }
 
 function submitClose() {
-  riskError.value = "";
-  const rNum = Number(closeR.value);
-  if (!closeCoin.value.trim() || !Number.isFinite(rNum)) {
-    riskError.value = "Enter coin and realized R.";
-    return;
-  }
-  const fillNum = closeFill.value ? Number(closeFill.value) : undefined;
-  emit("closeTrade", {
-    coin: closeCoin.value.trim(),
-    r: rNum,
-    fill_price: Number.isFinite(fillNum) ? fillNum : undefined,
-  });
+  const { payload, error } = buildClosePayload({ coin: closeCoin.value, r: closeR.value, fill: closeFill.value });
+  riskError.value = error ?? "";
+  if (!payload) return;
+  emit("closeTrade", payload);
   closeR.value = "";
   closeFill.value = "";
 }
+
+function confirmClear() {
+  if (window.confirm("Clear older closed trades? (Open trades and today's risk lock stay intact.)")) {
+    emit("clearTrades");
+  }
+}
+
+const correlatedWarning = computed(() =>
+  findCorrelatedOpenTrades({
+    coin: coin.value,
+    entry: Number(entry.value),
+    stop: Number(stop.value),
+    trades: props.trades,
+  })
+);
 </script>
 
 <template>
@@ -113,29 +118,45 @@ function submitClose() {
             <option value="scalp">Scalp (0.5%)</option>
             <option value="intraday">Intraday (1.0%)</option>
           </select>
-          <input
-            v-model="entry"
-            name="open_entry"
-            type="number"
-            step="any"
-            placeholder="Entry"
-            class="rounded border border-border-subtle bg-surface-panel px-2 py-1 text-ink-primary"
-          />
-          <input
-            v-model="stop"
-            name="open_stop"
-            type="number"
-            step="any"
-            placeholder="Stop"
-            class="rounded border border-border-subtle bg-surface-panel px-2 py-1 text-ink-primary"
-          />
+          <div class="col-span-2 grid grid-cols-3 gap-1.5">
+            <input
+              v-model="entry"
+              name="open_entry"
+              type="number"
+              step="any"
+              placeholder="Entry"
+              class="rounded border border-border-subtle bg-surface-panel px-2 py-1 text-ink-primary"
+            />
+            <input
+              v-model="stop"
+              name="open_stop"
+              type="number"
+              step="any"
+              placeholder="SL"
+              class="rounded border border-border-subtle bg-surface-panel px-2 py-1 text-ink-primary"
+            />
+            <input
+              v-model="target"
+              name="open_target"
+              type="number"
+              step="any"
+              placeholder="TP"
+              class="rounded border border-border-subtle bg-surface-panel px-2 py-1 text-ink-primary"
+            />
+          </div>
         </div>
         <button
           type="submit"
-          class="w-full cursor-pointer rounded bg-accent-brand px-2.5 py-1 text-xs font-medium text-white hover:opacity-90"
+          class="w-full cursor-pointer rounded bg-accent-brand px-2.5 py-1 text-xs font-medium text-white transition-all duration-150 hover:opacity-90 active:scale-95"
         >
           Log Open
         </button>
+        <p
+          v-if="correlatedWarning"
+          class="rounded border border-accent-warn/40 bg-accent-warn/10 px-2 py-1 text-xs text-accent-warn"
+        >
+          {{ correlatedWarning }}
+        </p>
       </form>
 
       <form
@@ -170,31 +191,47 @@ function submitClose() {
         </div>
         <button
           type="submit"
-          class="w-full cursor-pointer rounded border border-border-subtle bg-surface-panel px-2.5 py-1 text-xs font-medium text-ink-primary hover:border-accent-brand"
+          class="w-full cursor-pointer rounded border border-border-subtle bg-surface-panel px-2.5 py-1 text-xs font-medium text-ink-primary transition-all duration-150 hover:border-accent-brand active:scale-95"
         >
           Log Close
         </button>
       </form>
 
       <div>
-        <div class="mb-1 text-xs font-semibold text-ink-secondary">Recent Trades</div>
+        <div class="mb-1 flex items-center justify-between">
+          <span class="text-xs font-semibold text-ink-secondary">Recent Trades</span>
+          <button
+            v-if="trades.length > 0"
+            type="button"
+            class="cursor-pointer rounded border border-border-subtle bg-surface-elevated px-1.5 py-0.5 text-xs text-ink-secondary hover:border-accent-bear hover:text-accent-bear"
+            @click="confirmClear"
+          >
+            Clear
+          </button>
+        </div>
         <table v-if="trades.length > 0" class="w-full text-left text-xs">
           <thead class="border-b border-border-subtle text-ink-muted">
             <tr>
               <th class="py-1 pr-1">Coin</th>
-              <th class="py-1 pr-1">Entry/SL</th>
-              <th class="py-1 text-right">R</th>
+              <th class="py-1 pr-1">Entry / SL / TP</th>
+              <th class="py-1 text-right">Result</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-border-subtle/50">
-            <tr v-for="(t, idx) in trades.slice().reverse().slice(0, 10)" :key="idx">
+            <tr v-for="(t, idx) in trades.slice().reverse().slice(0, 10)" :key="idx" class="fade_in_item">
               <td class="py-1 pr-1 font-medium text-ink-primary">{{ t.coin.replace("USDT.P", "") }}</td>
-              <td class="py-1 pr-1 text-ink-secondary">{{ t.entry }} / {{ t.stop }}</td>
+              <td class="py-1 pr-1 text-ink-secondary">
+                {{ t.entry }} / {{ t.stop }}{{ t.target != null ? ` / ${t.target}` : "" }}
+              </td>
               <td
                 class="py-1 text-right font-medium"
-                :class="t.closed ? ((t.r || 0) >= 0 ? 'text-accent-bull' : 'text-accent-bear') : 'text-accent-warn'"
+                :class="t.closed ? ((t.r || 0) > 0 ? 'text-accent-bull' : (t.r || 0) < 0 ? 'text-accent-bear' : 'text-ink-secondary') : 'text-accent-warn'"
               >
-                {{ t.closed ? `${(t.r || 0) >= 0 ? "+" : ""}${t.r}R` : "OPEN" }}
+                {{
+                  t.closed
+                    ? `${(t.r || 0) > 0 ? "WIN " : (t.r || 0) < 0 ? "LOSS " : "BE "}${(t.r || 0) >= 0 ? "+" : ""}${t.r}R`
+                    : "OPEN"
+                }}
               </td>
             </tr>
           </tbody>

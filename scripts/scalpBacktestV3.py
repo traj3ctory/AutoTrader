@@ -57,7 +57,7 @@ def micro_break(candles, i: int, direction: str) -> bool:
     return candles[i].h > swing_high
 
 
-def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: bool = False, session_filter: bool = False, time_stop: bool = False, time_stop_candles: int = TIME_STOP_CANDLES_DEFAULT, time_stop_min_r: float = TIME_STOP_MIN_R_DEFAULT, state_out: Optional[dict] = None) -> list:
+def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: bool = False, session_filter: bool = False, time_stop: bool = False, time_stop_candles: int = TIME_STOP_CANDLES_DEFAULT, time_stop_min_r: float = TIME_STOP_MIN_R_DEFAULT, state_out: Optional[dict] = None, allow_counter_trend: bool = False) -> list:
     candles = frames["5"]
     closes = [c.c for c in candles]
     e9, e20 = sb.ema(closes, 9), sb.ema(closes, 20)
@@ -133,9 +133,9 @@ def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: boo
         # 2026-08-25 doc correction) and 4H downgraded from hard gate to counter-trend-only.
         # Measured over 17 coins / 3 months: VWAP-on+4H-hard +0.247 avgR, VWAP-off+4H-hard
         # +0.391, VWAP-off+4H-soft +0.455 (48.1% win). VWAP is context for reporting only.
-        if bull_cross and bull_slope and bias4h != "bearish" and longs_ok:
+        if bull_cross and bull_slope and (allow_counter_trend or bias4h != "bearish") and longs_ok:
             direction, kind = "long", "demand"
-        elif bear_cross and bear_slope and bias4h != "bullish" and shorts_ok:
+        elif bear_cross and bear_slope and (allow_counter_trend or bias4h != "bullish") and shorts_ok:
             if short_gates:
                 bias1d = structure_1d.at(candle.t)
                 if bias1d not in ("bearish", "range"):

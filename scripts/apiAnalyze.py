@@ -39,8 +39,12 @@ def load_history(symbol):
     cache_path = CACHE_DIR / f"{symbol}_5m.json.gz"
     rows = {}
     if cache_path.exists():
-        with gzip.open(cache_path, "rt", encoding="utf-8") as handle:
-            rows = {r["t"]: sb.Candle(**r) for r in json.load(handle) if r["t"] >= start_ms}
+        try:
+            with gzip.open(cache_path, "rt", encoding="utf-8") as handle:
+                rows = {r["t"]: sb.Candle(**r) for r in json.load(handle) if r["t"] >= start_ms}
+        except (EOFError, OSError, ValueError):
+            # A truncated or corrupt cache (interrupted write) is rebuilt from Bybit.
+            rows = {}
     # A cache that starts late was built with a shorter window, so refetch it in full.
     if rows and min(rows) > start_ms + DAY_MS:
         rows = {}
@@ -76,8 +80,7 @@ def load_history(symbol):
     if not candles:
         raise RuntimeError(f"{symbol}: no candles returned")
     cache_path.parent.mkdir(parents=True, exist_ok=True)
-    with gzip.open(cache_path, "wt", encoding="utf-8") as handle:
-        json.dump([asdict(c) for c in candles], handle, separators=(",", ":"))
+    sb.write_gz_json_atomic(cache_path, [asdict(c) for c in candles])
     return candles
 
 

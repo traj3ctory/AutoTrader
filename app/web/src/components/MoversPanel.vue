@@ -57,6 +57,7 @@ const activeTab = ref<"gainers" | "losers" | "range">("losers");
         </button>
         <button
           type="button"
+          title="Run mover scan & sync top 3 focus coins"
           class="inline-flex cursor-pointer items-center rounded border border-border-subtle bg-surface-elevated px-2 py-0.5 text-xs text-ink-primary hover:border-accent-brand disabled:opacity-50"
           :disabled="moversState === LoadState.Loading"
           @click="emit('refresh')"
@@ -65,6 +66,15 @@ const activeTab = ref<"gainers" | "losers" | "range">("losers");
           <span v-else>↻</span>
         </button>
       </div>
+    </div>
+
+    <div
+      v-if="movers?.schedule?.times?.length"
+      class="mt-1 flex shrink-0 items-center justify-between text-xs text-ink-muted"
+      :class="{ 'lg:hidden': collapsed }"
+    >
+      <span>Auto: {{ movers.schedule.times.join(" · ") }} UTC{{ movers.schedule.tzOffsetHours >= 0 ? "+" : "" }}{{ movers.schedule.tzOffsetHours }}</span>
+      <span v-if="movers.tvWatchlist?.length">Synced: {{ movers.tvWatchlist.map((s) => s.replace("USDT.P", "")).join(", ") }}</span>
     </div>
 
     <div class="mt-2 min-h-0 flex-1 overflow-y-auto" :class="{ 'lg:hidden': collapsed }">
@@ -85,6 +95,7 @@ const activeTab = ref<"gainers" | "losers" | "range">("losers");
                 ? movers?.losers || []
                 : movers?.rangeMovers || []"
             :key="row.ticker"
+            class="fade_in_item"
           >
             <td class="py-1 pr-1 font-medium text-ink-primary">
               {{ row.symbol.replace("USDT", "") }}

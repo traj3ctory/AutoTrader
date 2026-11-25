@@ -18,6 +18,7 @@ import json
 import math
 import os
 import statistics
+import threading
 import time
 import urllib.parse
 import urllib.request
@@ -156,6 +157,14 @@ def request_json(url: str, retries: int = 5) -> dict[str, Any]:
     raise RuntimeError(f"Request failed after {retries} attempts: {url}: {last}")
 
 
+def write_gz_json_atomic(path: Path, payload) -> None:
+    # Write to a temp file then rename, so a concurrent reader never sees a half-written gzip.
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
+    with gzip.open(tmp, "wt", encoding="utf-8") as handle:
+        json.dump(payload, handle, separators=(",", ":"))
+    os.replace(tmp, path)
+
+
 def fetch_5m(symbol: str, start_ms: int, end_ms: int, cache_path: Path) -> list[Candle]:
     if cache_path.exists():
         with gzip.open(cache_path, "rt", encoding="utf-8") as handle:
@@ -191,8 +200,7 @@ def fetch_5m(symbol: str, start_ms: int, end_ms: int, cache_path: Path) -> list[
 
     candles = sorted(rows.values(), key=lambda c: c.t)
     cache_path.parent.mkdir(parents=True, exist_ok=True)
-    with gzip.open(cache_path, "wt", encoding="utf-8") as handle:
-        json.dump([asdict(c) for c in candles], handle, separators=(",", ":"))
+    write_gz_json_atomic(cache_path, [asdict(c) for c in candles])
     print(f"{symbol}: downloaded {len(candles):,} 5m candles in {pages} pages", flush=True)
     return candles
 
@@ -423,21 +431,67 @@ def engulfing(previous: Candle, candle: Candle, zone: Zone, direction: str) -> b
         and overlaps(candle, zone) and candle.c < zone.low
 
 
-def choose_rr(entry: float, stop: float, direction: str, opposite: list[Zone]) -> tuple[Optional[float], Optional[float]]:
+def build_tp_ladder(
+    entry: float,
+    stop: float,
+    direction: str,
+    opposite: list[Zone],
+    min_rr: float = 1.5,
+) -> list[dict[str, Any]]:
     risk = abs(entry - stop)
     if risk <= 0:
-        return None, None
+        return []
     if direction == "long":
-        boundaries = [z.low for z in opposite if not z.invalidated and z.low > entry]
-        room = min(boundaries) - entry if boundaries else math.inf
+        raw_edges = sorted(z.low for z in opposite if not z.invalidated and z.low > entry)
     else:
-        boundaries = [z.high for z in opposite if not z.invalidated and z.high < entry]
-        room = entry - max(boundaries) if boundaries else math.inf
-    for rr in (2.0, 1.5):
-        if room >= rr * risk:
-            target = entry + rr * risk if direction == "long" else entry - rr * risk
-            return rr, target
-    return None, None
+        raw_edges = sorted((z.high for z in opposite if not z.invalidated and z.high < entry), reverse=True)
+    edges: list[float] = []
+    for edge in raw_edges:
+        if not edges or abs(edge - edges[-1]) > 0.05 * risk:
+            edges.append(edge)
+    if edges:
+        if abs(edges[0] - entry) / risk < min_rr:
+            return []
+        notes = [
+            "1st opposing zone edge",
+            "Conditional — after TP1 zone breaks",
+            "Conditional — after TP2 zone breaks",
+        ]
+        return [
+            {
+                "label": f"TP{idx + 1}",
+                "price": edge,
+                "rr": round(abs(edge - entry) / risk, 2),
+                "source": "zone",
+                "note": notes[idx],
+            }
+            for idx, edge in enumerate(edges[:3])
+        ]
+    return [
+        {
+            "label": "TP1",
+            "price": entry + 1.5 * risk if direction == "long" else entry - 1.5 * risk,
+            "rr": 1.5,
+            "source": "r_multiple",
+            "note": "No opposing zone — price discovery 1.5R",
+        },
+        {
+            "label": "TP2",
+            "price": entry + 2.0 * risk if direction == "long" else entry - 2.0 * risk,
+            "rr": 2.0,
+            "source": "r_multiple",
+            "note": "No opposing zone — price discovery 2.0R",
+        },
+    ]
+
+
+def choose_rr(entry: float, stop: float, direction: str, opposite: list[Zone]) -> tuple[Optional[float], Optional[float]]:
+    ladder = build_tp_ladder(entry, stop, direction, opposite)
+    if not ladder:
+        return None, None
+    if ladder[0]["source"] == "zone":
+        return float(ladder[0]["rr"]), float(ladder[0]["price"])
+    return 2.0, float(ladder[-1]["price"])
 
 
 def outcome_from_exit(direction: str, entry: float, stop: float, exit_price: float) -> float:
@@ -834,7 +888,7 @@ def main() -> None:
             "confirmation": "15m directional rejection or body-engulfing candle at first retest",
             "entry": "limit at proximal/entry line until filled or zone invalidation",
             "stop": "beyond distal/exit line by 0.50 x prior completed 4H ATR(14)",
-            "target": "2R if before next opposing zone; else 1.5R; otherwise skip",
+            "target": "first opposing zone edge if >= 1.5R; 2R when no zone ahead; otherwise skip",
             "risk": "1% per trade; 3% daily/open-risk portfolio caps",
             "exit": "TP or SL only; positions still open at test end are unresolved",
             "cost_pct_round_trip": args.intraday_cost_pct,
@@ -842,10 +896,10 @@ def main() -> None:
         "scalp": {
             "structure": "4H last two confirmed fractal highs/lows (2 left, 2 right)",
             "zones": "Last red 1H source candle before a bullish close above the latest confirmed swing high (lower-wick demand), or last green candle before a bearish close below the latest confirmed swing low (full-range supply), refined to a matching 15m source candle",
-            "confirmation": "5m 9/20 EMA cross; both EMA slopes agree; daily UTC VWAP agrees; 4H trend agrees; nearest valid 15m-refined zone provides stop context",
+            "confirmation": "5m 9/20 EMA cross; both EMA slopes agree; daily UTC VWAP reported as context only; 4H trend agrees; nearest valid 15m-refined zone provides stop context",
             "entry": "market at crossover candle close",
             "stop": "beyond 15m-refined distal line by 0.50 x prior completed 4H ATR(14)",
-            "target": "2R if before next opposing zone; else 1.5R; otherwise skip",
+            "target": "first opposing zone edge if >= 1.5R; 2R when no zone ahead; otherwise skip",
             "risk": "0.5% per trade; 3% daily/open-risk portfolio caps",
             "vwap_reset": "00:00 UTC daily",
             "max_hold": "None; TP or SL only; positions still open at test end are unresolved",

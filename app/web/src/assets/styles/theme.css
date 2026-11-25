@@ -10,4 +10,7 @@
   --accent-bull: #22c55e;
   --accent-bear: #ef4444;
   --accent-warn: #f59e0b;
+  --motion-enter: 220ms;
+  --motion-stagger: 40ms;
+  --motion-offset: 4px;
 }
