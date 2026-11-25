@@ -1,0 +1,72 @@
+4H counter-trend gate test, scalp v4 engine, out-of-sample 2026-08-01 -> 2026-11-15, cost 0.14%, time stop 72c/-0.3R.
+Trend = 4H structure at the signal candle vs trade direction. Positions are one at a time, so totals shift between buckets across variants.
+
+
+===== ALL coins =====
+
+A current rule (counter-trend blocked, 1D short gate)
+  all     n= 310 win= 31.6% avgR=  0.161 totalR=   50.03
+  with    n= 141 win= 34.0% avgR=  0.203 totalR=   28.58   long n= 105 win= 36.2% avgR=  0.226 totalR=   23.  short n=  36 win= 27.8% avgR=  0.135 totalR=    4.
+  range   n= 169 win= 29.6% avgR=  0.127 totalR=   21.45   long n= 129 win= 28.7% avgR=  0.045 totalR=    5.  short n=  40 win= 32.5% avgR=  0.390 totalR=   15.
+  counter n=   0   long n=   0  short n=   0
+  Aug-Sep n= 227 win= 30.8% avgR=  0.114 totalR=   25.78 | Oct-Nov n=  83 win= 33.7% avgR=  0.292 totalR=   24.25
+
+B counter-trend allowed, 1D short gate kept
+  all     n= 338 win= 31.4% avgR=  0.151 totalR=   50.90
+  with    n= 137 win= 36.5% avgR=  0.261 totalR=   35.80   long n= 103 win= 36.9% avgR=  0.261 totalR=   26.  short n=  34 win= 35.3% avgR=  0.263 totalR=    8.
+  range   n= 134 win= 26.1% avgR=  0.046 totalR=    6.17   long n= 102 win= 26.5% avgR= -0.022 totalR=   -2.  short n=  32 win= 25.0% avgR=  0.263 totalR=    8.
+  counter n=  67 win= 31.3% avgR=  0.133 totalR=    8.93   long n=  55 win= 32.7% avgR=  0.186 totalR=   10.  short n=  12 win= 25.0% avgR= -0.107 totalR=   -1.
+  Aug-Sep n= 250 win= 31.6% avgR=  0.132 totalR=   32.89 | Oct-Nov n=  88 win= 30.7% avgR=  0.205 totalR=   18.01
+
+C counter-trend allowed, no short gates
+  all     n= 333 win= 31.2% avgR=  0.141 totalR=   46.90
+  with    n= 141 win= 35.5% avgR=  0.218 totalR=   30.73   long n=  96 win= 37.5% avgR=  0.251 totalR=   24.  short n=  45 win= 31.1% avgR=  0.147 totalR=    6.
+  range   n= 130 win= 27.7% avgR=  0.081 totalR=   10.59   long n=  88 win= 28.4% avgR=  0.055 totalR=    4.  short n=  42 win= 26.2% avgR=  0.137 totalR=    5.
+  counter n=  62 win= 29.0% avgR=  0.090 totalR=    5.58   long n=  47 win= 31.9% avgR=  0.211 totalR=    9.  short n=  15 win= 20.0% avgR= -0.288 totalR=   -4.
+  Aug-Sep n= 247 win= 31.6% avgR=  0.128 totalR=   31.50 | Oct-Nov n=  86 win= 30.2% avgR=  0.179 totalR=   15.40
+
+===== current ledger 16 =====
+
+A current rule (counter-trend blocked, 1D short gate)
+  all     n= 175 win= 30.3% avgR=  0.161 totalR=   28.21
+  with    n=  75 win= 34.7% avgR=  0.247 totalR=   18.54   long n=  50 win= 38.0% avgR=  0.288 totalR=   14.  short n=  25 win= 28.0% avgR=  0.165 totalR=    4.
+  range   n= 100 win= 27.0% avgR=  0.097 totalR=    9.67   long n=  74 win= 25.7% avgR= -0.064 totalR=   -4.  short n=  26 win= 30.8% avgR=  0.555 totalR=   14.
+  counter n=   0   long n=   0  short n=   0
+  Aug-Sep n= 121 win= 28.1% avgR=  0.062 totalR=    7.47 | Oct-Nov n=  54 win= 35.2% avgR=  0.384 totalR=   20.74
+
+B counter-trend allowed, 1D short gate kept
+  all     n= 180 win= 28.3% avgR=  0.101 totalR=   18.22
+  with    n=  68 win= 36.8% avgR=  0.307 totalR=   20.89   long n=  49 win= 38.8% avgR=  0.337 totalR=   16.  short n=  19 win= 31.6% avgR=  0.231 totalR=    4.
+  range   n=  78 win= 24.4% avgR=  0.019 totalR=    1.48   long n=  59 win= 23.7% avgR= -0.148 totalR=   -8.  short n=  19 win= 26.3% avgR=  0.537 totalR=   10.
+  counter n=  34 win= 20.6% avgR= -0.122 totalR=   -4.15   long n=  26 win= 19.2% avgR= -0.162 totalR=   -4.  short n=   8 win= 25.0% avgR=  0.008 totalR=    0.
+  Aug-Sep n= 128 win= 28.1% avgR=  0.057 totalR=    7.24 | Oct-Nov n=  52 win= 28.8% avgR=  0.211 totalR=   10.98
+
+C counter-trend allowed, no short gates
+  all     n= 189 win= 27.5% avgR=  0.069 totalR=   13.10
+  with    n=  75 win= 34.7% avgR=  0.225 totalR=   16.90   long n=  49 win= 38.8% avgR=  0.273 totalR=   13.  short n=  26 win= 26.9% avgR=  0.136 totalR=    3.
+  range   n=  81 win= 24.7% avgR=  0.027 totalR=    2.20   long n=  55 win= 25.5% avgR= -0.074 totalR=   -4.  short n=  26 win= 23.1% avgR=  0.242 totalR=    6.
+  counter n=  33 win= 18.2% avgR= -0.182 totalR=   -6.00   long n=  23 win= 17.4% avgR= -0.177 totalR=   -4.  short n=  10 win= 20.0% avgR= -0.194 totalR=   -1.
+  Aug-Sep n= 137 win= 27.0% avgR=  0.013 totalR=    1.84 | Oct-Nov n=  52 win= 28.8% avgR=  0.216 totalR=   11.26
+
+===== original 17 =====
+
+A current rule (counter-trend blocked, 1D short gate)
+  all     n= 192 win= 34.4% avgR=  0.188 totalR=   36.16
+  with    n=  91 win= 37.4% avgR=  0.279 totalR=   25.38   long n=  67 win= 37.3% avgR=  0.252 totalR=   16.  short n=  24 win= 37.5% avgR=  0.353 totalR=    8.
+  range   n= 101 win= 31.7% avgR=  0.107 totalR=   10.79   long n=  82 win= 32.9% avgR=  0.169 totalR=   13.  short n=  19 win= 26.3% avgR= -0.161 totalR=   -3.
+  counter n=   0   long n=   0  short n=   0
+  Aug-Sep n= 143 win= 32.9% avgR=  0.142 totalR=   20.25 | Oct-Nov n=  49 win= 38.8% avgR=  0.325 totalR=   15.92
+
+B counter-trend allowed, 1D short gate kept
+  all     n= 216 win= 34.3% avgR=  0.180 totalR=   38.90
+  with    n=  90 win= 40.0% avgR=  0.315 totalR=   28.31   long n=  65 win= 38.5% avgR=  0.276 totalR=   17.  short n=  25 win= 44.0% avgR=  0.414 totalR=   10.
+  range   n=  78 win= 26.9% avgR= -0.018 totalR=   -1.42   long n=  60 win= 30.0% avgR=  0.076 totalR=    4.  short n=  18 win= 16.7% avgR= -0.334 totalR=   -6.
+  counter n=  48 win= 35.4% avgR=  0.250 totalR=   12.01   long n=  40 win= 37.5% avgR=  0.327 totalR=   13.  short n=   8 win= 25.0% avgR= -0.134 totalR=   -1.
+  Aug-Sep n= 160 win= 33.8% avgR=  0.153 totalR=   24.50 | Oct-Nov n=  56 win= 35.7% avgR=  0.257 totalR=   14.40
+
+C counter-trend allowed, no short gates
+  all     n= 203 win= 35.0% avgR=  0.197 totalR=   40.01
+  with    n=  89 win= 39.3% avgR=  0.299 totalR=   26.60   long n=  57 win= 40.4% avgR=  0.349 totalR=   19.  short n=  32 win= 37.5% avgR=  0.210 totalR=    6.
+  range   n=  70 win= 30.0% avgR=  0.056 totalR=    3.92   long n=  47 win= 31.9% avgR=  0.145 totalR=    6.  short n=  23 win= 26.1% avgR= -0.125 totalR=   -2.
+  counter n=  44 win= 34.1% avgR=  0.216 totalR=    9.48   long n=  34 win= 38.2% avgR=  0.371 totalR=   12.  short n=  10 win= 20.0% avgR= -0.313 totalR=   -3.
+  Aug-Sep n= 147 win= 36.1% avgR=  0.225 totalR=   33.02 | Oct-Nov n=  56 win= 32.1% avgR=  0.125 totalR=    6.99

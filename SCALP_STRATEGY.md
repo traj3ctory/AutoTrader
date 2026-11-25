@@ -59,15 +59,25 @@ zone edge; scalp takes the confirmed cross at market).
 
 ## 3. The two 4H rules — separate, do not conflate
 
-### (a) Direction — blocks counter-trend only  **[MEASURED]**
+### (a) Direction — ranks counter-trend lower, no longer blocks it  **[MEASURED 2026-11-25]**
+
+Decision 2026-11-25: both sides are allowed on every 4H reading, but a trade with the 4H trend is
+ranked higher and is the only tier that raises a sound alert.
 
 | 4H reads | Long | Short |
 |---|---|---|
-| `bullish` | allowed | **blocked** |
-| `range` / neutral | allowed | allowed |
-| `bearish` | **blocked** | allowed |
+| `bullish` | WITH-TREND (top tier) | COUNTER-TREND (lower tier) |
+| `range` / neutral | allowed (middle tier) | allowed (middle tier) |
+| `bearish` | COUNTER-TREND (lower tier) | WITH-TREND (top tier) |
 
-4H is **guidance, not a matching requirement**. A neutral 4H does not block either side.
+Counter-trend signals still pass every other gate (zone anchor, 1D and micro-break for shorts, 1.5R
+room). They carry a COUNTER-TREND badge, sort below with-trend signals, and never trigger the sound
+alert. Evidence (`backtests/2026-11-25-trend-gate/`, OOS 2026-08-01 to 2026-11-15, 27 coins): with-trend
++0.261 avgR (137 trades), counter-trend +0.133 (67), 4H range +0.046 (134). With-trend was best on
+every coin set; counter-trend was +0.250 on the original 17 but -0.122 on the current ledger 16, so
+it is unreliable, not an equal edge. Standard error is about 0.18R per bucket.
+
+Earlier evidence, when counter-trend was blocked outright (`backtests/2026-08-26-gate-review/`):
 
 Measured over 17 coins / 3 months at the v4 config (`backtests/2026-08-26-gate-review/`):
 
@@ -79,7 +89,7 @@ report only, never block   +0.305 avgR   42.0% win   181 trades
 
 **Reporting is mandatory, not optional.** The block is silent-by-default only if you let it be.
 Every run must state the trend relationship for **both** directions in plain words —
-`TREND SUPPORTS` / `TREND NEUTRAL (allowed, not supporting)` / `COUNTER-TREND -> blocked` — and,
+`TREND SUPPORTS` / `TREND NEUTRAL (allowed, not supporting)` / `COUNTER-TREND (lower tier)` — and,
 when nothing fires, name **which specific gate** suppressed each side. `apiAnalyze.py` prints all
 of this automatically as of 2026-08-26. Never report a bare "no signal" while a cross exists and a
 gate is quietly vetoing it.
@@ -99,12 +109,21 @@ truth.
 
 Mark 4H supply/demand before mapping any scalp. A long into overhead 4H supply, or a short into 4H
 demand, is capped at **Watch Only** unless the setup is explicitly a reaction trade at that zone.
+The analyzer app enforces this cap (2026-11-25): a signal with a NEAR 4H SUPPLY badge on a long, or
+NEAR 4H DEMAND on a short, is shown as WATCH ONLY with the reason, never alerts, and the ledger sync
+records it as Watch Only. It cannot tell a reaction trade apart, so judge that by hand.
+
+### (c) BTC/ETH confirmation — advisory only
+
+Each tradeable signal shows ALIGNED / MIXED / CONFLICTING from the 4H structure of BTC and ETH
+against the trade direction (the coin itself is left out). It informs size and conviction; it never
+blocks. Untested.
 
 ---
 
 ## 4. Shorts — two extra gates  **[MEASURED]**
 
-Longs are unaffected by both. On top of the 4H counter-trend rule:
+Longs are unaffected by both. Independent of the 4H trend tier:
 
 1. **1D structure** must read `bearish` or `range`/neutral. (Separate check, separate timeframe.)
 2. **5m micro-structure break** — price breaks the prior 5-candle swing low, confirming at the signal.
@@ -138,13 +157,17 @@ Do not restore any of these as hard gates without a fresh backtest showing posit
   it is not a real invalidation point — skip to the **next real structural level**. If that pushes
   R:R below floor, the trade does not qualify: **reduce size or skip it. Never shrink the stop to
   make the math work.**
-- **TP  [MEASURED]** — a single fixed target: **2R** if the nearest live opposing zone leaves at
-  least 2R of room, otherwise **1.5R** if it leaves 1.5R, otherwise **no trade**. The whole position
-  exits at that target. This is the only exit the backtest ever used.
+- **TP  [MEASURED]** — zone to zone (decided 2026-11-25): the single full exit is the first live opposing zone edge when it leaves at least 1.5R, otherwise no trade; with no opposing zone ahead (price discovery) the exit is 2R. The whole position exits at that target. The old fixed 2R/1.5R exit was the earlier backtest and is superseded.
 - **R:R floor** — 1:1.5 minimum, 1:2 preferred (same rule, stated as a floor).
 - **Structural targets, TP2 and partial exits  [ASSUMED]** — placing TP at a prior swing, running a
   TP2 inside an R band, or scaling out at TP1 were never backtested. They may be used as discretion,
   but the measured results in this document do not describe them.
+- **Zone-edge TP update (2026-11-25 OOS test, 2026-08-01 → 2026-11-15, 0.14% cost):** Targeting the
+  1st opposing zone edge (`>= 1.5R`, price discovery `2.0R`) improved Scalp v4 from `+0.143` to **`+0.188 avgR`**
+  on original 17 and `+0.123` to **`+0.174 avgR`** on current 16; Intraday current 16 doubled (`+0.074` → **`+0.141 avgR`**),
+  while original 17 dipped (`+0.282` → `+0.102`). Scaling `50%` at `1.5R` + BE helped Intraday (`+0.160 avgR / +14.54R` vs `+5.31R`),
+  whereas Scalp v4 still scored higher on full exit at TP1 (`+50.81R` vs `+43.25R`). Scalp Zone is **context only**
+  (`-0.128 avgR` on Core 7): the app shows it but it is never tradeable, never alerts and never draws the chart box.
 
 ### Managing a trade whose TP1 R:R is thin  [ASSUMED]
 

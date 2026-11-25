@@ -239,7 +239,7 @@ Before finalizing levels:
 - Check every TP against the TP Zone Validity Rule in `ANALYZE_PROMPT.md`: no TP may span more than one demand/supply zone. Fix TP1 first if it's wrong - a TP that skips through an untested zone and lands in a second one is not a real target, no matter how good the resulting R:R looks.
 - Calculate R:R from the conservative entry-zone edge (entry high for longs, entry low for shorts), never the midpoint.
 
-Tested exit (noted 2026-11-16): both engines exit the full position at a fixed 2R, or 1.5R when that is all the room before the next opposing zone; TP2 bands and the reduced-size tier below are untested discretion and must be labelled so. Floors: Scalp TP1 >= 1.5R with TP2 in the 2.5-3.5R band; Intraday TP1 >= 2R with TP2 in the 3-4R band. If proper SL puts TP1 below the floor, mark WAIT / SKIP. If TP2 has no structural level inside the band, the setup does not fit the template.
+Tested exit (updated 2026-11-25): both engines exit the full position at the first opposing zone edge (at least 1.5R), or 2R when no zone is ahead; TP2 bands and the reduced-size tier below are untested discretion and must be labelled so. Floors: Scalp TP1 >= 1.5R with TP2 in the 2.5-3.5R band; Intraday TP1 >= 2R with TP2 in the 3-4R band. If proper SL puts TP1 below the floor, mark WAIT / SKIP. If TP2 has no structural level inside the band, the setup does not fit the template.
 
 ## Gate 8: Setup Rating Check
 
