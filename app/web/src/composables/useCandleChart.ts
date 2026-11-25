@@ -10,7 +10,7 @@ import {
   type ISeriesApi,
   type UTCTimestamp,
 } from "lightweight-charts";
-import { MAX_SCALP_AGE_CANDLES, MIN_BOX_WIDTH_PX } from "../constants/analyzer";
+import { BOX_FUTURE_WIDTH_PX, BOX_GAP_PX, CHART_RIGHT_OFFSET_BARS, MAX_SCALP_AGE_CANDLES } from "../constants/analyzer";
 import type { AnalyzeResponse } from "../types/analyzer";
 import type { ActiveBoxSpec, PositionBoxCoords } from "../types/chart";
 import type { INullable } from "../types/common";
@@ -106,9 +106,7 @@ export function useCandleChart({
     const yStop = candleSeries.priceToCoordinate(activeBox.stop);
     const yTarget = candleSeries.priceToCoordinate(activeBox.target);
     const xEdge = lastCandleTime !== null ? chart.timeScale().timeToCoordinate(lastCandleTime) : null;
-    const entryBarTime = candleTimes.filter((t) => t <= activeBox!.entryTimeSec).pop() ?? candleTimes[0];
-    const xEntry = entryBarTime !== undefined ? chart.timeScale().timeToCoordinate(entryBarTime as UTCTimestamp) : null;
-    if (yEntry === null || yStop === null || yTarget === null || xEdge === null || xEntry === null) {
+    if (yEntry === null || yStop === null || yTarget === null || xEdge === null) {
       positionBox.value = null;
       return;
     }
@@ -119,8 +117,8 @@ export function useCandleChart({
       riskTop: Math.min(yEntry, yStop),
       riskHeight: Math.max(2, Math.abs(yStop - yEntry)),
       entryTop: yEntry,
-      left: Math.round(xEntry),
-      width: Math.max(MIN_BOX_WIDTH_PX, Math.round(xEdge - xEntry)),
+      left: Math.round(xEdge) + BOX_GAP_PX,
+      width: BOX_FUTURE_WIDTH_PX,
     };
   }
 
@@ -165,7 +163,7 @@ export function useCandleChart({
       layout: { background: { color: "#111827" }, textColor: "#9ca3af" },
       grid: { vertLines: { color: "#1f2937" }, horzLines: { color: "#1f2937" } },
       rightPriceScale: { borderColor: "#243047" },
-      timeScale: { borderColor: "#243047", timeVisible: true, rightOffset: 16 },
+      timeScale: { borderColor: "#243047", timeVisible: true, rightOffset: CHART_RIGHT_OFFSET_BARS },
       width: containerRef.value.clientWidth,
       height: containerRef.value.clientHeight,
     });

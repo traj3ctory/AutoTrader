@@ -57,7 +57,7 @@ def micro_break(candles, i: int, direction: str) -> bool:
     return candles[i].h > swing_high
 
 
-def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: bool = False, session_filter: bool = False, time_stop: bool = False, time_stop_candles: int = TIME_STOP_CANDLES_DEFAULT, time_stop_min_r: float = TIME_STOP_MIN_R_DEFAULT, state_out: Optional[dict] = None, allow_counter_trend: bool = False) -> list:
+def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: bool = False, session_filter: bool = False, time_stop: bool = False, time_stop_candles: int = TIME_STOP_CANDLES_DEFAULT, time_stop_min_r: float = TIME_STOP_MIN_R_DEFAULT, state_out: Optional[dict] = None, allow_counter_trend: bool = False, max_stop_pct: Optional[float] = None) -> list:
     candles = frames["5"]
     closes = [c.c for c in candles]
     e9, e20 = sb.ema(closes, 9), sb.ema(closes, 20)
@@ -158,6 +158,9 @@ def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: boo
         entry = candle.c
         stop = zone.low - 0.50 * current_atr if direction == "long" else zone.high + 0.50 * current_atr
         if direction == "long" and stop >= entry or direction == "short" and stop <= entry:
+            zone.consumed = True
+            continue
+        if max_stop_pct is not None and abs(entry - stop) / entry * 100 > max_stop_pct:
             zone.consumed = True
             continue
         opposite = [z for z in active if z.kind != kind and z.known_t <= candle.t and not z.invalidated]

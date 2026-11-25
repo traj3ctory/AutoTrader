@@ -28,4 +28,6 @@ export const TIMEFRAMES: TimeframeOption[] = [
 ];
 
 export const AUTOMATION_GATE_GOAL = 30;
-export const MIN_BOX_WIDTH_PX = 12;
+export const BOX_FUTURE_WIDTH_PX = 120;
+export const BOX_GAP_PX = 8;
+export const CHART_RIGHT_OFFSET_BARS = 24;

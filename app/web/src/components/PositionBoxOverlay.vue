@@ -17,7 +17,7 @@ defineProps<{
       :style="{ left: `${box.left}px`, width: `${box.width}px` }"
     >
       <div
-        class="absolute inset-x-0 border border-accent-bull/60 bg-accent-bull/20 transition-all duration-150"
+        class="absolute inset-x-0 border border-accent-bull/60 bg-accent-bull/10 transition-all duration-150"
         :style="{ top: `${box.rewardTop}px`, height: `${box.rewardHeight}px` }"
       >
         <span
@@ -28,7 +28,7 @@ defineProps<{
         </span>
       </div>
       <div
-        class="absolute inset-x-0 border border-accent-bear/60 bg-accent-bear/20 transition-all duration-150"
+        class="absolute inset-x-0 border border-accent-bear/60 bg-accent-bear/10 transition-all duration-150"
         :style="{ top: `${box.riskTop}px`, height: `${box.riskHeight}px` }"
       >
         <span
@@ -42,7 +42,7 @@ defineProps<{
         class="absolute inset-x-0 -translate-y-1/2 border-t border-accent-brand transition-all duration-150"
         :style="{ top: `${box.entryTop}px` }"
       >
-        <span class="inline-block rounded bg-accent-brand px-1.5 py-0.5 text-xs font-semibold text-white shadow">
+        <span class="inline-block rounded bg-accent-brand/80 px-1 text-xs font-semibold text-white">
           {{ box.direction.toUpperCase() }} {{ box.entry }} · {{ box.rr }}R
         </span>
       </div>
