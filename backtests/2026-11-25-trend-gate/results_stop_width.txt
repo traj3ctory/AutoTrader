@@ -1,0 +1,78 @@
+XRPUSDT done
+DOGEUSDT done
+ZECUSDT done
+AVAXUSDT done
+JTOUSDT done
+LITUSDT done
+HYPEUSDT done
+BEATUSDT done
+BTWUSDT done
+SOONUSDT done
+FARTCOINUSDT done
+KAITOUSDT done
+AKEUSDT done
+USUSDT done
+BNBUSDT done
+UNIUSDT done
+UAIUSDT done
+SOLUSDT done
+AAVEUSDT done
+ALGOUSDT done
+AEROUSDT done
+BROCCOLIUSDT done
+BCHUSDT done
+XPLUSDT done
+ZROUSDT done
+ARKUSDT done
+LYNUSDT done
+
+===== ALL coins: in-engine max stop width =====
+  cap  None%  n= 338 win= 31.4% avgR=  0.151 totalR=   50.90  median width 5.16%
+  cap   5.0%  n= 289 win= 30.8% avgR=  0.147 totalR=   42.58  median width 3.02%
+  cap   4.0%  n= 237 win= 28.7% avgR=  0.082 totalR=   19.34  median width 2.59%
+  cap   3.0%  n= 179 win= 28.5% avgR=  0.030 totalR=    5.29  median width 2.09%
+  cap   2.5%  n= 146 win= 26.7% avgR= -0.006 totalR=   -0.83  median width 1.84%
+  cap   2.0%  n= 104 win= 26.0% avgR= -0.025 totalR=   -2.55  median width 1.64%
+  cap   1.5%  n=  51 win= 29.4% avgR=  0.085 totalR=    4.36  median width 1.17%
+
+  buckets of the uncapped trades by stop width (ALL coins)
+     0-1.0  % n=   9 win= 11.1% avgR= -0.676 totalR=   -6.08
+   1.0-1.5  % n=  19 win= 42.1% avgR=  0.916 totalR=   17.41
+   1.5-2.0  % n=  24 win= 16.7% avgR= -0.237 totalR=   -5.68
+   2.0-3.0  % n=  49 win= 24.5% avgR= -0.129 totalR=   -6.30
+   3.0-5.0  % n=  65 win= 32.3% avgR=  0.371 totalR=   24.09
+   5.0-100  % n= 172 win= 34.9% avgR=  0.160 totalR=   27.47
+
+===== current ledger 16: in-engine max stop width =====
+  cap  None%  n= 180 win= 28.3% avgR=  0.101 totalR=   18.22  median width 3.76%
+  cap   5.0%  n= 182 win= 29.7% avgR=  0.121 totalR=   21.96  median width 2.94%
+  cap   4.0%  n= 158 win= 27.2% avgR=  0.056 totalR=    8.90  median width 2.54%
+  cap   3.0%  n= 124 win= 26.6% avgR=  0.008 totalR=    0.94  median width 2.04%
+  cap   2.5%  n= 105 win= 26.7% avgR=  0.005 totalR=    0.49  median width 1.85%
+  cap   2.0%  n=  75 win= 25.3% avgR= -0.016 totalR=   -1.20  median width 1.73%
+  cap   1.5%  n=  35 win= 31.4% avgR=  0.173 totalR=    6.04  median width 1.18%
+
+  buckets of the uncapped trades by stop width (current ledger 16)
+     0-1.0  % n=   4 win=  0.0% avgR= -0.903 totalR=   -3.61
+   1.0-1.5  % n=  15 win= 33.3% avgR=  0.683 totalR=   10.24
+   1.5-2.0  % n=  20 win= 20.0% avgR= -0.168 totalR=   -3.36
+   2.0-3.0  % n=  36 win= 16.7% avgR= -0.365 totalR=  -13.16
+   3.0-5.0  % n=  41 win= 29.3% avgR=  0.289 totalR=   11.83
+   5.0-100  % n=  64 win= 37.5% avgR=  0.254 totalR=   16.28
+
+===== original 17: in-engine max stop width =====
+  cap  None%  n= 216 win= 34.3% avgR=  0.180 totalR=   38.90  median width 6.33%
+  cap   5.0%  n= 185 win= 33.0% avgR=  0.155 totalR=   28.72  median width 3.13%
+  cap   4.0%  n= 145 win= 33.1% avgR=  0.137 totalR=   19.84  median width 2.76%
+  cap   3.0%  n= 105 win= 34.3% avgR=  0.117 totalR=   12.29  median width 2.04%
+  cap   2.5%  n=  85 win= 30.6% avgR=  0.022 totalR=    1.90  median width 1.79%
+  cap   2.0%  n=  61 win= 29.5% avgR= -0.078 totalR=   -4.76  median width 1.55%
+  cap   1.5%  n=  31 win= 32.3% avgR=  0.060 totalR=    1.86  median width 1.13%
+
+  buckets of the uncapped trades by stop width (original 17)
+     0-1.0  % n=   7 win= 14.3% avgR= -0.684 totalR=   -4.79
+   1.0-1.5  % n=  10 win= 50.0% avgR=  0.558 totalR=    5.58
+   1.5-2.0  % n=  11 win= 27.3% avgR=  0.003 totalR=    0.03
+   2.0-3.0  % n=  22 win= 36.4% avgR=  0.268 totalR=    5.90
+   3.0-5.0  % n=  41 win= 31.7% avgR=  0.287 totalR=   11.75
+   5.0-100  % n= 125 win= 35.2% avgR=  0.163 totalR=   20.42
