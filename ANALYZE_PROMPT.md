@@ -338,10 +338,6 @@ Watch Only:
 - Useful levels exist, but trade is not ready.
 - Needs reclaim, retest, rejection, MSS, or better R:R.
 
-Conditional Trade - Reduced Size:
-
-- See the Conditional (Reduced-Size) Tier in Trade Rules. TP1 is sub-floor but within the defined reduced-size band (1.5-2R Intraday / 1.2-1.5R Scalp), every other gate passes, and the trigger has actually confirmed.
-- Trade candidate at half normal risk (half the Risk Context per-trade figure for the trade type - Scalp 0.25% instead of 0.5%, Intraday 0.5% instead of 1%), not full size.
 
 Skip / No Trade:
 
@@ -355,7 +351,6 @@ Final action by rating:
 
 - Clean Trade = Trade candidate if entry condition is met.
 - Conditional Trade = Conditional trade or reduced confidence.
-- Conditional Trade - Reduced Size = Trade candidate at half risk if the trigger has confirmed.
 - Watch Only = Wait / monitor only.
 - Skip / No Trade = No trade.
 
@@ -811,28 +806,15 @@ If verification fails:
 ## Trade Rules
 
 - R:R is measured from the conservative edge of the entry zone (entry high for longs, entry low for shorts) to each TP against the SL. Confirmation fills happen at the edge, so midpoint math flatters the ratio; never use the midpoint for the floor check.
-- UNTESTED (noted 2026-11-16): the TP2 bands in the next two lines and the Conditional (Reduced-Size) Tier below were never backtested. Both engines exit the whole position at the first opposing zone edge (at least 1.5R), or 2R when no zone is ahead. Keep TP1 at the engine's target; treat TP2 as an optional stretch level and say it is untested when reporting it.
+- UNTESTED (noted 2026-11-16): the TP2 bands in the next two lines were never backtested (the Conditional tier was removed 2026-11-25). Both engines exit the whole position at the first opposing zone edge (at least 1.5R), or 2R when no zone is ahead. Keep TP1 at the engine's target; treat TP2 as an optional stretch level and say it is untested when reporting it.
 - Scalp floor: TP1 at least 1:1.5, and TP2 placed at structure inside the 1:2.5 to 1:3.5 band.
 - Intraday floor: TP1 at least 1:2, and TP2 placed at structure inside the 1:3 to 1:4 band.
-- If TP1 is below the floor, cap the setup rating at Watch Only or Skip / No Trade - EXCEPT when the Conditional (Reduced-Size) Tier below applies.
+- If TP1 is below the floor, cap the setup rating at Watch Only or Skip / No Trade.
 - If TP2 falls outside the band, re-place it at the nearest structural level inside the band; if no structural level exists there, the setup does not fit the template. Never move a TP into empty air to hit a ratio.
 
-### Conditional (Reduced-Size) Tier
+### Conditional (Reduced-Size) Tier - REMOVED
 
-A setup whose TP1 (off the conservative entry edge) falls in the 1.5R-2R range (Intraday) or 1.2R-1.5R range (Scalp) - i.e. below the full floor but not far below it - qualifies for `Conditional Trade - Reduced Size` instead of an automatic Watch Only/Skip, but only if every other gate passes cleanly:
-- SL is Safe (not Vulnerable, not Too Tight).
-- Entry activation has actually triggered (rejection candle confirmed, reclaim confirmed-and-holding, or break-and-retest confirmed) - not "no entry yet."
-- Catalyst is Clear or News Risk-with-a-defined-cap, not an active veto-level event.
-- BTC/ETH filter is Aligned or Mixed, not strongly Conflicting.
-
-If all four hold, rate the setup `Conditional Trade - Reduced Size` and state explicitly in `final_action`: position size is half the user's normal risk for that trade type per the Risk Context section (Scalp 0.25% instead of 0.5%; Intraday 0.5% instead of 1%), because R:R is genuine but sub-floor. This tier does not apply to setups below 1.5R (Intraday) / 1.2R (Scalp) - those remain Skip / No Trade regardless of how clean the other gates are. This tier never overrides Vulnerable/Too-Tight SL, an unconfirmed trigger, or a hard catalyst veto.
-- Store rr_tp1 and rr_tp2 in the ledger record for every setup.
-- Do not force a trade.
-- If no clean setup exists, say WAIT.
-- Even when saying WAIT, always state the proposed trade type:
-  - Proposed Long
-  - Proposed Short
-  - Proposed Wait / No Trade
+Removed 2026-11-25: there is no reduced-size or sub-floor tier. The floor is 1.5R for both modes; below it the setup is Skip / No Trade. With no opposing zone ahead the single full exit is 2R.
 
 ## Entry Style
 

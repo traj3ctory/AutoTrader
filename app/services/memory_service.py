@@ -37,10 +37,10 @@ def _build_ledger_record(sym, res, now_iso, existing=None):
         entry_val = active["entry"]
         sl_val = active["stop"]
         rr1 = active["rr"]
-        rating = "Conditional Trade - Reduced Size" if tier["lowerTier"] else "Clean Trade"
+        rating = "Clean Trade"
         state = f"{(res['scalp'] if sc_pos else res['intraday'])['verdictKind']} {side.upper()}"
         proposed = side
-        action = "TRADE"
+        action = "TRADE (counter-trend, lower tier)" if tier["lowerTier"] else "TRADE"
     else:
         tps, entry_val, sl_val, rr1 = [], None, None, None
         side = "Wait"

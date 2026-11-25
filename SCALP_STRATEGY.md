@@ -157,7 +157,7 @@ Do not restore any of these as hard gates without a fresh backtest showing posit
   it is not a real invalidation point — skip to the **next real structural level**. If that pushes
   R:R below floor, the trade does not qualify: **reduce size or skip it. Never shrink the stop to
   make the math work.**
-- **TP  [MEASURED]** — zone to zone (decided 2026-11-25): the single full exit is the first live opposing zone edge when it leaves at least 1.5R, otherwise no trade; with no opposing zone ahead (price discovery) the exit is 2R. The whole position exits at that target. The old fixed 2R/1.5R exit was the earlier backtest and is superseded.
+- **TP  [MEASURED]** — zone to zone (decided 2026-11-25): the single full exit is the first live opposing zone edge when it leaves at least 1.5R, otherwise no trade; with no opposing zone ahead (price discovery) TP1 is the single full exit at 2R (the card shows that 2R, not 1.5R). The whole position exits at that target. The old fixed 2R/1.5R exit was the earlier backtest and is superseded.
 - **R:R floor** — 1:1.5 minimum, 1:2 preferred (same rule, stated as a floor).
 - **Structural targets, TP2 and partial exits  [ASSUMED]** — placing TP at a prior swing, running a
   TP2 inside an R band, or scaling out at TP1 were never backtested. They may be used as discretion,
@@ -191,7 +191,7 @@ severe regression, because it cuts off winners that simply hadn't resolved yet.
 ## 8. Risk — the part that actually decides outcomes
 
 - **0.5% of available balance per scalp** (Intraday: 1%).
-- Reduced-size tier: **0.25%** (half) when R:R is genuine but sub-floor and every other gate passes.
+- No reduced-size tier (removed 2026-11-25): the R:R floor is 1.5R, below it is no trade.
 - **Max daily loss 3%.**
 - **Max 1–2 open trades.**
 - **Stop after 2 consecutive losses.**

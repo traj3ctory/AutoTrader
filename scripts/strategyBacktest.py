@@ -470,17 +470,10 @@ def build_tp_ladder(
     return [
         {
             "label": "TP1",
-            "price": entry + 1.5 * risk if direction == "long" else entry - 1.5 * risk,
-            "rr": 1.5,
-            "source": "r_multiple",
-            "note": "No opposing zone — price discovery 1.5R",
-        },
-        {
-            "label": "TP2",
             "price": entry + 2.0 * risk if direction == "long" else entry - 2.0 * risk,
             "rr": 2.0,
             "source": "r_multiple",
-            "note": "No opposing zone — price discovery 2.0R",
+            "note": "No opposing zone - price discovery, full exit at 2R",
         },
     ]
 

@@ -247,17 +247,15 @@ Assign one:
 
 - Clean Trade
 - Conditional Trade
-- Conditional Trade - Reduced Size
 - Watch Only
 - Skip / No Trade
 
-Conditional Trade - Reduced Size applies only when TP1 is sub-floor but inside the reduced-size band (1.5-2R Intraday / 1.2-1.5R Scalp), every other gate (SL quality, confirmed trigger, catalyst, BTC/ETH filter) passes cleanly, and the activation basis has actually confirmed - see the Conditional (Reduced-Size) Tier in ANALYZE_PROMPT.md. State the half-risk sizing (0.75% instead of 1.5%) explicitly in the final output.
+Reduced-size tier removed 2026-11-25: the floor is 1.5R for both modes, below it is Skip / No Trade; with no opposing zone the full exit is 2R.
 
 Rating must match action:
 
 - Clean Trade -> Trade candidate if trigger is met.
 - Conditional Trade -> Conditional trade.
-- Conditional Trade - Reduced Size -> Trade candidate at half risk if trigger is met.
 - Watch Only -> Wait / monitor.
 - Skip / No Trade -> No trade.
 
