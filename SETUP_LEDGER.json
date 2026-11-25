@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "last_updated": "2026-11-24T09:50:00Z",
+  "last_updated": "2026-11-25T08:30:14Z",
   "principle": "AutoTrader remembers. TradingView displays.",
   "context_watch": {
     "BTCUSDT.P": {
@@ -27,19 +27,19 @@
       "coin": "XRPUSDT.P",
       "exchange": "BYBIT",
       "trade_type": "Scalp",
-      "proposed_type": "Proposed Wait / No Trade",
-      "bias": "Price 0.9353; 4H bullish, 1D bearish. Intraday engine zones: nearest unused supply 1.0893-1.1059 (FVG), nearest unused demand 0.9191-0.9284 (FVG). Scalp reference zones: demand below none; supply above none. Scalp engine: no signal (4H bullish blocks shorts). Intraday engine: no signal.",
+      "proposed_type": "Short",
+      "bias": "Price 0.9196; 4H bearish, 1D bearish; LATE ENTRY (10c ago, <=12c tested equal) SHORT: entry 0.9130, SL 0.9389, TP 0.8613, R:R 2.0 (-0.26R)",
       "btc_eth_filter": "Engine structure read only, no alignment judgement made: BTC 60000 (4H bullish, 1D bearish) and ETH 1685.25 (4H bullish, 1D range).",
       "catalyst": "Unverified - engine-only refresh, no news or macro calendar check this pass.",
       "setup_type": "Engine watch (short)",
-      "setup_rating": "Watch Only",
-      "setup_state": "NO SIGNAL; 4H BULLISH / 1D BEARISH; WAIT SUPPLY 1.0893-1.1059",
+      "setup_rating": "Clean Trade",
+      "setup_state": "LATE_ENTRY SHORT",
       "position_status": "NO POSITION",
-      "direction": "Wait",
+      "direction": "Short",
       "entry": {
-        "low": null,
-        "high": null,
-        "basis": "No entry yet. Intraday short needs the first touch of the unused supply zone 1.0893-1.1059 and a closed 15m rejection/engulfing there; limit at the zone near edge 1.0893.",
+        "low": 0.913,
+        "high": 0.913,
+        "basis": "LATE ENTRY (10c ago, <=12c tested equal) SHORT: entry 0.9130, SL 0.9389, TP 0.8613, R:R 2.0 (-0.26R)",
         "actual": null
       },
       "watch_zone": {
@@ -49,19 +49,22 @@
         "trigger": "Engine intraday short: zone first touched within the last 4 closed 15m candles plus a closed 15m rejection or engulfing, with 1D bearish. Target is the engine fixed 2R (1.5R if that is all the room)."
       },
       "reclaim": null,
-      "sl": null,
+      "sl": 0.9389,
       "sl_quality": "N/A - no entry yet",
-      "tp": [],
+      "tp": [
+        0.8742,
+        0.8613
+      ],
       "invalidation": "A close through 1.0893-1.1059 kills the zone.",
       "nearest_liquidity": "Buy-side: supply 1.0893-1.1059. Sell-side: demand 0.9191-0.9284 (FVG present, blocked by 1D bearish).",
       "reclaim_status": "N/A - no reclaim level mapped.",
       "relative_strength": "Not assessed in an engine-only refresh.",
-      "final_action": "WAIT - no valid engine signal on either trade type.",
+      "final_action": "TRADE",
       "notes": "2026-11-24 engine-only refresh via apiAnalyze.py (replays the backtest engines). Only a VALID verdict is a tested entry.",
-      "analyzed_at": "2026-11-24T09:50:00Z",
+      "analyzed_at": "2026-11-25T08:30:14Z",
       "activation_basis": "no-entry-yet",
-      "rr_tp1": null,
-      "rr_tp2": null,
+      "rr_tp1": 2.0,
+      "rr_tp2": 0.8613,
       "eb": "No entry yet. Intraday short needs the first touch of the unused supply zone 1.0893-1.1059 and a closed 15m rejection/engulfing there; limit at the zone near edge 1.0893."
     },
     "HYPEUSDT.P": {

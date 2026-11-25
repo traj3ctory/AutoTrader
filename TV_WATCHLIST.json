@@ -1,6 +1,6 @@
 {
   "source": "TradingView Watchlist (id 184742650, crypto perps only; top 3 extra rotated by Auto scan)",
-  "updated_at": "2026-11-24T18:17:14Z",
+  "updated_at": "2026-11-25T07:32:01Z",
   "pool": [
     "FARTCOINUSDT.P",
     "KAITOUSDT.P",
@@ -11,8 +11,9 @@
     "LINKUSDT.P"
   ],
   "symbols": [
-    "PIEVERSEUSDT.P",
-    "KMNOUSDT.P",
-    "BLESSUSDT.P"
-  ]
+    "MONUSDT.P",
+    "DOSUSDT.P",
+    "BTWUSDT.P"
+  ],
+  "last_mover_sync": "2026-11-25T07:32:01Z"
 }
