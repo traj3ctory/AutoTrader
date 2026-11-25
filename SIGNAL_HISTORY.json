@@ -2,6 +2,33 @@
   "version": 1,
   "signals": [
     {
+      "id": "SOLUSDT:Scalp EMA:11-25 11:25 UTC",
+      "seenAtUtc": "2026-11-25T11:31:08Z",
+      "symbol": "SOLUSDT",
+      "mode": "Scalp EMA",
+      "status": "LATE_ENTRY",
+      "outcome": "OPEN",
+      "netR": null,
+      "closedAtUtc": null,
+      "emaBadge": null,
+      "zone4hBadge": {
+        "label": "NEAR 4H SUPPLY",
+        "side": "supply",
+        "distPct": 1.89,
+        "zone": {
+          "kind": "supply",
+          "low": 68.86,
+          "high": 70.09,
+          "proximal": 68.86,
+          "distal": 70.09,
+          "hasFvg": false,
+          "touchIndex": null
+        }
+      },
+      "summary": "LATE ENTRY (7c ago, <=12c tested equal) SHORT: entry 67.5800, SL 69.2511, TP 62.0600, R:R 3.3 (+0.05R)",
+      "copyText": "SOLUSDT | Price 67.5000 | 4H bullish | 1D bearish\n5m EMA 9/20 [BEAR]: BEAR-ordered (9 below 20), slope DOWN (BEARISH 11-25 11:25 UTC (7c ago))\nScalp Zone (context only, untested): NO_SIGNAL \u2014 NO SIGNAL \u2014 waiting for 15m zone touch + 5m rejection/engulfing\nScalp v4 EMA Cross: LATE_ENTRY \u2014 LATE ENTRY (7c ago, <=12c tested equal) SHORT: entry 67.5800, SL 69.2511, TP 62.0600, R:R 3.3 (+0.05R)\n  Zone LONG: 62.0500-62.0600 (SL 60.9989, TP none, NoneR) | blocked by: no unused demand zone touched in last 4 closed 5m candles\n  Zone SHORT: 67.9200-68.2000 (SL 69.2511, TP none, NoneR) | blocked by: 4H counter-trend (bullish); no unused supply zone touched in last 4 closed 5m candles\nIntraday: NO_SIGNAL \u2014 NO SIGNAL on the last closed 15m candle\n  Intraday LONG nearest zone: none | blocked by: 1D structure (bearish) opposes long; no unused demand zone first touched in last 4 closed 15m candles\n  Intraday SHORT nearest zone: 71.2900-72.0400 | blocked by: no unused supply zone first touched in last 4 closed 15m candles"
+    },
+    {
       "id": "DOSUSDT:Scalp EMA:11-25 08:20 UTC",
       "seenAtUtc": "2026-11-25T08:21:28Z",
       "symbol": "DOSUSDT",
@@ -11,8 +38,8 @@
       "netR": null,
       "closedAtUtc": null,
       "emaBadge": null,
-      "summary": "ENGINE IN TRADE (36c ago, too old) SHORT: entry 0.0932, SL 0.1160, TP 0.0476, R:R 2.0 (+0.59R)",
-      "copyText": "DOSUSDT | Price 0.0798 | 4H range | 1D bearish\n5m EMA 9/20 [BEAR]: BEAR-ordered (9 below 20), slope DOWN (BEARISH 11-25 08:20 UTC (36c ago))\nScalp Zone (context only, untested): NO_SIGNAL \u2014 NO SIGNAL \u2014 waiting for 15m zone touch + 5m rejection/engulfing\nScalp v4 EMA Cross: ENGINE_IN_TRADE \u2014 ENGINE IN TRADE (36c ago, too old) SHORT: entry 0.0932, SL 0.1160, TP 0.0476, R:R 2.0 (+0.59R)\n  Zone LONG: blocked by: no unused demand zone touched in last 4 closed 5m candles\n  Zone SHORT: 0.1002-0.1014 (SL 0.1081, TP 0.0232, 2.0R) | blocked by: no unused supply zone touched in last 4 closed 5m candles\nIntraday: ENGINE_IN_TRADE \u2014 ENGINE IN TRADE SHORT filled 11-25 04:30 UTC: entry 0.0960, SL 0.1084, TP 0.0711, R:R 2.0 (+1.34R)\n  Intraday LONG nearest zone: none | blocked by: 1D structure (bearish) opposes long; no unused demand zone first touched in last 4 closed 15m candles\n  Intraday SHORT nearest zone: 0.1343-0.1405 | blocked by: no unused supply zone first touched in last 4 closed 15m candles"
+      "summary": "ENGINE IN TRADE (44c ago, too old) SHORT: entry 0.0932, SL 0.1160, TP 0.0476, R:R 2.0 (+0.59R)",
+      "copyText": "DOSUSDT | Price 0.0797 | 4H range | 1D bearish\n5m EMA 9/20 [BEAR]: BEAR-ordered (9 below 20), slope DOWN (BEARISH 11-25 08:20 UTC (44c ago))\nScalp Zone (context only, untested): NO_SIGNAL \u2014 NO SIGNAL \u2014 waiting for 15m zone touch + 5m rejection/engulfing\nScalp v4 EMA Cross: ENGINE_IN_TRADE \u2014 ENGINE IN TRADE (44c ago, too old) SHORT: entry 0.0932, SL 0.1160, TP 0.0476, R:R 2.0 (+0.59R)\n  Zone LONG: blocked by: no unused demand zone touched in last 4 closed 5m candles\n  Zone SHORT: 0.1002-0.1014 (SL 0.1081, TP 0.0229, 2.0R) | blocked by: no unused supply zone touched in last 4 closed 5m candles\nIntraday: ENGINE_IN_TRADE \u2014 ENGINE IN TRADE SHORT filled 11-25 04:30 UTC: entry 0.0960, SL 0.1084, TP 0.0711, R:R 2.0 (+1.31R)\n  Intraday LONG nearest zone: none | blocked by: 1D structure (bearish) opposes long; no unused demand zone first touched in last 4 closed 15m candles\n  Intraday SHORT nearest zone: 0.1343-0.1405 | blocked by: no unused supply zone first touched in last 4 closed 15m candles"
     },
     {
       "id": "XRPUSDT:Scalp EMA:11-25 07:40 UTC",
@@ -24,8 +51,8 @@
       "netR": null,
       "closedAtUtc": null,
       "emaBadge": null,
-      "summary": "ENGINE IN TRADE (44c ago, too old) SHORT: entry 0.9130, SL 0.9389, TP 0.8613, R:R 2.0 (+0.02R)",
-      "copyText": "XRPUSDT | Price 0.9125 | 4H bearish | 1D bearish\n5m EMA 9/20 [MIXED]: BEAR-ordered (9 below 20), slope MIXED (BEARISH 11-25 09:25 UTC (23c ago))\nScalp Zone (context only, untested): NO_SIGNAL \u2014 NO SIGNAL \u2014 waiting for 15m zone touch + 5m rejection/engulfing\nScalp v4 EMA Cross: ENGINE_IN_TRADE \u2014 ENGINE IN TRADE (44c ago, too old) SHORT: entry 0.9130, SL 0.9389, TP 0.8613, R:R 2.0 (+0.02R)\n  Zone LONG: blocked by: 4H counter-trend (bearish); no unused demand zone touched in last 4 closed 5m candles\n  Zone SHORT: 1.1499-1.1537 (SL 1.1665, TP 0.4045, 2.0R) | blocked by: no unused supply zone touched in last 4 closed 5m candles\nIntraday: NO_SIGNAL \u2014 NO SIGNAL on the last closed 15m candle\n  Intraday LONG nearest zone: none | blocked by: 1D structure (bearish) opposes long; no unused demand zone first touched in last 4 closed 15m candles\n  Intraday SHORT nearest zone: 1.0893-1.1059 | blocked by: no unused supply zone first touched in last 4 closed 15m candles"
+      "summary": "ENGINE IN TRADE (52c ago, too old) SHORT: entry 0.9130, SL 0.9389, TP 0.8613, R:R 2.0 (+0.18R)",
+      "copyText": "XRPUSDT | Price 0.9083 | 4H bearish | 1D bearish\n5m EMA 9/20 [BEAR]: BEAR-ordered (9 below 20), slope DOWN (BEARISH 11-25 09:25 UTC (31c ago))\nScalp Zone (context only, untested): NO_SIGNAL \u2014 NO SIGNAL \u2014 waiting for 15m zone touch + 5m rejection/engulfing\nScalp v4 EMA Cross: ENGINE_IN_TRADE \u2014 ENGINE IN TRADE (52c ago, too old) SHORT: entry 0.9130, SL 0.9389, TP 0.8613, R:R 2.0 (+0.18R)\n  Zone LONG: blocked by: 4H counter-trend (bearish); no unused demand zone touched in last 4 closed 5m candles\n  Zone SHORT: 1.1499-1.1537 (SL 1.1665, TP 0.3919, 2.0R) | blocked by: no unused supply zone touched in last 4 closed 5m candles\nIntraday: NO_SIGNAL \u2014 NO SIGNAL on the last closed 15m candle\n  Intraday LONG nearest zone: none | blocked by: 1D structure (bearish) opposes long; no unused demand zone first touched in last 4 closed 15m candles\n  Intraday SHORT nearest zone: 1.0893-1.1059 | blocked by: no unused supply zone first touched in last 4 closed 15m candles"
     },
     {
       "id": "BTWUSDT:Scalp EMA:11-25 05:50 UTC",
@@ -37,8 +64,8 @@
       "netR": null,
       "closedAtUtc": null,
       "emaBadge": null,
-      "summary": "ENGINE IN TRADE (66c ago, too old) LONG: entry 0.8219, SL 0.7722, TP 0.9048, R:R 1.67 (+1.55R)",
-      "copyText": "BTWUSDT | Price 0.8990 | 4H bullish | 1D bearish\n5m EMA 9/20 [BULL]: BULL-ordered (9 above 20), slope UP (BULLISH 11-25 05:50 UTC (66c ago))\nScalp Zone (context only, untested): NO_SIGNAL \u2014 NO SIGNAL \u2014 waiting for 15m zone touch + 5m rejection/engulfing\nScalp v4 EMA Cross: ENGINE_IN_TRADE \u2014 ENGINE IN TRADE (66c ago, too old) LONG: entry 0.8219, SL 0.7722, TP 0.9048, R:R 1.67 (+1.55R)\n  Zone LONG: 0.7553-0.7556 (SL 0.7281, TP none, NoneR) | blocked by: no unused demand zone touched in last 4 closed 5m candles\n  Zone SHORT: 0.9048-0.9128 (SL 0.9400, TP none, NoneR) | blocked by: 4H counter-trend (bullish); no unused supply zone touched in last 4 closed 5m candles\nIntraday: STALE_ORDER \u2014 STALE ORDER LONG (signalled 104d ago, limit 0.2196 is 75.6% from price) - missed signal, not actionable\n  Intraday LONG nearest zone: 0.7964-0.8001 | blocked by: 1D structure (bearish) opposes long; no unused demand zone first touched in last 4 closed 15m candles\n  Intraday SHORT nearest zone: 0.9842-1.0046 | blocked by: no unused supply zone first touched in last 4 closed 15m candles"
+      "summary": "ENGINE IN TRADE (74c ago, too old) LONG: entry 0.8219, SL 0.7722, TP 0.9048, R:R 1.67 (+1.53R)",
+      "copyText": "BTWUSDT | Price 0.8980 | 4H bullish | 1D bearish\n5m EMA 9/20 [MIXED]: BULL-ordered (9 above 20), slope MIXED (BULLISH 11-25 05:50 UTC (74c ago))\nScalp Zone (context only, untested): NO_SIGNAL \u2014 NO SIGNAL \u2014 waiting for 15m zone touch + 5m rejection/engulfing\nScalp v4 EMA Cross: ENGINE_IN_TRADE \u2014 ENGINE IN TRADE (74c ago, too old) LONG: entry 0.8219, SL 0.7722, TP 0.9048, R:R 1.67 (+1.53R)\n  Zone LONG: 0.7553-0.7556 (SL 0.7281, TP none, NoneR) | blocked by: no unused demand zone touched in last 4 closed 5m candles\n  Zone SHORT: 0.9048-0.9128 (SL 0.9400, TP none, NoneR) | blocked by: 4H counter-trend (bullish); no unused supply zone touched in last 4 closed 5m candles\nIntraday: STALE_ORDER \u2014 STALE ORDER LONG (signalled 104d ago, limit 0.2196 is 75.5% from price) - missed signal, not actionable\n  Intraday LONG nearest zone: 0.7964-0.8001 | blocked by: 1D structure (bearish) opposes long; no unused demand zone first touched in last 4 closed 15m candles\n  Intraday SHORT nearest zone: 0.9842-1.0046 | blocked by: no unused supply zone first touched in last 4 closed 15m candles"
     },
     {
       "id": "DOSUSDT:Intraday:Engulfing",
@@ -46,8 +73,8 @@
       "symbol": "DOSUSDT",
       "mode": "Intraday",
       "emaBadge": null,
-      "summary": "ENGINE IN TRADE SHORT filled 11-25 04:30 UTC: entry 0.0960, SL 0.1084, TP 0.0711, R:R 2.0 (+1.34R)",
-      "copyText": "DOSUSDT | Price 0.0793 | 4H range | 1D bearish\n5m EMA 9/20 [BEAR]: BEAR-ordered (9 below 20), slope DOWN (BEARISH 11-25 08:20 UTC (35c ago))\nScalp Zone (context only, untested): NO_SIGNAL \u2014 NO SIGNAL \u2014 waiting for 15m zone touch + 5m rejection/engulfing\nScalp v4 EMA Cross: ENGINE_IN_TRADE \u2014 ENGINE IN TRADE (35c ago, too old) SHORT: entry 0.0932, SL 0.1160, TP 0.0476, R:R 2.0 (+0.61R)\n  Zone LONG: blocked by: no unused demand zone touched in last 4 closed 5m candles\n  Zone SHORT: 0.1002-0.1014 (SL 0.1081, TP 0.0217, 2.0R) | blocked by: no unused supply zone touched in last 4 closed 5m candles\nIntraday: ENGINE_IN_TRADE \u2014 ENGINE IN TRADE SHORT filled 11-25 04:30 UTC: entry 0.0960, SL 0.1084, TP 0.0711, R:R 2.0 (+1.34R)\n  Intraday LONG nearest zone: none | blocked by: 1D structure (bearish) opposes long; no unused demand zone first touched in last 4 closed 15m candles\n  Intraday SHORT nearest zone: 0.1343-0.1405 | blocked by: no unused supply zone first touched in last 4 closed 15m candles",
+      "summary": "ENGINE IN TRADE SHORT filled 11-25 04:30 UTC: entry 0.0960, SL 0.1084, TP 0.0711, R:R 2.0 (+1.31R)",
+      "copyText": "DOSUSDT | Price 0.0797 | 4H range | 1D bearish\n5m EMA 9/20 [BEAR]: BEAR-ordered (9 below 20), slope DOWN (BEARISH 11-25 08:20 UTC (44c ago))\nScalp Zone (context only, untested): NO_SIGNAL \u2014 NO SIGNAL \u2014 waiting for 15m zone touch + 5m rejection/engulfing\nScalp v4 EMA Cross: ENGINE_IN_TRADE \u2014 ENGINE IN TRADE (44c ago, too old) SHORT: entry 0.0932, SL 0.1160, TP 0.0476, R:R 2.0 (+0.59R)\n  Zone LONG: blocked by: no unused demand zone touched in last 4 closed 5m candles\n  Zone SHORT: 0.1002-0.1014 (SL 0.1081, TP 0.0229, 2.0R) | blocked by: no unused supply zone touched in last 4 closed 5m candles\nIntraday: ENGINE_IN_TRADE \u2014 ENGINE IN TRADE SHORT filled 11-25 04:30 UTC: entry 0.0960, SL 0.1084, TP 0.0711, R:R 2.0 (+1.31R)\n  Intraday LONG nearest zone: none | blocked by: 1D structure (bearish) opposes long; no unused demand zone first touched in last 4 closed 15m candles\n  Intraday SHORT nearest zone: 0.1343-0.1405 | blocked by: no unused supply zone first touched in last 4 closed 15m candles",
       "status": "ENGINE_IN_TRADE",
       "outcome": "OPEN"
     }
