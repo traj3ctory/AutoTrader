@@ -10,9 +10,17 @@ import {
   type ISeriesApi,
   type UTCTimestamp,
 } from "lightweight-charts";
-import { BOX_FUTURE_WIDTH_PX, BOX_GAP_PX, CHART_RIGHT_OFFSET_BARS, MAX_SCALP_AGE_CANDLES } from "../constants/analyzer";
-import type { AnalyzeResponse } from "../types/analyzer";
-import type { ActiveBoxSpec, PositionBoxCoords } from "../types/chart";
+import {
+  BOX_FUTURE_WIDTH_PX,
+  BOX_GAP_PX,
+  CHART_RIGHT_OFFSET_BARS,
+  INITIAL_VISIBLE_BARS,
+  MAX_SCALP_AGE_CANDLES,
+  ORIGIN_PADDING_BARS,
+} from "../constants/analyzer";
+import { buildZoneBands } from "../utils/zoneBands";
+import type { AnalyzeResponse, ZoneInfo } from "../types/analyzer";
+import type { ActiveBoxSpec, PositionBoxCoords, ZoneBand } from "../types/chart";
 import type { INullable } from "../types/common";
 
 /**
@@ -50,7 +58,9 @@ export function useCandleChart({
 }) {
   const showEma = ref(selectedTf() === "5");
   const positionBox = ref<INullable<PositionBoxCoords>>(null);
+  const zoneBands = ref<ZoneBand[]>([]);
   let activeBox: INullable<ActiveBoxSpec> = null;
+  let chartZones: ZoneInfo[] = [];
   let lastCandleTime: INullable<UTCTimestamp> = null;
   let candleTimes: number[] = [];
   let chart: INullable<IChartApi> = null;
@@ -60,7 +70,6 @@ export function useCandleChart({
   let priceLines: IPriceLine[] = [];
   let linePrices: number[] = [];
   let resizeObserver: INullable<ResizeObserver> = null;
-
   function applyEmaVisibility() {
     ema9Series?.applyOptions({ visible: showEma.value });
     ema20Series?.applyOptions({ visible: showEma.value });
@@ -83,21 +92,10 @@ export function useCandleChart({
     priceLines = [];
   }
 
-  function addZoneLine({ price, title, color }: { price: number; title: string; color: string }) {
-    if (!candleSeries || !Number.isFinite(price)) return;
-    priceLines.push(
-      candleSeries.createPriceLine({
-        price,
-        color,
-        lineWidth: 1,
-        lineStyle: LineStyle.Dashed,
-        axisLabelVisible: true,
-        title,
-      })
-    );
-  }
-
   function updatePositionBox() {
+    if (chart && candleSeries) {
+      zoneBands.value = buildZoneBands({ chart, series: candleSeries, zones: chartZones, candleTimes });
+    }
     if (!chart || !candleSeries || !activeBox) {
       positionBox.value = null;
       return;
@@ -122,6 +120,28 @@ export function useCandleChart({
     };
   }
 
+  /**
+   * @function showRecentBars
+   * @description Shows the latest bars, widened to include a loaded target zone's origin candle.
+   */
+  function showRecentBars() {
+    let from = Math.max(0, candleTimes.length - INITIAL_VISIBLE_BARS);
+    for (const zone of chartZones) {
+      if (!zone.isTarget || zone.timeSec === undefined || zone.timeSec < candleTimes[0]) continue;
+      const originIndex = candleTimes.filter((t) => t <= (zone.timeSec as number)).length - 1;
+      from = Math.max(0, Math.min(from, originIndex - ORIGIN_PADDING_BARS));
+    }
+    chart?.timeScale().setVisibleLogicalRange({ from, to: candleTimes.length - 1 + CHART_RIGHT_OFFSET_BARS });
+  }
+
+  /**
+   * @function scheduleOverlayUpdate
+   * @description Redraws overlays after the chart has painted its new price scale.
+   */
+  function scheduleOverlayUpdate() {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(updatePositionBox));
+  }
+
   function renderData() {
     const current = analysis();
     if (!chart || !candleSeries || !ema9Series || !ema20Series || !current) return;
@@ -143,18 +163,14 @@ export function useCandleChart({
     if (activeBox) {
       linePrices.push(activeBox.entry, activeBox.stop, activeBox.target);
     }
-    if (current.intraday.long.nearestZone) {
-      addZoneLine({ price: current.intraday.long.nearestZone.low, title: "Demand Low", color: "#22c55e" });
-      addZoneLine({ price: current.intraday.long.nearestZone.high, title: "Demand High", color: "#22c55e" });
-    }
-    if (current.intraday.short.nearestZone) {
-      addZoneLine({ price: current.intraday.short.nearestZone.low, title: "Supply Low", color: "#ef4444" });
-      addZoneLine({ price: current.intraday.short.nearestZone.high, title: "Supply High", color: "#ef4444" });
-    }
+    const nearZones = current.nearZones;
+    const sets = activeBox?.label === "Limit" ? [nearZones.intraday] : activeBox ? [nearZones.scalp] : [nearZones.scalp, nearZones.intraday];
+    chartZones = sets
+      .flatMap((set) => [...set.supply, ...set.demand])
+      .filter((z) => z.isTarget || !z.consumed);
     chart.priceScale("right").applyOptions({ autoScale: true });
-    chart.timeScale().fitContent();
-    updatePositionBox();
-    window.requestAnimationFrame(updatePositionBox);
+    showRecentBars();
+    scheduleOverlayUpdate();
   }
 
   onMounted(() => {
@@ -210,11 +226,11 @@ export function useCandleChart({
           width: Math.floor(entry.contentRect.width),
           height: Math.floor(entry.contentRect.height),
         });
-        updatePositionBox();
+        scheduleOverlayUpdate();
       }
     });
     resizeObserver.observe(containerRef.value);
-    chart.timeScale().subscribeVisibleLogicalRangeChange(updatePositionBox);
+    chart.timeScale().subscribeVisibleLogicalRangeChange(scheduleOverlayUpdate);
     renderData();
   });
 
@@ -230,5 +246,5 @@ export function useCandleChart({
     chart = null;
   });
 
-  return { showEma, toggleEma, positionBox, updatePositionBox };
+  return { showEma, toggleEma, positionBox, zoneBands, updatePositionBox };
 }

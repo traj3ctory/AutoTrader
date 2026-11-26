@@ -57,7 +57,11 @@ def micro_break(candles, i: int, direction: str) -> bool:
     return candles[i].h > swing_high
 
 
-def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: bool = False, session_filter: bool = False, time_stop: bool = False, time_stop_candles: int = TIME_STOP_CANDLES_DEFAULT, time_stop_min_r: float = TIME_STOP_MIN_R_DEFAULT, state_out: Optional[dict] = None, allow_counter_trend: bool = False, max_stop_pct: Optional[float] = None) -> list:
+TARGET_MAX_AGE_DAYS_DEFAULT = 60
+DAY_MS = 86_400_000
+
+
+def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: bool = False, session_filter: bool = False, time_stop: bool = False, time_stop_candles: int = TIME_STOP_CANDLES_DEFAULT, time_stop_min_r: float = TIME_STOP_MIN_R_DEFAULT, state_out: Optional[dict] = None, allow_counter_trend: bool = False, max_stop_pct: Optional[float] = None, target_htf_zones: bool = False, target_max_age_days: Optional[float] = None, htf_close_invalidation: bool = False) -> list:
     candles = frames["5"]
     closes = [c.c for c in candles]
     e9, e20 = sb.ema(closes, 9), sb.ema(closes, 20)
@@ -69,6 +73,11 @@ def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: boo
     atr_lookup = sb.SeriesLookup(frames["240"], "240", sb.atr(frames["240"]))
     active = []
     zone_cursor = 0
+    htf_zones = sorted(sb.clone_zones(sb.refined_zones(frames["240"], "240", frames["60"], "60")), key=lambda z: z.known_t) if target_htf_zones else []
+    htf_active = []
+    htf_cursor = 0
+    h4_pointer = 0
+    h4_ms = sb.INTERVAL_MS["240"]
     trades = []
     position: Optional[dict[str, Any]] = None
 
@@ -86,6 +95,20 @@ def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: boo
                 zone.invalidated = True
             elif zone.kind == "supply" and candle.c > zone.high:
                 zone.invalidated = True
+        while htf_cursor < len(htf_zones) and htf_zones[htf_cursor].known_t <= candle.t:
+            htf_active.append(htf_zones[htf_cursor])
+            htf_cursor += 1
+        if htf_close_invalidation:
+            while h4_pointer < len(frames["240"]) and frames["240"][h4_pointer].t + h4_ms <= candle.t + sb.INTERVAL_MS["5"]:
+                closed = frames["240"][h4_pointer]
+                h4_pointer += 1
+                for zone in htf_active:
+                    if not zone.invalidated and (zone.kind == "demand" and closed.c < zone.low or zone.kind == "supply" and closed.c > zone.high):
+                        zone.invalidated = True
+        else:
+            for zone in htf_active:
+                if not zone.invalidated and (zone.kind == "demand" and candle.c < zone.low or zone.kind == "supply" and candle.c > zone.high):
+                    zone.invalidated = True
         if not in_test:
             continue
 
@@ -164,6 +187,9 @@ def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: boo
             zone.consumed = True
             continue
         opposite = [z for z in active if z.kind != kind and z.known_t <= candle.t and not z.invalidated]
+        opposite += [z for z in htf_active if z.kind != kind and not z.invalidated]
+        if target_max_age_days is not None:
+            opposite = [z for z in opposite if z.source_tf.startswith("240") or candle.t - z.known_t <= target_max_age_days * DAY_MS]
         rr, target = sb.choose_rr(entry, stop, direction, opposite)
         zone.consumed = True
         if rr is None or target is None:
@@ -175,7 +201,7 @@ def run_scalp_v3(symbol: str, frames: dict, cost_pct: float, *, short_gates: boo
 
     # Live-read hook: exposes end-of-replay zone and position state, no effect on trades.
     if state_out is not None:
-        state_out.update(active=active, position=position)
+        state_out.update(active=active, htf_active=htf_active, position=position)
 
     if position is not None and candles:
         final = next((c for c in reversed(candles) if c.t <= sb.ms(sb.TEST_END)), candles[-1])

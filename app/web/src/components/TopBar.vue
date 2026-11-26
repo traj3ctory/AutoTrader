@@ -7,9 +7,6 @@ const props = defineProps<{
   overview: OverviewResponse | null;
   risk: RiskStatus | null;
   scanState: LoadState;
-  ledgerSymbols: string[];
-  tvSymbols: string[];
-  selectedSymbol: string;
   activeView: AppView;
   soundEnabled: boolean;
   autoScanMinutes: number;
@@ -44,7 +41,7 @@ function handleAutoScanChange(event: Event) {
 <template>
   <header class="w-full shrink-0 border-b border-border-subtle bg-surface-panel px-3 py-1.5">
     <div class="flex flex-wrap items-center justify-between gap-2 lg:flex-nowrap">
-      <div class="flex shrink-0 items-center gap-2">
+      <div class="flex flex-wrap items-center gap-2 lg:shrink-0 lg:flex-nowrap">
         <span class="text-sm font-semibold tracking-tight text-ink-primary">AutoTrader</span>
 
         <div class="flex items-center rounded border border-border-subtle bg-surface-elevated p-0.5 text-xs">
@@ -94,42 +91,7 @@ function handleAutoScanChange(event: Event) {
         </span>
       </div>
 
-      <div class="no_scrollbar min-w-0 flex-1 overflow-x-auto border-x border-border-subtle px-2">
-        <div class="flex items-center gap-1 whitespace-nowrap">
-          <button
-            v-for="sym in ledgerSymbols"
-            :key="sym"
-            type="button"
-            class="shrink-0 cursor-pointer rounded px-2 py-0.5 text-xs font-medium"
-            :class="
-              selectedSymbol === sym && activeView === AppView.Analyzer
-                ? 'bg-accent-brand text-white'
-                : 'bg-surface-elevated text-ink-secondary hover:text-ink-primary'
-            "
-            @click="emit('selectCoin', sym)"
-          >
-            {{ sym.replace("USDT", "") }}
-          </button>
-          <span v-if="tvSymbols.length" class="mx-0.5 shrink-0 text-xs text-ink-muted">|</span>
-          <button
-            v-for="sym in tvSymbols"
-            :key="sym"
-            type="button"
-            class="shrink-0 cursor-pointer rounded px-2 py-0.5 text-xs font-medium"
-            :class="
-              selectedSymbol === sym && activeView === AppView.Analyzer
-                ? 'bg-accent-brand text-white'
-                : 'bg-surface-elevated text-ink-muted hover:text-ink-primary'
-            "
-            title="From TradingView Watchlist"
-            @click="emit('selectCoin', sym)"
-          >
-            {{ sym.replace("USDT", "") }}
-          </button>
-        </div>
-      </div>
-
-      <div class="flex shrink-0 items-center gap-1.5">
+      <div class="flex flex-wrap items-center gap-1.5 lg:shrink-0 lg:flex-nowrap">
         <form class="flex items-center gap-1" @submit.prevent="submitSearch">
           <input
             v-model="customSymbol"

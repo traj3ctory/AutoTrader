@@ -6,6 +6,7 @@ import { LoadState, type AnalyzeResponse } from "../types/analyzer";
 import type { INullable } from "../types/common";
 import LoadingSpinner from "./LoadingSpinner.vue";
 import PositionBoxOverlay from "./PositionBoxOverlay.vue";
+import ZoneBandsOverlay from "./ZoneBandsOverlay.vue";
 
 const props = defineProps<{
   analysis: INullable<AnalyzeResponse>;
@@ -19,7 +20,7 @@ const emit = defineEmits<{
 }>();
 
 const containerRef = ref<INullable<HTMLElement>>(null);
-const { showEma, toggleEma, positionBox, updatePositionBox } = useCandleChart({
+const { showEma, toggleEma, positionBox, zoneBands, updatePositionBox } = useCandleChart({
   containerRef,
   analysis: () => props.analysis,
   selectedTf: () => props.selectedTf,
@@ -100,6 +101,7 @@ const { showEma, toggleEma, positionBox, updatePositionBox } = useCandleChart({
       @pointerup="updatePositionBox"
     >
       <div ref="containerRef" class="h-full w-full" />
+      <ZoneBandsOverlay :bands="zoneBands" />
       <PositionBoxOverlay :box="positionBox" />
       <div
         v-if="analyzeState === LoadState.Loading"

@@ -126,7 +126,23 @@ def zone_txt(zone):
     return f"{zone.low:.6g}-{zone.high:.6g} (FVG {'present' if zone.has_fvg else 'absent'})"
 
 
-def scalp_reference(direction, active, price, atr_now):
+# The one live Scalp rule set; the app, this CLI and signalScan all pass it to run_scalp_v3.
+LIVE_SCALP_KWARGS = {
+    "short_gates": True, "allow_counter_trend": True, "time_stop": True,
+    "time_stop_candles": TIME_STOP_CANDLES, "time_stop_min_r": TIME_STOP_MIN_R,
+    "target_htf_zones": True, "htf_close_invalidation": True,
+    "target_max_age_days": v3.TARGET_MAX_AGE_DAYS_DEFAULT,
+}
+
+
+def live_target_zones(state, now_t):
+    """Zones the scalp engine can target now: intact 1H within the age cap, intact 4H of any age."""
+    max_age_ms = v3.TARGET_MAX_AGE_DAYS_DEFAULT * DAY_MS
+    return [z for z in state["active"] + state["htf_active"]
+            if not z.invalidated and (z.source_tf.startswith("240") or now_t - z.known_t <= max_age_ms)]
+
+
+def scalp_reference(direction, active, price, atr_now, target_zones=None):
     # The zone, stop and target the engine would use if a valid cross closed at the current price.
     kind = "demand" if direction == "long" else "supply"
     cands = [z for z in active if z.kind == kind and not z.invalidated and not z.consumed
@@ -136,7 +152,7 @@ def scalp_reference(direction, active, price, atr_now):
         return None, None, None, None
     zone = cands[0]
     stop = zone.low - 0.5 * atr_now if direction == "long" else zone.high + 0.5 * atr_now
-    opposite = [z for z in active if z.kind != kind and not z.invalidated]
+    opposite = [z for z in (active if target_zones is None else target_zones) if z.kind != kind and not z.invalidated]
     rr, target = sb.choose_rr(price, stop, direction, opposite)
     return zone, stop, rr, target
 
@@ -144,9 +160,7 @@ def scalp_reference(direction, active, price, atr_now):
 def analyze_scalp(symbol, frames, span_days, replay_days, summary):
     c5 = frames["5"]
     state = {}
-    trades = v3.run_scalp_v3(symbol, frames, COST_PCT, short_gates=True, time_stop=True,
-                             time_stop_candles=TIME_STOP_CANDLES, time_stop_min_r=TIME_STOP_MIN_R,
-                             state_out=state)
+    trades = v3.run_scalp_v3(symbol, frames, COST_PCT, state_out=state, **LIVE_SCALP_KWARGS)
     active, position = state["active"], state["position"]
     i = len(c5) - 1
     price, now_t = c5[i].c, c5[i].t
@@ -204,15 +218,12 @@ def analyze_scalp(symbol, frames, span_days, replay_days, summary):
 
     print(f"\nVERDICT: {verdict}")
     for direction, crossed, sloped in (("long", bull_cross, bull_slope), ("short", bear_cross, bear_slope)):
-        against = "bearish" if direction == "long" else "bullish"
-        zone, stop, rr, target = scalp_reference(direction, active, price, atr_now)
+        zone, stop, rr, target = scalp_reference(direction, active, price, atr_now, live_target_zones(state, now_t))
         blocks = []
         if not crossed:
             blocks.append("no 9/20 cross on the last closed candle")
         if not sloped:
             blocks.append("both EMAs not sloping in direction")
-        if bias4h == against:
-            blocks.append(f"4H counter-trend (4H reads {bias4h})")
         if direction == "short":
             if bias1d not in ("bearish", "range"):
                 blocks.append(f"1D structure gate (1D reads {bias1d})")
@@ -221,7 +232,7 @@ def analyze_scalp(symbol, frames, span_days, replay_days, summary):
         side_txt = "below" if direction == "long" else "above"
         kind = "demand" if direction == "long" else "supply"
         if zone is None:
-            blocks.append(f"no live unused {kind} zone {side_txt} price")
+            blocks.append(f"no unused 1H {kind} zone {side_txt} price for an entry (4H zones set targets only)")
             ref = f"reference {kind} zone: none"
         else:
             if rr is None:

@@ -1,0 +1,62 @@
+XRPUSDT done
+DOGEUSDT done
+ZECUSDT done
+AVAXUSDT done
+JTOUSDT done
+LITUSDT done
+HYPEUSDT done
+BEATUSDT done
+BTWUSDT done
+SOONUSDT done
+FARTCOINUSDT done
+KAITOUSDT done
+AKEUSDT done
+USUSDT done
+BNBUSDT done
+UNIUSDT done
+UAIUSDT done
+SOLUSDT done
+AAVEUSDT done
+ALGOUSDT done
+AEROUSDT done
+BROCCOLIUSDT done
+BCHUSDT done
+XPLUSDT done
+ZROUSDT done
+ARKUSDT done
+LYNUSDT done
+
+27 coins, 2026-08-01 to 11-15, cost 0.14%; halves split at 09-23
+
+== scalp
+1 current                              n= 288 win= 38.5% avgR=  0.270 totalR=   77.79 medianStop= 5.79% maxDD=  23.1R halves=   47.2/   30.6
+2 same candle, wick+body               n= 301 win= 37.2% avgR=  0.213 totalR=   64.01 medianStop= 5.30% maxDD=  21.1R halves=   22.0/   42.0
+3 top/bottom candle, wick+body         n= 125 win= 30.4% avgR= -0.054 totalR=   -6.71 medianStop=11.37% maxDD=  19.2R halves=   -9.3/    2.6
+4 last green/red at top, to wick       n= 136 win= 34.6% avgR=  0.082 totalR=   11.13 medianStop=11.68% maxDD=  13.7R halves=    8.7/    2.4
+5 candidate: 4H uses 3, 1H current     n= 304 win= 33.2% avgR=  0.058 totalR=   17.56 medianStop= 4.90% maxDD=  23.0R halves=    0.6/   17.0
+
+== intraday
+1 current                              n=  70 win= 35.7% avgR=  0.061 totalR=    4.27 medianStop= 2.89% maxDD=  12.3R halves=   -5.4/    9.7
+2 same candle, wick+body               n=  60 win= 36.7% avgR=  0.195 totalR=   11.67 medianStop= 2.89% maxDD=  14.9R halves=  -10.5/   22.1
+3 top/bottom candle, wick+body         n=  42 win= 50.0% avgR=  0.589 totalR=   24.72 medianStop= 4.80% maxDD=   8.2R halves=   10.6/   14.1
+4 last green/red at top, to wick       n=  30 win= 43.3% avgR=  0.420 totalR=   12.60 medianStop= 4.00% maxDD=   5.3R halves=   12.1/    0.5
+5 candidate: 4H uses 3, 1H current     n=  42 win= 50.0% avgR=  0.589 totalR=   24.72 medianStop= 4.80% maxDD=   8.2R halves=   10.6/   14.1
+
+== 90% range of avgR (resampling coins)
+scalp     1 current                            +0.155 to +0.386  above zero in 100%  total without best coin +64.8R
+scalp     2 same candle, wick+body             +0.107 to +0.320  above zero in 100%  total without best coin +52.6R
+scalp     3 top/bottom candle, wick+body       -0.264 to +0.145  above zero in 33%  total without best coin -13.1R
+scalp     4 last green/red at top, to wick     -0.135 to +0.287  above zero in 73%  total without best coin +1.7R
+scalp     5 candidate: 4H uses 3, 1H current   -0.072 to +0.191  above zero in 76%  total without best coin +3.3R
+intraday  1 current                            -0.165 to +0.300  above zero in 66%  total without best coin +0.2R
+intraday  2 same candle, wick+body             -0.235 to +0.649  above zero in 76%  total without best coin +1.2R
+intraday  3 top/bottom candle, wick+body       +0.061 to +1.105  above zero in 97%  total without best coin +16.8R
+intraday  4 last green/red at top, to wick     -0.066 to +0.912  above zero in 92%  total without best coin +8.6R
+intraday  5 candidate: 4H uses 3, 1H current   +0.061 to +1.105  above zero in 97%  total without best coin +16.8R
+
+== zones (1H->15m and 4H->1H)
+1 current                              count= 19987 medianHeight= 0.72%
+2 same candle, wick+body               count= 20167 medianHeight= 0.84%
+3 top/bottom candle, wick+body         count= 12064 medianHeight= 1.25%
+4 last green/red at top, to wick       count= 10240 medianHeight= 1.33%
+5 candidate: 4H uses 3, 1H current     count= 18309 medianHeight= 0.75%

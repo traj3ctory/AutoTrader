@@ -18,6 +18,13 @@ export const enum SidebarTab {
   Risk = 1,
 }
 
+export const enum MoverTab {
+  Watchlist = 0,
+  Losers = 1,
+  Gainers = 2,
+  Range = 3,
+}
+
 export const enum AppView {
   Analyzer = 0,
   Dashboard = 1,

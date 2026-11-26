@@ -95,9 +95,6 @@ onBeforeUnmount(() => {
       :overview="store.overview"
       :risk="store.risk"
       :scan-state="store.scanState"
-      :ledger-symbols="store.ledgerSymbols"
-      :tv-symbols="store.tvSymbols"
-      :selected-symbol="store.selectedSymbol"
       :active-view="activeView"
       :sound-enabled="store.soundEnabled"
       :auto-scan-minutes="store.autoScanMinutes"
@@ -186,6 +183,9 @@ onBeforeUnmount(() => {
         </div>
 
         <MoversPanel
+          :ledger-symbols="store.ledgerSymbols"
+          :tv-symbols="store.tvSymbols"
+          :selected-symbol="store.selectedSymbol"
           :movers="store.movers"
           :movers-state="store.moversState"
           :collapsed="moversCollapsed"

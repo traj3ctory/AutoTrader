@@ -103,6 +103,7 @@ class Zone:
     # timeframe) left a 3-candle Fair Value Gap in the zone's direction. Evidence
     # the move was genuinely one-sided, not proof either way - does not affect
     # entry, sizing, or R:R.
+    refined: bool = False  # True only when a lower-timeframe zone narrowed this box (display label).
 
     @property
     def proximal(self) -> float:
@@ -362,6 +363,7 @@ def refined_zones(high_candles: list[Candle], high_tf: str,
             kind=parent.kind, source_tf=f"{high_tf}->{low_tf}", t=parent.t,
             known_t=parent.known_t, low=low, high=high,
             pivot_price=parent.pivot_price,
+            refined=bool(candidates),
             has_fvg=parent.has_fvg,  # FVG quality is checked at the zone's own
             # origin timeframe (the high_tf parent), not the low_tf refinement -
             # per the timeframe-matching rule (check FVG where the zone was born).

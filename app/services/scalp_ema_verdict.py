@@ -23,11 +23,11 @@ def _position_verdict(ctx, pos, active):
     return kind, tradeable, text, payload
 
 
-def _side_gates(ctx, active):
+def _side_gates(ctx, active, target_zones):
     sides = {}
     pairs = (("long", ctx["bull_cross"], ctx["bull_slope"]), ("short", ctx["bear_cross"], ctx["bear_slope"]))
     for direction, crossed, sloped in pairs:
-        zone, stop, rr, target = live.scalp_reference(direction, active, ctx["price"], ctx["atr_now"])
+        zone, stop, rr, target = live.scalp_reference(direction, active, ctx["price"], ctx["atr_now"], target_zones)
         blocks = []
         if not crossed:
             blocks.append("no 9/20 cross on last closed 5m candle")
@@ -41,7 +41,7 @@ def _side_gates(ctx, active):
         side_txt = "below" if direction == "long" else "above"
         kind = "demand" if direction == "long" else "supply"
         if zone is None:
-            blocks.append(f"no live unused {kind} zone {side_txt} price")
+            blocks.append(f"no unused 1H {kind} zone {side_txt} price for an entry (4H zones set targets only)")
         elif rr is None:
             blocks.append("no room for 1.5R before next opposing zone")
         sides[direction] = {
@@ -57,12 +57,13 @@ def _side_gates(ctx, active):
 
 def build_scalp_ema(ctx, state, trades, replay_days):
     pos, active = state["position"], state["active"]
+    target_zones = state.get("target_zones", active)
     if pos is not None:
-        kind, tradeable, text, payload = _position_verdict(ctx, pos, active)
+        kind, tradeable, text, payload = _position_verdict(ctx, pos, target_zones)
     else:
         kind, tradeable, payload = "NO_SIGNAL", False, None
         text = "NO SIGNAL on the last closed 5m candle"
-    sides = _side_gates(ctx, active)
+    sides = _side_gates(ctx, active, target_zones)
     return {
         "verdictKind": kind,
         "verdictText": text,

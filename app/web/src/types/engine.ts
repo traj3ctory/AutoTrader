@@ -8,6 +8,11 @@ export interface ZoneInfo {
   distal: number;
   hasFvg: boolean;
   touchIndex: number | null;
+  tf?: string;
+  refined?: boolean;
+  consumed?: boolean;
+  isTarget?: boolean;
+  timeSec?: number;
 }
 
 export interface ScalpSideInfo {
@@ -109,6 +114,7 @@ export interface AnalyzeResponse {
   structure4h: string;
   structure1d: string;
   zone4hBadge?: Zone4hBadge | null;
+  nearZones: Record<"scalp" | "intraday", { demand: ZoneInfo[]; supply: ZoneInfo[] }>;
   atr4hPct: number | null;
   vwap: number;
   emaOrder: string;

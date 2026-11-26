@@ -1,0 +1,32 @@
+XRPUSDT done
+DOGEUSDT done
+ZECUSDT done
+AVAXUSDT done
+JTOUSDT done
+LITUSDT done
+HYPEUSDT done
+BEATUSDT done
+BTWUSDT done
+SOONUSDT done
+FARTCOINUSDT done
+KAITOUSDT done
+AKEUSDT done
+USUSDT done
+BNBUSDT done
+UNIUSDT done
+UAIUSDT done
+SOLUSDT done
+AAVEUSDT done
+ALGOUSDT done
+AEROUSDT done
+BROCCOLIUSDT done
+BCHUSDT done
+XPLUSDT done
+ZROUSDT done
+ARKUSDT done
+LYNUSDT done
+current          n= 338 win= 31.4% avgR=  0.151 totalR=   50.90 medianTargetR=2.00
++4H 5m-close, 30d n= 415 win= 37.3% avgR=  0.255 totalR=  105.86 medianTargetR=2.00
++4H 4H-close, 30d n= 395 win= 37.0% avgR=  0.248 totalR=   97.80 medianTargetR=2.00
++4H 4H-close, no cap n= 260 win= 34.2% avgR=  0.196 totalR=   50.88 medianTargetR=2.00
++4H 4H-close, 60d n= 315 win= 39.4% avgR=  0.313 totalR=   98.71 medianTargetR=2.00

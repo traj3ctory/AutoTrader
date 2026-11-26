@@ -43,6 +43,7 @@ export function historyOutcomeLabel(item: SignalHistoryEntry): string {
   if (item.outcome === "LOSS") return `LOSS${item.netR != null ? ` ${item.netR}R` : ""}`;
   if (item.outcome === "BE") return "BE 0R";
   if (item.outcome === "EXPIRED") return "EXPIRED";
+  if (item.status === "ENGINE_IN_TRADE") return "PAST ENTRY WINDOW";
   return statusLabel(item.status);
 }
 
@@ -53,7 +54,9 @@ export function historyOutcomeLabel(item: SignalHistoryEntry): string {
 export function historyOutcomeClass(item: SignalHistoryEntry): string {
   if (item.outcome === "WIN") return "bg-accent-bull/20 text-accent-bull";
   if (item.outcome === "LOSS") return "bg-accent-bear/20 text-accent-bear";
-  if (item.outcome === "BE" || item.outcome === "EXPIRED") return "bg-surface-panel text-ink-muted";
+  if (item.outcome === "BE" || item.outcome === "EXPIRED" || item.status === "ENGINE_IN_TRADE") {
+    return "bg-surface-panel text-ink-muted";
+  }
   return statusBadgeClass(item.status);
 }
 

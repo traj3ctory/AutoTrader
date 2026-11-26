@@ -15,13 +15,7 @@
   --color-accent-warn: var(--accent-warn);
 }
 
-.no_scrollbar {
-  scrollbar-width: none;
-}
 
-.no_scrollbar::-webkit-scrollbar {
-  display: none;
-}
 
 @keyframes item_enter {
   from {

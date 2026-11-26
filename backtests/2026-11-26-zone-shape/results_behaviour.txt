@@ -1,0 +1,29 @@
+== 1 current
+   15 supply 73.72-74.59 candle 11-23 16:45 usable 11-23 17:45
+  no-lookahead check passed (15m, 1H, 4H; 3 cut points)
+== 2 same candle, wick+body
+   15 supply 74.27-74.59 candle 11-23 16:45 usable 11-23 17:45
+  no-lookahead check passed (15m, 1H, 4H; 3 cut points)
+== 3 top/bottom candle, wick+body
+   15 supply 76.44-78.47 candle 11-23 14:15 usable 11-23 17:45
+   15 supply 73.46-74.08 candle 11-23 17:30 usable 11-23 19:00
+   15 demand 65.78-67.35 candle 11-25 14:45 usable 11-25 17:15
+   60 supply 76.44-78.47 candle 11-23 14:00 usable 11-24 03:00
+   60 demand 65.78-67.35 candle 11-25 14:00 usable 11-25 18:00
+  240 supply 72.48-78.47 candle 11-23 12:00 usable 11-24 16:00
+  60->15 supply 76.44-78.47 refined=True
+  240->60 supply 76.44-78.47 refined=True
+  no-lookahead check passed (15m, 1H, 4H; 3 cut points)
+== 4 last green/red at top, to wick
+   15 supply 76.44-78.47 candle 11-23 14:15 usable 11-23 17:45
+   15 demand 65.78-66.89 candle 11-25 14:30 usable 11-25 17:15
+   60 supply 72.19-78.47 candle 11-23 13:00 usable 11-24 03:00
+   60 demand 65.78-67.85 candle 11-25 13:00 usable 11-25 18:00
+  240 supply 72.48-78.47 candle 11-23 12:00 usable 11-24 16:00
+  60->15 supply 72.19-78.47 refined=False
+  240->60 supply 72.48-78.47 refined=True
+  no-lookahead check passed (15m, 1H, 4H; 3 cut points)
+== 5 candidate: 4H uses 3, 1H current
+  60->15 supply 71.70-72.19 candle 11-24 00:00 refined=False
+  60->15 supply 70.24-71.01 candle 11-24 03:00 refined=True
+  240->60 supply 76.44-78.47 candle 11-23 12:00 refined=True

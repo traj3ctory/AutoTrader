@@ -1,0 +1,32 @@
+XRPUSDT done
+DOGEUSDT done
+ZECUSDT done
+AVAXUSDT done
+JTOUSDT done
+LITUSDT done
+HYPEUSDT done
+BEATUSDT done
+BTWUSDT done
+SOONUSDT done
+FARTCOINUSDT done
+KAITOUSDT done
+AKEUSDT done
+USUSDT done
+BNBUSDT done
+UNIUSDT done
+UAIUSDT done
+SOLUSDT done
+AAVEUSDT done
+ALGOUSDT done
+AEROUSDT done
+BROCCOLIUSDT done
+BCHUSDT done
+XPLUSDT done
+ZROUSDT done
+ARKUSDT done
+LYNUSDT done
+current          n= 338 win= 31.4% avgR=  0.151 totalR=   50.90 medianTargetR=2.00
++4H zones        n= 281 win= 33.8% avgR=  0.177 totalR=   49.68 medianTargetR=2.00
+age<=30d         n= 448 win= 34.6% avgR=  0.186 totalR=   83.43 medianTargetR=2.00
++4H, age<=30d    n= 415 win= 37.3% avgR=  0.255 totalR=  105.86 medianTargetR=2.00
++4H, age<=14d    n= 514 win= 36.8% avgR=  0.218 totalR=  111.93 medianTargetR=2.00

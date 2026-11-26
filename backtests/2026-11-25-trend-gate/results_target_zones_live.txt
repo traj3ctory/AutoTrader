@@ -1,0 +1,5 @@
+2R-planned= 177 current                              n= 338 win= 31.4% avgR=  0.151 totalR=   50.90 medianTargetR=2.00
+2R-planned= 196 +4H 5m-close, 30d                    n= 377 win= 36.3% avgR=  0.282 totalR=  106.22 medianTargetR=2.00
+2R-planned= 184 +4H 4H-close, 30d                    n= 330 win= 37.3% avgR=  0.304 totalR=  100.28 medianTargetR=2.00
+2R-planned= 163 +4H 4H-close, no cap                 n= 260 win= 34.2% avgR=  0.196 totalR=   50.88 medianTargetR=2.00
+2R-planned= 174 LIVE: 1H<=60d, 4H any age, 4H-close  n= 288 win= 38.5% avgR=  0.330 totalR=   94.99 medianTargetR=2.00

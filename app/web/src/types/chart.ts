@@ -22,3 +22,14 @@ export interface PositionBoxCoords extends ActiveBoxSpec {
   left: number;
   width: number;
 }
+
+export interface ZoneBand {
+  key: string;
+  kind: "demand" | "supply";
+  label: string;
+  top: number;
+  height: number;
+  consumed: boolean;
+  fill: string;
+  left: number;
+}

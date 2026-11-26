@@ -27,9 +27,7 @@ def load_state():
 
 def scan_scalp(symbol, frames):
     state = {}
-    v3.run_scalp_v3(symbol, frames, live.COST_PCT, short_gates=True, time_stop=True,
-                    time_stop_candles=live.TIME_STOP_CANDLES, time_stop_min_r=live.TIME_STOP_MIN_R,
-                    state_out=state)
+    v3.run_scalp_v3(symbol, frames, live.COST_PCT, state_out=state, **live.LIVE_SCALP_KWARGS)
     position = state["position"]
     c5 = frames["5"]
     if position is None:
@@ -38,9 +36,12 @@ def scan_scalp(symbol, frames):
     if age > SCALP_MAX_AGE:
         return None
     side = position["direction"].upper()
+    bias4h = sb.StructureLookup(frames["240"], "240").at(position["signal_t"])
+    against = "bearish" if side == "LONG" else "bullish"
+    tier = " [LOWER TIER: counter to 4H trend]" if bias4h == against else ""
     drift = live.unreal_r(position, c5[-1].c)
     late = "on the last closed candle" if age == 0 else f"{age} candle(s) ago - late entry with the same SL/TP tested equal up to 12 candles"
-    text = (f"{symbol} SCALP {side} - cross closed {live.hhmm(position['signal_t'] + live.FIVE_MS)} UTC ({late}): "
+    text = (f"{symbol} SCALP {side}{tier} - cross closed {live.hhmm(position['signal_t'] + live.FIVE_MS)} UTC ({late}): "
             f"entry {position['entry']:.6g}, SL {position['orig_stop']:.6g}, TP {position['target']:.6g}, "
             f"R:R {position['rr']}; price now {c5[-1].c:.6g} ({drift:+.2f}R from entry)")
     return f"{symbol}:scalp:{position['signal_t']}", position["signal_t"], text

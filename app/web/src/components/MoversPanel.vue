@@ -1,9 +1,17 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { LoadState, type MoversPayload } from "../types/analyzer";
+import { MoverTab } from "../types/enums";
+import { MOVER_TABS } from "../constants/movers";
+import { STORAGE_KEYS } from "../constants/analyzer";
+import { readStoredNumber, writeStoredNumber } from "../utils/storage";
 import LoadingSpinner from "./LoadingSpinner.vue";
+import WatchlistGrid from "./WatchlistGrid.vue";
 
-defineProps<{
+const props = defineProps<{
+  ledgerSymbols: string[];
+  tvSymbols: string[];
+  selectedSymbol: string;
   movers: MoversPayload | null;
   moversState: LoadState;
   collapsed: boolean;
@@ -15,12 +23,19 @@ const emit = defineEmits<{
   toggleCollapse: [];
 }>();
 
-const activeTab = ref<"gainers" | "losers" | "range">("losers");
+const activeTab = ref<MoverTab>(readStoredNumber({ key: STORAGE_KEYS.moverTab, fallback: MoverTab.Watchlist }));
+watch(activeTab, (value) => writeStoredNumber({ key: STORAGE_KEYS.moverTab, value }));
+
+const rows = computed(() => {
+  if (activeTab.value === MoverTab.Gainers) return props.movers?.gainers || [];
+  if (activeTab.value === MoverTab.Range) return props.movers?.rangeMovers || [];
+  return props.movers?.losers || [];
+});
 </script>
 
 <template>
   <section class="flex-col rounded-lg border border-border-subtle bg-surface-panel p-3">
-    <div class="flex shrink-0 items-center justify-between gap-2">
+    <div class="flex shrink-0 flex-wrap items-center justify-between gap-2">
       <button
         type="button"
         class="flex cursor-pointer items-center gap-1.5 text-left text-xs font-semibold uppercase tracking-wide text-ink-primary"
@@ -30,30 +45,17 @@ const activeTab = ref<"gainers" | "losers" | "range">("losers");
         <span>Crypto Movers</span>
       </button>
 
-      <div class="flex items-center gap-1" :class="{ 'lg:hidden': collapsed }">
+      <div class="flex flex-wrap items-center gap-1" :class="{ 'lg:hidden': collapsed }">
         <button
+          v-for="tab in MOVER_TABS"
+          :key="tab.value"
           type="button"
+          :title="tab.hint"
           class="cursor-pointer rounded px-1.5 py-0.5 text-xs"
-          :class="activeTab === 'losers' ? 'bg-accent-brand text-white' : 'bg-surface-elevated text-ink-secondary'"
-          @click="activeTab = 'losers'"
+          :class="activeTab === tab.value ? 'bg-accent-brand text-white' : 'bg-surface-elevated text-ink-secondary'"
+          @click="activeTab = tab.value"
         >
-          Losers
-        </button>
-        <button
-          type="button"
-          class="cursor-pointer rounded px-1.5 py-0.5 text-xs"
-          :class="activeTab === 'gainers' ? 'bg-accent-brand text-white' : 'bg-surface-elevated text-ink-secondary'"
-          @click="activeTab = 'gainers'"
-        >
-          Gainers
-        </button>
-        <button
-          type="button"
-          class="cursor-pointer rounded px-1.5 py-0.5 text-xs"
-          :class="activeTab === 'range' ? 'bg-accent-brand text-white' : 'bg-surface-elevated text-ink-secondary'"
-          @click="activeTab = 'range'"
-        >
-          Range
+          {{ tab.label }}
         </button>
         <button
           type="button"
@@ -78,22 +80,25 @@ const activeTab = ref<"gainers" | "losers" | "range">("losers");
     </div>
 
     <div class="mt-2 min-h-0 flex-1 overflow-y-auto" :class="{ 'lg:hidden': collapsed }">
-      <table class="w-full text-left text-xs">
+      <WatchlistGrid
+        v-if="activeTab === MoverTab.Watchlist"
+        :ledger-symbols="ledgerSymbols"
+        :tv-symbols="tvSymbols"
+        :selected-symbol="selectedSymbol"
+        @select-coin="(symbol) => emit('selectCoin', symbol)"
+      />
+      <table v-else class="w-full text-left text-xs">
         <thead class="border-b border-border-subtle text-ink-muted">
           <tr>
             <th class="py-1 pr-1">Coin</th>
-            <th class="py-1 pr-1">{{ activeTab === "range" ? "Range" : "24h" }}</th>
+            <th class="py-1 pr-1">{{ activeTab === MoverTab.Range ? "Range" : "24h" }}</th>
             <th class="py-1 pr-1">Vol</th>
             <th class="py-1 text-right">Read</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-border-subtle/50">
           <tr
-            v-for="row in activeTab === 'gainers'
-              ? movers?.gainers || []
-              : activeTab === 'losers'
-                ? movers?.losers || []
-                : movers?.rangeMovers || []"
+            v-for="row in rows"
             :key="row.ticker"
             class="fade_in_item"
           >
@@ -105,7 +110,7 @@ const activeTab = ref<"gainers" | "losers" | "range">("losers");
               class="py-1 pr-1"
               :class="row.pct >= 0 ? 'text-accent-bull' : 'text-accent-bear'"
             >
-              <template v-if="activeTab === 'range'">
+              <template v-if="activeTab === MoverTab.Range">
                 {{ row.rangePct }}%
               </template>
               <template v-else>

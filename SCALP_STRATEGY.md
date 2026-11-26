@@ -157,6 +157,7 @@ Do not restore any of these as hard gates without a fresh backtest showing posit
   it is not a real invalidation point — skip to the **next real structural level**. If that pushes
   R:R below floor, the trade does not qualify: **reduce size or skip it. Never shrink the stop to
   make the math work.**
+- **Target zones  [MEASURED 2026-11-25]** — opposing zones for the target are the 1H (60->15) set plus 4H (240->60) zones, intact; 1H zones must have formed within the last 60 days, 4H zones have no age limit (a visible 4H swing level is a valid target); a 4H zone dies only when a 4H candle closes through it (1H zones: a 5m close). Old zones (e.g. a 5-month-old one-cent zone) no longer set targets. OOS 27 coins, **provisional** until the §7 time-stop decision, exiting at the 6h close: before +0.078 avgR / +26.5R; +4H zones, 4H-close invalidation, 60d cap +0.270 avgR / +77.8R, 288 trades (`backtests/2026-11-25-trend-gate/results_target_zones_live.txt` still shows the inflated +0.330 / +95.0R); 174 of those 288 (60%) had a planned target of exactly 2R, mostly the no-zone fallback.
 - **TP  [MEASURED]** — zone to zone (decided 2026-11-25): the single full exit is the first live opposing zone edge when it leaves at least 1.5R, otherwise no trade; with no opposing zone ahead (price discovery) TP1 is the single full exit at 2R (the card shows that 2R, not 1.5R). The whole position exits at that target. The old fixed 2R/1.5R exit was the earlier backtest and is superseded.
 - **R:R floor** — 1:1.5 minimum, 1:2 preferred (same rule, stated as a floor).
 - **Structural targets, TP2 and partial exits  [ASSUMED]** — placing TP at a prior swing, running a
@@ -182,6 +183,10 @@ Do not restore any of these as hard gates without a fresh backtest showing posit
 ## 7. Time stop  **[MEASURED]**
 
 At **6 hours** held: if the trade is at **−0.3R or worse**, tighten the stop to breakeven.
+
+**Known engine fault (found 2026-11-26, decision pending):** a losing trade is already past breakeven,
+so the replay books a breakeven fill at a price that never traded. The measured figures that include
+this rule are overstated, and a real position would still be open.
 
 Do **not** use the "must be +0.3R favourable by 6h" variant — tested at −0.132R avg / 15.4% win, a
 severe regression, because it cuts off winners that simply hadn't resolved yet.

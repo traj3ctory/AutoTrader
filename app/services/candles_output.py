@@ -1,6 +1,6 @@
 """Candle series with EMA overlays for the chart."""
 import strategyBacktest as sb
-from services.config import CANDLE_LIMIT
+from services.config import CANDLE_LIMIT_DEFAULT, CANDLE_LIMITS
 
 
 def build_candles(frames, tf):
@@ -9,7 +9,8 @@ def build_candles(frames, tf):
     e9 = sb.ema(closes, 9)
     e20 = sb.ema(closes, 20)
     out = []
-    for idx in range(max(0, len(tf_candles) - CANDLE_LIMIT), len(tf_candles)):
+    limit = CANDLE_LIMITS.get(tf, CANDLE_LIMIT_DEFAULT)
+    for idx in range(max(0, len(tf_candles) - limit), len(tf_candles)):
         c = tf_candles[idx]
         out.append({
             "time": int(c.t // 1000),

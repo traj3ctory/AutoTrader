@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatSeenAt } from "../utils/time";
 import { ref } from "vue";
 import { AUTOMATION_GATE_GOAL } from "../constants/analyzer";
 import { useDashboardStats } from "../composables/useDashboardStats";
@@ -193,7 +194,7 @@ const { scorecardStats, mistakeTags, filteredRecords } = useDashboardStats({
                 >
                   {{ sig.symbol }} · {{ sig.mode }}
                 </button>
-                <span class="text-ink-muted">{{ sig.seenAtUtc }}</span>
+                <span class="text-ink-muted">{{ formatSeenAt(sig.seenAtUtc) }}</span>
               </div>
               <p class="mt-0.5 text-ink-secondary">{{ sig.summary }}</p>
             </div>

@@ -16,7 +16,9 @@ for _path in (SCRIPTS_DIR, APP_DIR):
 
 HOST = os.environ.get("AUTOTRADER_HOST", "127.0.0.1")
 PORT = int(os.environ.get("AUTOTRADER_PORT", "8787"))
-CANDLE_LIMIT = 220
+# Candles sent to the chart per timeframe (display only; the engines replay the full history).
+CANDLE_LIMITS = {"5": 600, "15": 500, "60": 500, "240": 500}
+CANDLE_LIMIT_DEFAULT = 500
 VALID_TFS = {"5", "15", "60", "240"}
 INTRADAY_PENDING_VALID_CANDLES = 4
 ZONE_LATE_ENTRY_CANDLES = 4

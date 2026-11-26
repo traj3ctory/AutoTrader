@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatClosedAt, formatSeenAt } from "../utils/time";
 import { ref } from "vue";
 import { CopyTarget, LoadState, type RiskStatus, type ScanResponse, type SignalHistoryEntry } from "../types/analyzer";
 import type { INullable } from "../types/common";
@@ -102,7 +103,7 @@ const showHistory = ref(false);
         </div>
         <p class="mt-1 text-ink-secondary">{{ item.summary }}</p>
         <p class="mt-0.5 text-ink-muted">
-          Seen {{ item.seenAtUtc }}<span v-if="item.closedAtUtc"> · Closed {{ item.closedAtUtc }}</span>
+          Seen {{ formatSeenAt(item.seenAtUtc) }}<span v-if="item.closedAtUtc"> · Closed {{ formatClosedAt({ closedUtc: item.closedAtUtc, seenIsoUtc: item.seenAtUtc }) }}</span>
         </p>
       </div>
       <p v-if="signalHistory.length === 0" class="text-ink-muted">
