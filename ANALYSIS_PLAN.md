@@ -39,7 +39,7 @@ When the user says `Analyze [coin]`, execute this flow:
 6. Check the catalyst/news gate; if a high-impact event or breaking headline is imminent, cap the action at Wait or No Chase.
 7. Choose trade type: Scalp, Intraday, or No Trade.
 8. Read required timeframes:
-   - Intraday: 1D -> 4H -> 1H, entry planned on 1H, trigger confirmation on 15m or 1H closes.
+   - Intraday: 1D structure -> 4H zone refined on 1H -> 15m rejection or engulfing close, limit order at the zone's near edge (CORRECTED 2026-11-27 to what the engine runs).
    - Scalp: 4H (supply/demand veto only) -> 1H -> 15m -> 5m, entry planned on 5m.
    - Scalps must mark 4H supply/demand before mapping any levels; a scalp into an opposing 4H zone is capped at Watch Only.
 9. Classify setup lifecycle.

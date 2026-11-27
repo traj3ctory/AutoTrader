@@ -164,7 +164,7 @@ If the chart has stale or conflicting drawings, mark the state as `Stale Map / N
 
 First decide the trade type:
 
-- Normal intraday/day trade: use 1D -> 4H -> 1H, with entry planned on 1H, refined to 15m for the confirmation candle (rejection: full body closes outside the zone with a long wick inside it; OR engulfing: full body covers the previous candle's body). Limit order at the zone's entry line.
+- Normal intraday/day trade: use 1D structure -> 4H zone refined on 1H (CORRECTED 2026-11-27 to what the engine runs), then 15m for the confirmation candle (rejection: full body closes outside the zone with a long wick inside it; OR engulfing: full body covers the previous candle's body). Limit order at the zone's entry line.
 - Scalp: use 4H -> 1H -> 15m -> 5m. 4H sets trend, 1H draws the zone, 15m refines it - 5m is where the 9/20 EMA cross, slope confirmation, and the actual entry live (see Scalp Entry Rule below), at market price. VWAP may be reported as context but is never a confirmation requirement or veto.
 
 4H rules for scalps - there are TWO separate ones, do not conflate them (clarified 2026-08-26 after a session where "4H bullish" was quoted as a short veto without either rule actually being stated):
@@ -808,7 +808,7 @@ If verification fails:
 - R:R is measured from the conservative edge of the entry zone (entry high for longs, entry low for shorts) to each TP against the SL. Confirmation fills happen at the edge, so midpoint math flatters the ratio; never use the midpoint for the floor check.
 - UNTESTED (noted 2026-11-16): the TP2 bands in the next two lines were never backtested (the Conditional tier was removed 2026-11-25). Both engines exit the whole position at the first opposing zone edge (at least 1.5R), or 2R when no zone is ahead. Keep TP1 at the engine's target; treat TP2 as an optional stretch level and say it is untested when reporting it.
 - Scalp floor: TP1 at least 1:1.5, and TP2 placed at structure inside the 1:2.5 to 1:3.5 band.
-- Intraday floor: TP1 at least 1:2, and TP2 placed at structure inside the 1:3 to 1:4 band.
+- Intraday floor (CORRECTED 2026-11-27 to the engine): TP1 at least 1:1.5, and TP2 placed at structure inside the 1:3 to 1:4 band.
 - If TP1 is below the floor, cap the setup rating at Watch Only or Skip / No Trade.
 - If TP2 falls outside the band, re-place it at the nearest structural level inside the band; if no structural level exists there, the setup does not fit the template. Never move a TP into empty air to hit a ratio.
 

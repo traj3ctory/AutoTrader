@@ -79,7 +79,7 @@ AutoTrader/
 `scripts/apiAnalyze.py`
 
 - The primary live analysis engine (2026-08-03). Imports `strategyBacktest.py`'s zone/structure/signal functions directly (not reimplemented), so a live read can never drift from what the 3-month backtest actually validated.
-- Computes 4H/1D structure, 1H->15m (Intraday) or 1H->15m->5m (Scalp) zones with an `has_fvg` quality flag, the 5m EMA/VWAP/slope signal, and entry/SL/TP/R:R.
+- Computes 4H/1D structure, 4H->1H (Intraday) or 1H->15m->5m (Scalp) zones with an `has_fvg` quality flag, the 5m EMA/VWAP/slope signal, and entry/SL/TP/R:R.
 - TradingView is now the fallback for structural reads, used only if this can't run for a coin.
 
 `scripts/strategyBacktest.py` / `scripts/scalpBacktestV3.py`
@@ -147,10 +147,10 @@ Structural picks that don't drift (unlike the actual coin list/states - see "Cur
 
 ## Timeframe Stacks
 
-- Intraday: 1D -> 4H -> 1H, entry planned on 1H, trigger confirmation on 15m or 1H closes.
+- Intraday: 1D structure -> 4H zone refined on 1H -> 15m rejection or engulfing close, limit order at the zone's near edge (CORRECTED 2026-11-27 to what the engine runs).
 - Scalp: 4H veto -> 1H -> 15m -> 5m, entry planned on 5m.
 - Scalps must check 4H supply/demand before mapping any levels. See the Timeframe Rules and R:R floors in `ANALYZE_PROMPT.md`.
-- R:R floors: Scalp TP1 >= 1.5R with TP2 in the 2.5-3.5R band; Intraday TP1 >= 2R with TP2 in the 3-4R band.
+- R:R floors: Scalp TP1 >= 1.5R with TP2 in the 2.5-3.5R band; Intraday TP1 >= 1.5R with TP2 in the 3-4R band (intraday floor CORRECTED 2026-11-27 to the engine's 1.5R).
 - R:R is measured from the conservative entry-zone edge (entry high for longs, entry low for shorts), not the midpoint.
 
 ## Required Analyze Workflow
