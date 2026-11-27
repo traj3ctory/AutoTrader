@@ -161,8 +161,9 @@ def request_json(url: str, retries: int = 5) -> dict[str, Any]:
 def write_gz_json_atomic(path: Path, payload) -> None:
     # Write to a temp file then rename, so a concurrent reader never sees a half-written gzip.
     tmp = path.with_name(f"{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
-    with gzip.open(tmp, "wt", encoding="utf-8") as handle:
-        json.dump(payload, handle, separators=(",", ":"))
+    # One serialized write with light compression is far faster than streaming json.dump.
+    with gzip.open(tmp, "wt", encoding="utf-8", compresslevel=1) as handle:
+        handle.write(json.dumps(payload, separators=(",", ":")))
     os.replace(tmp, path)
 
 

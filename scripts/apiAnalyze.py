@@ -90,7 +90,9 @@ def load_history(symbol):
     if not candles:
         raise RuntimeError(f"{symbol}: no candles returned")
     cache_path.parent.mkdir(parents=True, exist_ok=True)
-    sb.write_gz_json_atomic(cache_path, [asdict(c) for c in candles])
+    # Rewriting the whole cache is slow, so it happens only when there is something new.
+    if full_fetch or candles[-1].t > stop_at:
+        sb.write_gz_json_atomic(cache_path, [asdict(c) for c in candles])
     if full_fetch:
         marker_path.write_text(str(start_ms))
     return candles

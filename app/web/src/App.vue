@@ -77,11 +77,10 @@ watch(() => store.autoScanMinutes, restartScanTimer);
 
 onMounted(async () => {
   await store.loadOverview();
-  await Promise.all([
-    store.analyzeCoin({ symbol: store.selectedSymbol }),
-    store.runScan(),
-    store.loadDashboard(),
-  ]);
+  const dashboardLoad = store.loadDashboard();
+  // The chart loads first; a scan started alongside it makes both slower.
+  await store.analyzeCoin({ symbol: store.selectedSymbol });
+  await Promise.all([dashboardLoad, store.runScan()]);
   restartScanTimer();
 });
 

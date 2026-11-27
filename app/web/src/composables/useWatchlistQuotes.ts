@@ -1,4 +1,4 @@
-import { onMounted, ref, watch, type Ref } from "vue";
+import { ref, watch, type Ref } from "vue";
 import { appRequest } from "../utils/appRequest";
 import { LoadState } from "../types/analyzer";
 import type { MoverRow, WatchlistResponse } from "../types/market";
@@ -20,8 +20,8 @@ export function useWatchlistQuotes({ reloadKey }: { reloadKey: Ref<string> }) {
     }
   }
 
-  onMounted(loadQuotes);
-  watch(reloadKey, loadQuotes);
+  // An empty key means the symbol lists have not arrived yet, so there is nothing to quote.
+  watch(reloadKey, (key) => key && loadQuotes(), { immediate: true });
 
   return { quotes, quotesState };
 }

@@ -14,6 +14,9 @@ from services.scalp_zone_verdict import build_scalp_zone
 from services.price_format import round_price
 from services.zone_proximity import detect_4h_zone_proximity
 
+# One entry per coin: the engines only see closed candles, so a replay holds until a new one arrives.
+_ANALYSIS_CACHE = {}
+
 
 def _run_engines(symbol, five):
     frames = live.build_frames(five)
@@ -38,16 +41,25 @@ def analyze_symbol(symbol, tf="15", include_candles=True):
         tf = "15"
     # Candles load outside the lock so one coin's download never stalls another request.
     five = live.load_history(symbol)
+    key = (five[0].t, five[-1].t, len(five))
     with ENGINE_LOCK:
-        run = _run_engines(symbol, five)
+        cached = _ANALYSIS_CACHE.get(symbol)
+        if not cached or cached["key"] != key:
+            cached = _ANALYSIS_CACHE[symbol] = {"key": key, **_build_analysis(symbol, five)}
+    result = {**cached["result"], "tf": tf, "candles": cached["candles"][tf] if include_candles else []}
+    result["copyText"] = build_copy_text(result)
+    return result
 
+
+def _build_analysis(symbol, five):
+    """Everything that depends only on the candles; the chart timeframe is picked afterwards."""
+    run = _run_engines(symbol, five)
     frames, replay_days = run["frames"], run["replay_days"]
     ctx = build_context(frames)
     price, atr_now = ctx["price"], ctx["atr_now"]
     result = {
         "symbol": symbol,
         "ticker": f"{symbol}.P",
-        "tf": tf,
         "price": round_price(price),
         "historyDays": round(run["span_days"]),
         "lastClosed5mUtc": f"{live.hhmm(ctx['now_t'] + live.FIVE_MS)} UTC",
@@ -63,11 +75,9 @@ def analyze_symbol(symbol, tf="15", include_candles=True):
         "scalpZone": build_scalp_zone(ctx, *run["zone"], replay_days),
         "scalp": build_scalp_ema(ctx, *run["scalp"], replay_days),
         "intraday": build_intraday(frames, *run["intraday"], replay_days),
-        "candles": build_candles(frames, tf) if include_candles else [],
     }
     result["nearZones"] = {
         "scalp": nearby_zones(zones=run["scalp"][0]["target_zones"], price=price, target_prices=engine_targets(result["scalp"])),
         "intraday": nearby_zones(zones=run["intraday"][0]["active"], price=price, target_prices=engine_targets(result["intraday"])),
     }
-    result["copyText"] = build_copy_text(result)
-    return result
+    return {"result": result, "candles": {tf: build_candles(frames, tf) for tf in VALID_TFS}}
