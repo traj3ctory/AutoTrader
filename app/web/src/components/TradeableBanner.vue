@@ -1,18 +1,16 @@
 <script setup lang="ts">
-import { formatClosedAt, formatSeenAt } from "../utils/time";
 import { ref } from "vue";
 import { CopyTarget, LoadState, type RiskStatus, type ScanResponse, type SignalHistoryEntry } from "../types/analyzer";
 import type { INullable } from "../types/common";
 import {
   btcEthBadgeClass,
-  historyOutcomeClass,
-  historyOutcomeLabel,
   statusBadgeClass,
   statusLabel,
   trendBadgeClass,
   trendLabel,
 } from "../utils/badges";
 import LoadingSpinner from "./LoadingSpinner.vue";
+import SignalHistoryList from "./SignalHistoryList.vue";
 
 defineProps<{
   scanResult: INullable<ScanResponse>;
@@ -25,6 +23,7 @@ defineProps<{
 const emit = defineEmits<{
   selectCoin: [symbol: string, tf?: string];
   copyText: [text: string];
+  showTrade: [item: SignalHistoryEntry];
 }>();
 
 const showHistory = ref(false);
@@ -65,51 +64,13 @@ const showHistory = ref(false);
       LOCKED — WATCH ONLY: {{ risk.reasons.join(" · ") }}
     </div>
 
-    <div v-if="showHistory" class="mt-2 max-h-60 space-y-1.5 overflow-y-auto text-xs">
-      <div
-        v-for="item in signalHistory"
-        :key="item.id"
-        class="fade_in_item rounded border border-border-subtle bg-surface-elevated p-2"
-      >
-        <div class="flex items-center justify-between gap-1">
-          <div class="flex flex-wrap items-center gap-1">
-            <span class="font-semibold text-ink-primary">{{ item.symbol }} · {{ item.mode }}</span>
-            <span class="rounded px-1.5 py-0.5 text-xs font-semibold" :class="historyOutcomeClass(item)">
-              {{ historyOutcomeLabel(item) }}
-            </span>
-            <span v-if="item.emaBadge" class="rounded bg-surface-panel px-1.5 py-0.5 text-xs text-ink-secondary">
-              EMA: {{ item.emaBadge }}
-            </span>
-            <span v-if="item.zone4hBadge" class="rounded bg-accent-warn/20 px-1.5 py-0.5 text-xs font-medium text-accent-warn">
-              {{ item.zone4hBadge.label }}
-            </span>
-          </div>
-          <div class="flex items-center gap-1">
-            <button
-              type="button"
-              class="cursor-pointer rounded border border-border-subtle bg-surface-panel px-1.5 py-0.5 text-xs text-ink-primary hover:border-accent-brand"
-              @click="emit('selectCoin', item.symbol, item.mode === 'Intraday' ? '60' : '15')"
-            >
-              Chart
-            </button>
-            <button
-              type="button"
-              class="cursor-pointer rounded bg-surface-panel px-1.5 py-0.5 text-xs text-ink-primary hover:bg-accent-brand hover:text-white"
-              @click="emit('copyText', item.copyText)"
-            >
-              {{ copiedTarget === CopyTarget.Tradeable ? "Copied!" : "Copy" }}
-            </button>
-          </div>
-        </div>
-        <p class="mt-1 text-ink-secondary">{{ item.summary }}</p>
-        <p class="mt-0.5 text-ink-muted">
-          Seen {{ formatSeenAt(item.seenAtUtc) }}<span v-if="item.closedAtUtc"> · Closed {{ formatClosedAt({ closedUtc: item.closedAtUtc, seenIsoUtc: item.seenAtUtc }) }}</span>
-        </p>
-      </div>
-      <p v-if="signalHistory.length === 0" class="text-ink-muted">
-        No tradeable signals recorded yet. Live triggers will log here automatically.
-      </p>
-    </div>
+    <SignalHistoryList
+      v-if="showHistory"
+      :items="signalHistory"
+      :copied-target="copiedTarget"
+      @show-trade="(item) => emit('showTrade', item)"
+      @copy-text="(text) => emit('copyText', text)"
+    />
 
     <div v-else>
       <div v-if="scanState === LoadState.Loading" class="mt-2">

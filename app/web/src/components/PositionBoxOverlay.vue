@@ -39,7 +39,7 @@ defineProps<{
         </span>
       </div>
       <div
-        class="absolute inset-x-0 -translate-y-1/2 border-t border-accent-brand transition-all duration-150"
+        class="absolute inset-x-0 border-t border-accent-brand transition-all duration-150"
         :style="{ top: `${box.entryTop}px` }"
       >
         <span class="inline-block px-1 text-xs font-semibold text-accent-brand">

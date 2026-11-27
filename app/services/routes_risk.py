@@ -4,6 +4,7 @@ import datetime as dt
 import riskGuard
 from services.config import RISK_LOCK
 from services.memory_service import append_scorecard_close, sync_symbol_to_ledger
+from services.price_format import round_price
 
 
 def _risk_response(state, doc, extra=None):
@@ -18,9 +19,9 @@ def open_trade(body):
     trade_type = str(body.get("type", "")).strip().lower()
     if trade_type not in riskGuard.RISK_PCT:
         raise ValueError(f"type must be one of {list(riskGuard.RISK_PCT)}")
-    entry = round(float(body["entry"]), 4)
-    stop = round(float(body["stop"]), 4)
-    target = round(float(body["target"]), 4) if body.get("target") not in (None, "") else None
+    entry = round_price(body["entry"])
+    stop = round_price(body["stop"])
+    target = round_price(body["target"]) if body.get("target") not in (None, "") else None
     risk_pct = float(body["risk_pct"]) if body.get("risk_pct") is not None else riskGuard.RISK_PCT[trade_type]
     with RISK_LOCK:
         doc = riskGuard.load_doc()

@@ -1,6 +1,7 @@
 """Pure formatting and serialization helpers for analyzer payloads."""
 import apiAnalyze as live
 import strategyBacktest as sb
+from services.price_format import fmt_price, round_price
 
 
 def fmt_age(ms):
@@ -12,17 +13,11 @@ def fmt_age(ms):
     return f"{minutes // 1440}d"
 
 
-def fmt4(val):
-    if val is None:
-        return "none"
-    return f"{float(val):.4f}"
-
-
 def serialize_targets(ladder):
     return [
         {
             "label": item["label"],
-            "price": round(item["price"], 4),
+            "price": round_price(item["price"]),
             "rr": item["rr"],
             "source": item["source"],
             "note": item["note"],
@@ -51,10 +46,10 @@ def serialize_zone(zone):
         return None
     return {
         "kind": zone.kind,
-        "low": round(zone.low, 4),
-        "high": round(zone.high, 4),
-        "proximal": round(zone.proximal, 4),
-        "distal": round(zone.distal, 4),
+        "low": round_price(zone.low),
+        "high": round_price(zone.high),
+        "proximal": round_price(zone.proximal),
+        "distal": round_price(zone.distal),
         "hasFvg": bool(zone.has_fvg),
         "touchIndex": zone.touch_index,
     }
@@ -95,10 +90,10 @@ def serialize_replay(trades, replay_days):
 def signal_position_payload(pos, active, age, drift):
     return {
         "direction": pos["direction"],
-        "entry": round(pos["entry"], 4),
-        "stop": round(pos["orig_stop"], 4),
-        "activeStop": round(pos["stop"], 4),
-        "target": round(pos["target"], 4),
+        "entry": round_price(pos["entry"]),
+        "stop": round_price(pos["orig_stop"]),
+        "activeStop": round_price(pos["stop"]),
+        "target": round_price(pos["target"]),
         "targets": position_targets(pos["entry"], pos["orig_stop"], pos["direction"], active, pos["target"], pos["rr"]),
         "rr": pos["rr"],
         "ageCandles": age,
@@ -113,7 +108,7 @@ def build_copy_text(result):
     sc = result["scalp"]
     intr = result["intraday"]
     lines = [
-        f"{result['symbol']} | Price {fmt4(result['price'])} | 4H {result['structure4h']} | 1D {result['structure1d']}",
+        f"{result['symbol']} | Price {fmt_price(result['price'])} | 4H {result['structure4h']} | 1D {result['structure1d']}",
         f"5m EMA 9/20 [{sc_zone['emaBadge']}]: {result['emaOrder']}, slope {result['emaSlope']} ({result['lastCross']['summary']})",
         f"Scalp Zone (context only, untested): {sc_zone['verdictKind']} — {sc_zone['verdictText']}",
         f"Scalp v4 EMA Cross: {sc['verdictKind']} — {sc['verdictText']}",
@@ -123,8 +118,8 @@ def build_copy_text(result):
         z = info["zone"]
         if z:
             lines.append(
-                f"  Zone {side.upper()}: {fmt4(z['low'])}-{fmt4(z['high'])} "
-                f"(SL {fmt4(info['stop'])}, TP {fmt4(info['target'])}, {info['rr']}R) | {info['status']}"
+                f"  Zone {side.upper()}: {fmt_price(z['low'])}-{fmt_price(z['high'])} "
+                f"(SL {fmt_price(info['stop'])}, TP {fmt_price(info['target'])}, {info['rr']}R) | {info['status']}"
             )
         else:
             lines.append(f"  Zone {side.upper()}: {info['status']}")
@@ -132,6 +127,6 @@ def build_copy_text(result):
     for side in ("long", "short"):
         info = intr[side]
         z = info["nearestZone"]
-        ztxt = f"{fmt4(z['low'])}-{fmt4(z['high'])}" if z else "none"
+        ztxt = f"{fmt_price(z['low'])}-{fmt_price(z['high'])}" if z else "none"
         lines.append(f"  Intraday {side.upper()} nearest zone: {ztxt} | {info['status']}")
     return "\n".join(lines)

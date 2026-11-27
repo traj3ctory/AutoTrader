@@ -4,44 +4,29 @@ import {
   LineSeries,
   LineStyle,
   createChart,
+  createSeriesMarkers,
   type AutoscaleInfo,
   type IChartApi,
   type IPriceLine,
   type ISeriesApi,
+  type ISeriesMarkersPluginApi,
+  type Time,
   type UTCTimestamp,
 } from "lightweight-charts";
 import {
-  BOX_FUTURE_WIDTH_PX,
-  BOX_GAP_PX,
   CHART_RIGHT_OFFSET_BARS,
   INITIAL_VISIBLE_BARS,
-  MAX_SCALP_AGE_CANDLES,
   ORIGIN_PADDING_BARS,
+  PAST_TRADE_PADDING_BARS,
 } from "../constants/analyzer";
 import { buildZoneBands } from "../utils/zoneBands";
-import type { AnalyzeResponse, ZoneInfo } from "../types/analyzer";
+import type { AnalyzeResponse, SignalHistoryEntry, ZoneInfo } from "../types/analyzer";
 import type { ActiveBoxSpec, PositionBoxCoords, ZoneBand } from "../types/chart";
 import type { INullable } from "../types/common";
-
-/**
- * @function pickActiveBox
- * @description Selects the primary fresh setup box in priority order (Scalp EMA -> Intraday Limit); Scalp Zone is context only.
- */
-function pickActiveBox(analysis: AnalyzeResponse): INullable<ActiveBoxSpec> {
-  const { scalp, intraday } = analysis;
-  const scalpFresh =
-    scalp.verdictKind === "VALID" ||
-    scalp.verdictKind === "LATE_ENTRY" ||
-    (scalp.verdictKind === "ENGINE_IN_TRADE" && (scalp.position?.ageCandles ?? 0) <= MAX_SCALP_AGE_CANDLES);
-
-  if (scalp.position && scalpFresh) {
-    return { label: "Scalp", ...scalp.position };
-  }
-  if (intraday.pending && intraday.verdictKind === "VALID") {
-    return { label: "Limit", ...intraday.pending };
-  }
-  return null;
-}
+import { chartPriceFormat } from "../utils/price";
+import { pickActiveBox, pickChartZones } from "../utils/activeBox";
+import { buildPositionBox } from "../utils/positionBox";
+import { candleAt, tradeBox, tradeMarkers } from "../utils/tradeReplay";
 
 /**
  * @function useCandleChart
@@ -51,17 +36,18 @@ export function useCandleChart({
   containerRef,
   analysis,
   selectedTf,
+  trade,
 }: {
   containerRef: Ref<INullable<HTMLElement>>;
   analysis: () => INullable<AnalyzeResponse>;
   selectedTf: () => string;
+  trade: () => INullable<SignalHistoryEntry>;
 }) {
   const showEma = ref(selectedTf() === "5");
   const positionBox = ref<INullable<PositionBoxCoords>>(null);
   const zoneBands = ref<ZoneBand[]>([]);
   let activeBox: INullable<ActiveBoxSpec> = null;
   let chartZones: ZoneInfo[] = [];
-  let lastCandleTime: INullable<UTCTimestamp> = null;
   let candleTimes: number[] = [];
   let chart: INullable<IChartApi> = null;
   let candleSeries: INullable<ISeriesApi<"Candlestick">> = null;
@@ -69,6 +55,7 @@ export function useCandleChart({
   let ema20Series: INullable<ISeriesApi<"Line">> = null;
   let priceLines: IPriceLine[] = [];
   let linePrices: number[] = [];
+  let markers: INullable<ISeriesMarkersPluginApi<Time>> = null;
   let resizeObserver: INullable<ResizeObserver> = null;
   function applyEmaVisibility() {
     ema9Series?.applyOptions({ visible: showEma.value });
@@ -100,24 +87,7 @@ export function useCandleChart({
       positionBox.value = null;
       return;
     }
-    const yEntry = candleSeries.priceToCoordinate(activeBox.entry);
-    const yStop = candleSeries.priceToCoordinate(activeBox.stop);
-    const yTarget = candleSeries.priceToCoordinate(activeBox.target);
-    const xEdge = lastCandleTime !== null ? chart.timeScale().timeToCoordinate(lastCandleTime) : null;
-    if (yEntry === null || yStop === null || yTarget === null || xEdge === null) {
-      positionBox.value = null;
-      return;
-    }
-    positionBox.value = {
-      ...activeBox,
-      rewardTop: Math.min(yEntry, yTarget),
-      rewardHeight: Math.max(2, Math.abs(yEntry - yTarget)),
-      riskTop: Math.min(yEntry, yStop),
-      riskHeight: Math.max(2, Math.abs(yStop - yEntry)),
-      entryTop: yEntry,
-      left: Math.round(xEdge) + BOX_GAP_PX,
-      width: BOX_FUTURE_WIDTH_PX,
-    };
+    positionBox.value = buildPositionBox({ chart, series: candleSeries, box: activeBox, candleTimes });
   }
 
   /**
@@ -134,6 +104,15 @@ export function useCandleChart({
     chart?.timeScale().setVisibleLogicalRange({ from, to: candleTimes.length - 1 + CHART_RIGHT_OFFSET_BARS });
   }
 
+  function showTradeBars(box: ActiveBoxSpec) {
+    const indexOf = (timeSec: number) => candleTimes.indexOf(candleAt({ candleTimes, timeSec }) ?? candleTimes[0]);
+    const end = box.exitTimeSec ? indexOf(box.exitTimeSec) : candleTimes.length - 1;
+    chart?.timeScale().setVisibleLogicalRange({
+      from: indexOf(box.entryTimeSec) - PAST_TRADE_PADDING_BARS,
+      to: end + PAST_TRADE_PADDING_BARS,
+    });
+  }
+
   /**
    * @function scheduleOverlayUpdate
    * @description Redraws overlays after the chart has painted its new price scale.
@@ -147,7 +126,6 @@ export function useCandleChart({
     if (!chart || !candleSeries || !ema9Series || !ema20Series || !current) return;
     const candles = current.candles || [];
     candleTimes = candles.map((c) => c.time);
-    lastCandleTime = candles.length > 0 ? (candles[candles.length - 1].time as UTCTimestamp) : null;
     candleSeries.setData(
       candles.map((c) => ({ time: c.time as UTCTimestamp, open: c.open, high: c.high, low: c.low, close: c.close }))
     );
@@ -158,18 +136,23 @@ export function useCandleChart({
       candles.filter((c) => c.ema20 !== null).map((c) => ({ time: c.time as UTCTimestamp, value: c.ema20 as number }))
     );
 
+    const priceFormat = chartPriceFormat({ price: current.price });
+    [candleSeries, ema9Series, ema20Series].forEach((series) => series?.applyOptions({ priceFormat }));
+
     clearPriceLines();
-    activeBox = pickActiveBox(current);
+    const focused = trade();
+    // A past trade replaces the live setup and hides today's zones, which did not exist in that form then.
+    const past = focused && focused.symbol === current.symbol ? focused : null;
+    const pastBox = past ? tradeBox({ item: past }) : null;
+    activeBox = past ? pastBox : pickActiveBox({ analysis: current });
     if (activeBox) {
       linePrices.push(activeBox.entry, activeBox.stop, activeBox.target);
     }
-    const nearZones = current.nearZones;
-    const sets = activeBox?.label === "Limit" ? [nearZones.intraday] : activeBox ? [nearZones.scalp] : [nearZones.scalp, nearZones.intraday];
-    chartZones = sets
-      .flatMap((set) => [...set.supply, ...set.demand])
-      .filter((z) => z.isTarget || !z.consumed);
+    markers?.setMarkers(past && pastBox ? tradeMarkers({ item: past, box: pastBox, candleTimes }) : []);
+    chartZones = past ? [] : pickChartZones({ analysis: current, box: activeBox });
     chart.priceScale("right").applyOptions({ autoScale: true });
-    showRecentBars();
+    if (pastBox) showTradeBars(pastBox);
+    else showRecentBars();
     scheduleOverlayUpdate();
   }
 
@@ -183,14 +166,12 @@ export function useCandleChart({
       width: containerRef.value.clientWidth,
       height: containerRef.value.clientHeight,
     });
-    const priceFormat = { type: "price" as const, precision: 4, minMove: 0.0001 };
     candleSeries = chart.addSeries(CandlestickSeries, {
       upColor: "#22c55e",
       downColor: "#ef4444",
       borderVisible: false,
       wickUpColor: "#22c55e",
       wickDownColor: "#ef4444",
-      priceFormat,
       autoscaleInfoProvider: (original: () => INullable<AutoscaleInfo>) => {
         const res = original();
         if (!res || !res.priceRange || linePrices.length === 0) return res;
@@ -203,13 +184,13 @@ export function useCandleChart({
         };
       },
     });
+    markers = createSeriesMarkers(candleSeries, []);
     ema9Series = chart.addSeries(LineSeries, {
       color: "#38bdf8",
       lineWidth: 1,
       visible: showEma.value,
       priceLineVisible: false,
       lastValueVisible: false,
-      priceFormat,
     });
     ema20Series = chart.addSeries(LineSeries, {
       color: "#f59e0b",
@@ -217,7 +198,6 @@ export function useCandleChart({
       visible: showEma.value,
       priceLineVisible: false,
       lastValueVisible: false,
-      priceFormat,
     });
     resizeObserver = new ResizeObserver((entries) => {
       const entry = entries[0];
@@ -234,7 +214,7 @@ export function useCandleChart({
     renderData();
   });
 
-  watch(analysis, renderData);
+  watch([analysis, trade], renderData);
   watch(selectedTf, (tf) => {
     showEma.value = tf === "5";
     applyEmaVisibility();

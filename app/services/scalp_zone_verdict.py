@@ -2,7 +2,8 @@
 import apiAnalyze as live
 import strategyBacktest as sb
 from services.config import SL_ATR_BUFFER_MULT, ZONE_LATE_ENTRY_CANDLES
-from services.formatters import fmt4, serialize_replay, serialize_zone, signal_position_payload
+from services.formatters import serialize_replay, serialize_zone, signal_position_payload
+from services.price_format import fmt_price, round_price
 
 
 def _ema_badge(ctx, direction):
@@ -19,7 +20,7 @@ def _position_verdict(ctx, pos, active):
     age = ctx["i"] - pos["entry_index"]
     side = pos["direction"].upper()
     drift = round(live.unreal_r(pos, ctx["price"]), 2)
-    levels = f"entry {fmt4(pos['entry'])}, SL {fmt4(pos['orig_stop'])}, TP {fmt4(pos['target'])}, R:R {pos['rr']}"
+    levels = f"entry {fmt_price(pos['entry'])}, SL {fmt_price(pos['orig_stop'])}, TP {fmt_price(pos['target'])}, R:R {pos['rr']}"
     if age == 0:
         kind, tradeable = "VALID", True
         text = f"VALID {side} zone bounce closed {live.hhmm(pos['signal_t'] + live.FIVE_MS)} UTC: {levels}"
@@ -70,8 +71,8 @@ def _side_gates(ctx, active):
             "blockedBy": blocks,
             "status": "all gates pass" if not blocks else "blocked by: " + "; ".join(blocks),
             "zone": serialize_zone(ref_z),
-            "stop": round(z_stop, 4) if z_stop is not None else None,
-            "target": round(z_target, 4) if z_target is not None else None,
+            "stop": round_price(z_stop),
+            "target": round_price(z_target),
             "rr": z_rr,
         }
     return sides

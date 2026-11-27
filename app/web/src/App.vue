@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useAnalyzerStore } from "./stores/useAnalyzerStore";
-import { AppView, CopyTarget, LoadState, SidebarTab } from "./types/analyzer";
+import { AppView, CopyTarget, LoadState, SidebarTab, type SignalHistoryEntry } from "./types/analyzer";
+import { pickTradeTf } from "./utils/tradeReplay";
 import type { INullable, RiskPrefillPayload } from "./types/common";
 import TopBar from "./components/TopBar.vue";
 import TradeableBanner from "./components/TradeableBanner.vue";
@@ -28,8 +29,15 @@ const isBusy = computed(
 );
 
 function handleSelectCoin(symbol: string, tf?: string) {
+  store.focusedTradeId = "";
   activeView.value = AppView.Analyzer;
   store.analyzeCoin({ symbol, tf });
+}
+
+function handleShowTrade(item: SignalHistoryEntry) {
+  activeView.value = AppView.Analyzer;
+  store.focusedTradeId = item.id;
+  store.analyzeCoin({ symbol: item.symbol, tf: pickTradeTf({ item }) });
 }
 
 function handleChangeView(view: AppView) {
@@ -127,7 +135,9 @@ onBeforeUnmount(() => {
           :analyze-state="store.analyzeState"
           :selected-symbol="store.selectedSymbol"
           :selected-tf="store.selectedTf"
+          :focused-trade="store.focusedTrade"
           @change-tf="(tf) => store.analyzeCoin({ tf })"
+          @back-to-live="store.focusedTradeId = ''"
         />
 
         <SetupDetail
@@ -152,6 +162,7 @@ onBeforeUnmount(() => {
           :scan-state="store.scanState"
           :copied-target="store.copiedTarget"
           @select-coin="handleSelectCoin"
+          @show-trade="handleShowTrade"
           @copy-text="(text) => store.copySetup({ text, target: CopyTarget.Tradeable })"
         />
 

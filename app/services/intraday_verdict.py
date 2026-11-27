@@ -2,26 +2,32 @@
 import apiAnalyze as live
 import strategyBacktest as sb
 from services.config import INTRADAY_PENDING_VALID_CANDLES
-from services.formatters import fmt4, fmt_age, position_targets, serialize_replay, serialize_zone
+from services.formatters import fmt_age, position_targets, serialize_replay, serialize_zone
+from services.price_format import fmt_price, round_price
+
+
+def _signal_at(signal_t, span15):
+    return f"{live.hhmm(signal_t + span15)} UTC"
 
 
 def _filled_verdict(pos, active, p15, t15, span15):
     drift = round(live.unreal_r(pos, p15), 2)
     text = (
         f"ENGINE IN TRADE {pos['direction'].upper()} filled {live.hhmm(pos['entry_t'])} UTC: "
-        f"entry {fmt4(pos['entry'])}, SL {fmt4(pos['stop'])}, TP {fmt4(pos['target'])}, "
+        f"entry {fmt_price(pos['entry'])}, SL {fmt_price(pos['stop'])}, TP {fmt_price(pos['target'])}, "
         f"R:R {pos['rr']} ({drift:+.2f}R)"
     )
     payload = {
         "direction": pos["direction"],
-        "entry": round(pos["entry"], 4),
-        "stop": round(pos["stop"], 4),
-        "target": round(pos["target"], 4),
+        "entry": round_price(pos["entry"]),
+        "stop": round_price(pos["stop"]),
+        "target": round_price(pos["target"]),
         "targets": position_targets(pos["entry"], pos["stop"], pos["direction"], active, pos["target"], pos["rr"]),
         "rr": pos["rr"],
         "ageCandles": max(0, int((t15 - pos["entry_t"]) // span15)),
         "unrealR": drift,
         "entryAtUtc": f"{live.hhmm(pos['entry_t'])} UTC",
+        "signalAtUtc": _signal_at(pos["signal_t"], span15),
         "entryTimeSec": int(pos["entry_t"] // 1000),
     }
     return "ENGINE_IN_TRADE", False, text, payload, None
@@ -33,15 +39,16 @@ def _pending_verdict(pend, active, p15, t15, span15):
     if age <= INTRADAY_PENDING_VALID_CANDLES:
         text = (
             f"VALID {pend['direction'].upper()} "
-            f"({pend['confirmation']}, {age}c ago): limit {fmt4(pend['entry'])} ({gap:.1f}% away), "
-            f"SL {fmt4(pend['stop'])}, TP {fmt4(pend['target'])}, R:R {pend['rr']}"
+            f"({pend['confirmation']}, {age}c ago): limit {fmt_price(pend['entry'])} ({gap:.1f}% away), "
+            f"SL {fmt_price(pend['stop'])}, TP {fmt_price(pend['target'])}, R:R {pend['rr']}"
         )
         payload = {
             "direction": pend["direction"],
             "confirmation": pend["confirmation"],
-            "entry": round(pend["entry"], 4),
-            "stop": round(pend["stop"], 4),
-            "target": round(pend["target"], 4),
+            "signalAtUtc": _signal_at(pend["signal_t"], span15),
+            "entry": round_price(pend["entry"]),
+            "stop": round_price(pend["stop"]),
+            "target": round_price(pend["target"]),
             "targets": position_targets(pend["entry"], pend["stop"], pend["direction"], active, pend["target"], pend["rr"]),
             "rr": pend["rr"],
             "ageCandles": age,
@@ -52,7 +59,7 @@ def _pending_verdict(pend, active, p15, t15, span15):
     # The engine never expires an unfilled limit; past the tested window it is a missed signal.
     text = (
         f"STALE ORDER {pend['direction'].upper()} (signalled {fmt_age(age * span15)} ago, "
-        f"limit {fmt4(pend['entry'])} is {gap:.1f}% from price) - missed signal, not actionable"
+        f"limit {fmt_price(pend['entry'])} is {gap:.1f}% from price) - missed signal, not actionable"
     )
     return "STALE_ORDER", False, text, None, None
 

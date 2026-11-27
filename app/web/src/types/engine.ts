@@ -63,6 +63,7 @@ export interface ScalpPosition {
 export interface IntradayPending {
   direction: "long" | "short";
   confirmation: string;
+  signalAtUtc: string;
   entry: number;
   stop: number;
   target: number;
@@ -83,6 +84,7 @@ export interface IntradayPosition {
   ageCandles?: number;
   unrealR: number;
   entryAtUtc: string;
+  signalAtUtc: string;
   entryTimeSec: number;
 }
 

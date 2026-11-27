@@ -21,6 +21,7 @@ export function emaBadgeClass(badge: string): string {
 export function statusLabel(status?: string): string {
   if (status === "LATE_ENTRY") return "LATE";
   if (status === "ENGINE_IN_TRADE") return "IN TRADE";
+  if (status === "STALE_ORDER") return "MISSED";
   return "VALID";
 }
 
@@ -30,6 +31,7 @@ export function statusLabel(status?: string): string {
  */
 export function statusBadgeClass(status?: string): string {
   if (status === "ENGINE_IN_TRADE") return "bg-accent-brand/20 text-accent-brand";
+  if (status === "STALE_ORDER") return "bg-surface-panel text-ink-muted";
   if (status === "LATE_ENTRY") return "bg-accent-warn/20 text-accent-warn";
   return "bg-accent-bull/20 text-accent-bull";
 }
@@ -43,7 +45,8 @@ export function historyOutcomeLabel(item: SignalHistoryEntry): string {
   if (item.outcome === "LOSS") return `LOSS${item.netR != null ? ` ${item.netR}R` : ""}`;
   if (item.outcome === "BE") return "BE 0R";
   if (item.outcome === "EXPIRED") return "EXPIRED";
-  if (item.status === "ENGINE_IN_TRADE") return "PAST ENTRY WINDOW";
+  if (item.status === "ENGINE_IN_TRADE") return "STILL OPEN";
+  if (item.status === "STALE_ORDER") return "NOT FILLED";
   return statusLabel(item.status);
 }
 
@@ -54,7 +57,7 @@ export function historyOutcomeLabel(item: SignalHistoryEntry): string {
 export function historyOutcomeClass(item: SignalHistoryEntry): string {
   if (item.outcome === "WIN") return "bg-accent-bull/20 text-accent-bull";
   if (item.outcome === "LOSS") return "bg-accent-bear/20 text-accent-bear";
-  if (item.outcome === "BE" || item.outcome === "EXPIRED" || item.status === "ENGINE_IN_TRADE") {
+  if (item.outcome === "BE" || item.outcome === "EXPIRED") {
     return "bg-surface-panel text-ink-muted";
   }
   return statusBadgeClass(item.status);

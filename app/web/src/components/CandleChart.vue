@@ -2,21 +2,24 @@
 import { ref } from "vue";
 import { TIMEFRAMES } from "../constants/analyzer";
 import { useCandleChart } from "../composables/useCandleChart";
-import { LoadState, type AnalyzeResponse } from "../types/analyzer";
+import { LoadState, type AnalyzeResponse, type SignalHistoryEntry } from "../types/analyzer";
 import type { INullable } from "../types/common";
 import LoadingSpinner from "./LoadingSpinner.vue";
 import PositionBoxOverlay from "./PositionBoxOverlay.vue";
 import ZoneBandsOverlay from "./ZoneBandsOverlay.vue";
+import PastTradeBar from "./PastTradeBar.vue";
 
 const props = defineProps<{
   analysis: INullable<AnalyzeResponse>;
   analyzeState: LoadState;
   selectedSymbol: string;
   selectedTf: string;
+  focusedTrade: INullable<SignalHistoryEntry>;
 }>();
 
 const emit = defineEmits<{
   changeTf: [tf: string];
+  backToLive: [];
 }>();
 
 const containerRef = ref<INullable<HTMLElement>>(null);
@@ -24,6 +27,7 @@ const { showEma, toggleEma, positionBox, zoneBands, updatePositionBox } = useCan
   containerRef,
   analysis: () => props.analysis,
   selectedTf: () => props.selectedTf,
+  trade: () => props.focusedTrade,
 });
 </script>
 
@@ -93,6 +97,8 @@ const { showEma, toggleEma, positionBox, zoneBands, updatePositionBox } = useCan
         </button>
       </div>
     </div>
+
+    <PastTradeBar v-if="focusedTrade" :item="focusedTrade" @back-to-live="emit('backToLive')" />
 
     <div
       class="relative min-h-56 w-full flex-1 overflow-hidden rounded border border-border-subtle"

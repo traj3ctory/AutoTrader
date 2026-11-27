@@ -56,6 +56,12 @@ export interface SignalHistoryEntry {
   outcome?: string | null;
   netR?: number | null;
   closedAtUtc?: string | null;
+  direction?: "long" | "short";
+  entry?: number;
+  stop?: number;
+  target?: number;
+  startMs?: number;
+  filled?: boolean;
   emaBadge?: string;
   zone4hBadge?: Zone4hBadge | null;
   summary: string;

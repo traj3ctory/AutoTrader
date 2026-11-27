@@ -13,6 +13,19 @@ export const enum CopyTarget {
   Ledger = 4,
 }
 
+export enum SignalOutcome {
+  Open = "OPEN",
+  Win = "WIN",
+  Loss = "LOSS",
+  BreakEven = "BE",
+  Expired = "EXPIRED",
+}
+
+export enum RiskMode {
+  Scalp = "scalp",
+  Intraday = "intraday",
+}
+
 export const enum SidebarTab {
   Movers = 0,
   Risk = 1,

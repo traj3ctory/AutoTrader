@@ -11,6 +11,7 @@ from services.intraday_verdict import build_intraday, last_closed_15m_label
 from services.scalp_ema_verdict import build_scalp_ema
 from services.scalp_zone_engine import run_scalp_zone
 from services.scalp_zone_verdict import build_scalp_zone
+from services.price_format import round_price
 from services.zone_proximity import detect_4h_zone_proximity
 
 
@@ -46,7 +47,7 @@ def analyze_symbol(symbol, tf="15", include_candles=True):
         "symbol": symbol,
         "ticker": f"{symbol}.P",
         "tf": tf,
-        "price": round(price, 4),
+        "price": round_price(price),
         "historyDays": round(run["span_days"]),
         "lastClosed5mUtc": f"{live.hhmm(ctx['now_t'] + live.FIVE_MS)} UTC",
         "lastClosed15mUtc": last_closed_15m_label(frames),
@@ -54,7 +55,7 @@ def analyze_symbol(symbol, tf="15", include_candles=True):
         "structure1d": ctx["bias1d"],
         "zone4hBadge": detect_4h_zone_proximity(frames["240"], price, atr_now),
         "atr4hPct": round((atr_now / price) * 100, 2) if atr_now and price else None,
-        "vwap": round(ctx["vwap"], 4),
+        "vwap": round_price(ctx["vwap"]),
         "emaOrder": ctx["order"],
         "emaSlope": ctx["slope"],
         "lastCross": ctx["last_cross"],

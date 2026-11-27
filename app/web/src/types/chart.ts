@@ -1,3 +1,5 @@
+import type { INullable } from "./common";
+
 export interface TimeframeOption {
   value: string;
   label: string;
@@ -11,6 +13,7 @@ export interface ActiveBoxSpec {
   target: number;
   rr: number;
   entryTimeSec: number;
+  exitTimeSec?: INullable<number>;
 }
 
 export interface PositionBoxCoords extends ActiveBoxSpec {
@@ -21,6 +24,16 @@ export interface PositionBoxCoords extends ActiveBoxSpec {
   entryTop: number;
   left: number;
   width: number;
+}
+
+export interface ChartZone {
+  kind: "demand" | "supply";
+  low: number;
+  high: number;
+  consumed: boolean;
+  isTarget: boolean;
+  timeSec?: number;
+  tfLabels: string[];
 }
 
 export interface ZoneBand {

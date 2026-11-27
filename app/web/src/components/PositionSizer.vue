@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { TIGHT_STOP_PCT } from "../constants/analyzer";
 import type { AnalyzeResponse } from "../types/analyzer";
-import type { INullable, RiskPrefillPayload } from "../types/common";
+import type { RiskPrefillPayload } from "../types/common";
+import { RiskMode } from "../types/enums";
 import { calculatePositionSize } from "../utils/sizing";
+import { buildSizerPlan } from "../utils/sizerPlan";
 
 const props = defineProps<{
   analysis: AnalyzeResponse;
@@ -17,22 +19,15 @@ const emit = defineEmits<{
 
 const customEntry = ref("");
 const customStop = ref("");
-const riskMode = ref<"scalp" | "intraday">("scalp");
+const activePlan = computed(() => buildSizerPlan({ analysis: props.analysis }));
+const riskMode = ref(RiskMode.Scalp);
 
-const activePlan = computed<{ mode: "scalp" | "intraday"; entry: number; stop: number; target: INullable<number> } | null>(() => {
-  const a = props.analysis;
-  if (a.scalp.position) {
-    return { mode: "scalp", entry: a.scalp.position.entry, stop: a.scalp.position.stop, target: a.scalp.position.target };
-  }
-  if (a.intraday.pending) {
-    return { mode: "intraday", entry: a.intraday.pending.entry, stop: a.intraday.pending.stop, target: a.intraday.pending.target };
-  }
-  if (a.intraday.position) {
-    return { mode: "intraday", entry: a.intraday.position.entry, stop: a.intraday.position.stop, target: a.intraday.position.target };
-  }
-  const refSide = a.scalp.short.zone ? a.scalp.short : a.scalp.long;
-  return refSide.stop ? { mode: "scalp", entry: a.price, stop: refSide.stop, target: refSide.target } : null;
-});
+// A manual risk choice lasts only while the same coin and mode are on screen.
+watch(
+  () => `${props.analysis.symbol}:${activePlan.value?.mode}`,
+  () => (riskMode.value = activePlan.value?.mode ?? RiskMode.Scalp),
+  { immediate: true }
+);
 
 const sizingResult = computed(() =>
   calculatePositionSize({
@@ -73,8 +68,8 @@ function handleBalanceInput(event: Event) {
           name="sizer_mode"
           class="rounded border border-border-subtle bg-surface-panel px-1.5 py-1 text-ink-primary transition-colors duration-150 focus:border-accent-brand focus:outline-none"
         >
-          <option value="scalp">0.5%</option>
-          <option value="intraday">1.0%</option>
+          <option :value="RiskMode.Scalp">0.5%</option>
+          <option :value="RiskMode.Intraday">1.0%</option>
         </select>
       </label>
       <label class="inline-flex items-center gap-1 text-ink-muted">

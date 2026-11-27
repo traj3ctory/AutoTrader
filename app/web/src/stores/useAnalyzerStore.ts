@@ -6,6 +6,7 @@ import {
   SCAN_TIMEOUT_MS,
   STORAGE_KEYS,
 } from "../constants/analyzer";
+import { useAnalyzeCoin } from "../composables/useAnalyzeCoin";
 import { useCopyFeedback } from "../composables/useCopyFeedback";
 import { useRiskActions } from "../composables/useRiskActions";
 import { useScanAlerts } from "../composables/useScanAlerts";
@@ -14,7 +15,6 @@ import { readStoredNumber, readStoredString, writeStoredNumber, writeStoredStrin
 import {
   CopyTarget,
   LoadState,
-  type AnalyzeResponse,
   type DashboardResponse,
   type MoversPayload,
   type OverviewResponse,
@@ -27,20 +27,21 @@ import type { INullable } from "../types/common";
 
 export const useAnalyzerStore = defineStore("analyzer", () => {
   const overviewState = ref<LoadState>(LoadState.Idle);
-  const analyzeState = ref<LoadState>(LoadState.Idle);
   const scanState = ref<LoadState>(LoadState.Idle);
   const moversState = ref<LoadState>(LoadState.Idle);
   const dashboardState = ref<LoadState>(LoadState.Idle);
   const errorMessage = ref("");
 
   const overview = ref<INullable<OverviewResponse>>(null);
-  const analysis = ref<INullable<AnalyzeResponse>>(null);
   const scanResult = ref<INullable<ScanResponse>>(null);
   const movers = ref<INullable<MoversPayload>>(null);
   const dashboard = ref<INullable<DashboardResponse>>(null);
   const risk = ref<INullable<RiskStatus>>(null);
   const trades = ref<TradeRecord[]>([]);
   const signalHistory = ref<SignalHistoryEntry[]>([]);
+  const focusedTradeId = ref("");
+  // Looked up by id so a rescan refreshes the shown result.
+  const focusedTrade = computed(() => signalHistory.value.find((item) => item.id === focusedTradeId.value) ?? null);
 
   const selectedSymbol = ref(readStoredString({ key: STORAGE_KEYS.symbol, fallback: "XRPUSDT" }));
   const selectedTf = ref(readStoredString({ key: STORAGE_KEYS.tf, fallback: "15" }));
@@ -48,6 +49,7 @@ export const useAnalyzerStore = defineStore("analyzer", () => {
   const { copiedTarget, flashCopied, copyToClipboard } = useCopyFeedback();
   const { soundEnabled, toggleSound, alertOnNewTradeable } = useScanAlerts();
   const autoScanMinutes = ref(DEFAULT_AUTO_SCAN_MINUTES);
+  const { analyzeState, analysis, fetchAnalysis } = useAnalyzeCoin({ risk, errorMessage });
 
   watch(accountBalance, (value) => writeStoredNumber({ key: STORAGE_KEYS.balance, value }));
 
@@ -83,25 +85,12 @@ export const useAnalyzerStore = defineStore("analyzer", () => {
   async function analyzeCoin({ symbol, tf }: { symbol?: string; tf?: string } = {}) {
     const nextSym = (symbol || selectedSymbol.value).toUpperCase().replace(".P", "");
     const nextTf = tf || selectedTf.value;
+    if (focusedTrade.value && focusedTrade.value.symbol !== nextSym) focusedTradeId.value = "";
     selectedSymbol.value = nextSym;
     selectedTf.value = nextTf;
     writeStoredString({ key: STORAGE_KEYS.symbol, value: nextSym });
     writeStoredString({ key: STORAGE_KEYS.tf, value: nextTf });
-    analyzeState.value = LoadState.Loading;
-    errorMessage.value = "";
-    try {
-      const data = await appRequest<AnalyzeResponse>({
-        url: "/analyze",
-        params: { symbol: nextSym, tf: nextTf },
-        timeout: SCAN_TIMEOUT_MS,
-      });
-      analysis.value = data;
-      risk.value = data.risk;
-      analyzeState.value = LoadState.Ready;
-    } catch (err) {
-      analyzeState.value = LoadState.Error;
-      errorMessage.value = err instanceof Error ? err.message : "Analysis failed";
-    }
+    await fetchAnalysis({ symbol: nextSym, tf: nextTf });
   }
 
   async function runScan({ extraSymbols = "" }: { extraSymbols?: string } = {}) {
@@ -203,6 +192,8 @@ export const useAnalyzerStore = defineStore("analyzer", () => {
   }
 
   return {
+    focusedTradeId,
+    focusedTrade,
     overviewState,
     analyzeState,
     scanState,

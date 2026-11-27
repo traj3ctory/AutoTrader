@@ -1,3 +1,4 @@
+import { RiskMode } from "../types/enums";
 import type { TimeframeOption } from "../types/chart";
 
 export const SCAN_TIMEOUT_MS = 180_000;
@@ -9,9 +10,9 @@ export const MAX_SCALP_AGE_CANDLES = 72;
 export const SAFE_LEVERAGE_FACTOR = 80;
 export const TIGHT_STOP_PCT = 1;
 
-export const RISK_PCT_BY_MODE: Record<"scalp" | "intraday", number> = {
-  scalp: 0.5,
-  intraday: 1.0,
+export const RISK_PCT_BY_MODE: Record<RiskMode, number> = {
+  [RiskMode.Scalp]: 0.5,
+  [RiskMode.Intraday]: 1.0,
 };
 
 export const STORAGE_KEYS = {
@@ -47,3 +48,14 @@ export const ZONE_TF_LABELS: Record<string, { base: string; refined: string }> =
 export const INITIAL_VISIBLE_BARS = 200;
 export const ORIGIN_PADDING_BARS = 10;
 export const ZONE_LABEL_MIN_GAP_PX = 16;
+
+export const PAST_TRADE_PADDING_BARS = 30;
+export const PAST_TRADE_MIN_BOX_PX = 130;
+// Candles the server sends per timeframe for the chart, and each timeframe's length.
+export const CHART_CANDLE_LIMIT = 500;
+export const TF_MINUTES: Record<string, number> = { "5": 5, "15": 15, "60": 60, "240": 240 };
+
+export const TRADEABLE_VERDICTS = ["VALID", "LATE_ENTRY"];
+
+export const PRICE_SIG_FIGS = 6;
+export const PRICE_MIN_DECIMALS = 4;

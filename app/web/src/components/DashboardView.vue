@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { historySummary } from "../utils/historyText";
 import { formatSeenAt } from "../utils/time";
 import { ref } from "vue";
 import { AUTOMATION_GATE_GOAL } from "../constants/analyzer";
@@ -196,7 +197,7 @@ const { scorecardStats, mistakeTags, filteredRecords } = useDashboardStats({
                 </button>
                 <span class="text-ink-muted">{{ formatSeenAt(sig.seenAtUtc) }}</span>
               </div>
-              <p class="mt-0.5 text-ink-secondary">{{ sig.summary }}</p>
+              <p class="mt-0.5 text-ink-secondary">{{ historySummary({ item: sig }) }}</p>
             </div>
           </div>
           <p v-else class="text-xs text-ink-muted">No tradeable signals recorded yet.</p>

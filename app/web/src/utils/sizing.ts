@@ -1,11 +1,12 @@
 import { RISK_PCT_BY_MODE, SAFE_LEVERAGE_FACTOR } from "../constants/analyzer";
 import type { INullable } from "../types/common";
+import type { RiskMode } from "../types/enums";
 
 export interface SizingInput {
   entry: number;
   stop: number;
   balance: number;
-  riskMode: "scalp" | "intraday";
+  riskMode: RiskMode;
 }
 
 export interface SizingResult {

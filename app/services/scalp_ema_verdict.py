@@ -1,7 +1,8 @@
 """Verdict for the Scalp v4 EMA-cross mode."""
 import apiAnalyze as live
 import scalpBacktestV3 as v3
-from services.formatters import fmt4, serialize_replay, serialize_zone, signal_position_payload
+from services.formatters import serialize_replay, serialize_zone, signal_position_payload
+from services.price_format import fmt_price, round_price
 
 
 def _position_verdict(ctx, pos, active):
@@ -9,7 +10,7 @@ def _position_verdict(ctx, pos, active):
     age = i - pos["entry_index"]
     side = pos["direction"].upper()
     drift = round(live.unreal_r(pos, price), 2)
-    levels = f"entry {fmt4(pos['entry'])}, SL {fmt4(pos['orig_stop'])}, TP {fmt4(pos['target'])}, R:R {pos['rr']}"
+    levels = f"entry {fmt_price(pos['entry'])}, SL {fmt_price(pos['orig_stop'])}, TP {fmt_price(pos['target'])}, R:R {pos['rr']}"
     if age == 0:
         kind, tradeable = "VALID", True
         text = f"VALID {side} closed {live.hhmm(pos['signal_t'] + live.FIVE_MS)} UTC: {levels}"
@@ -48,8 +49,8 @@ def _side_gates(ctx, active, target_zones):
             "blockedBy": blocks,
             "status": "all gates pass" if not blocks else "blocked by: " + "; ".join(blocks),
             "zone": serialize_zone(zone),
-            "stop": round(stop, 4) if stop is not None else None,
-            "target": round(target, 4) if target is not None else None,
+            "stop": round_price(stop),
+            "target": round_price(target),
             "rr": rr,
         }
     return sides
