@@ -13,6 +13,12 @@ export interface MoverRow {
   low?: string;
 }
 
+export type CoinQuote = Pick<MoverRow, "symbol"> & Partial<MoverRow>;
+
+export interface WatchlistResponse {
+  rows: MoverRow[];
+}
+
 export interface MoverScheduleInfo {
   times: string[];
   tzOffsetHours: number;

@@ -1,46 +1,46 @@
 <script setup lang="ts">
-defineProps<{
+import { computed } from "vue";
+import { LoadState } from "../types/analyzer";
+import { useWatchlistQuotes } from "../composables/useWatchlistQuotes";
+import CoinTable from "./CoinTable.vue";
+
+const props = defineProps<{
   ledgerSymbols: string[];
   tvSymbols: string[];
   selectedSymbol: string;
+  moversUpdatedAt: string;
 }>();
 
 const emit = defineEmits<{
   selectCoin: [symbol: string];
 }>();
+
+const reloadKey = computed(() => [...props.ledgerSymbols, ...props.tvSymbols, props.moversUpdatedAt].join(","));
+const { quotes, quotesState } = useWatchlistQuotes({ reloadKey });
+
+const groups = computed(() =>
+  [
+    { label: "Ledger", symbols: props.ledgerSymbols },
+    { label: "From movers sync", symbols: props.tvSymbols },
+  ]
+    .filter((group) => group.symbols.length)
+    .map((group) => ({
+      label: group.label,
+      rows: group.symbols.map((symbol) => quotes.value[symbol] ?? { symbol }),
+    }))
+);
 </script>
 
 <template>
-  <div class="space-y-2 text-xs">
-    <div>
-      <p class="mb-1 text-ink-muted">Ledger</p>
-      <div class="flex flex-wrap gap-1">
-        <button
-          v-for="sym in ledgerSymbols"
-          :key="sym"
-          type="button"
-          class="cursor-pointer rounded px-2 py-1 font-medium"
-          :class="selectedSymbol === sym ? 'bg-accent-brand text-white' : 'bg-surface-elevated text-ink-secondary hover:text-ink-primary'"
-          @click="emit('selectCoin', sym)"
-        >
-          {{ sym.replace("USDT", "") }}
-        </button>
-      </div>
-    </div>
-    <div v-if="tvSymbols.length">
-      <p class="mb-1 text-ink-muted">From movers sync</p>
-      <div class="flex flex-wrap gap-1">
-        <button
-          v-for="sym in tvSymbols"
-          :key="sym"
-          type="button"
-          class="cursor-pointer rounded px-2 py-1 font-medium"
-          :class="selectedSymbol === sym ? 'bg-accent-brand text-white' : 'bg-surface-elevated text-ink-muted hover:text-ink-primary'"
-          @click="emit('selectCoin', sym)"
-        >
-          {{ sym.replace("USDT", "") }}
-        </button>
-      </div>
+  <div class="space-y-3 text-xs">
+    <p v-if="quotesState === LoadState.Error" class="text-accent-bear">Live quotes unavailable.</p>
+    <div v-for="group in groups" :key="group.label">
+      <p class="mb-1 text-ink-muted">{{ group.label }}</p>
+      <CoinTable
+        :rows="group.rows"
+        :selected-symbol="selectedSymbol"
+        @select-coin="(symbol) => emit('selectCoin', symbol)"
+      />
     </div>
   </div>
 </template>

@@ -7,6 +7,7 @@ import { STORAGE_KEYS } from "../constants/analyzer";
 import { readStoredNumber, writeStoredNumber } from "../utils/storage";
 import LoadingSpinner from "./LoadingSpinner.vue";
 import WatchlistGrid from "./WatchlistGrid.vue";
+import CoinTable from "./CoinTable.vue";
 
 const props = defineProps<{
   ledgerSymbols: string[];
@@ -85,51 +86,16 @@ const rows = computed(() => {
         :ledger-symbols="ledgerSymbols"
         :tv-symbols="tvSymbols"
         :selected-symbol="selectedSymbol"
+        :movers-updated-at="movers?.updatedAt || ''"
         @select-coin="(symbol) => emit('selectCoin', symbol)"
       />
-      <table v-else class="w-full text-left text-xs">
-        <thead class="border-b border-border-subtle text-ink-muted">
-          <tr>
-            <th class="py-1 pr-1">Coin</th>
-            <th class="py-1 pr-1">{{ activeTab === MoverTab.Range ? "Range" : "24h" }}</th>
-            <th class="py-1 pr-1">Vol</th>
-            <th class="py-1 text-right">Read</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-border-subtle/50">
-          <tr
-            v-for="row in rows"
-            :key="row.ticker"
-            class="fade_in_item"
-          >
-            <td class="py-1 pr-1 font-medium text-ink-primary">
-              {{ row.symbol.replace("USDT", "") }}
-              <span v-if="row.inLedger" class="text-accent-brand">★</span>
-            </td>
-            <td
-              class="py-1 pr-1"
-              :class="row.pct >= 0 ? 'text-accent-bull' : 'text-accent-bear'"
-            >
-              <template v-if="activeTab === MoverTab.Range">
-                {{ row.rangePct }}%
-              </template>
-              <template v-else>
-                {{ row.pct >= 0 ? "+" : "" }}{{ row.pct }}%
-              </template>
-            </td>
-            <td class="py-1 pr-1 text-ink-secondary">${{ row.turnoverM }}M</td>
-            <td class="py-1 text-right">
-              <button
-                type="button"
-                class="cursor-pointer rounded bg-surface-elevated px-1.5 py-0.5 text-xs text-ink-primary hover:bg-accent-brand hover:text-white"
-                @click="emit('selectCoin', row.symbol)"
-              >
-                Open
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <CoinTable
+        v-else
+        :rows="rows"
+        :show-range="activeTab === MoverTab.Range"
+        :selected-symbol="selectedSymbol"
+        @select-coin="(symbol) => emit('selectCoin', symbol)"
+      />
     </div>
   </section>
 </template>

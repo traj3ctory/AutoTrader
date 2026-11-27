@@ -6,6 +6,7 @@ from services.history_service import load_json, load_signal_history
 from services.movers_facade import parse_movers_md, refresh_movers_and_sync, run_node_script
 from services.movers_service import normalize_symbol
 from services.scan_service import scan_symbols
+from services.watchlist_service import watchlist_quotes
 
 PINE_TEMPLATE = "AUTOTRADER_TRADE_MAP_TEMPLATE.pine"
 BACKTEST_OOS = "backtests/2026-11-16-oos/results.txt"
@@ -59,6 +60,10 @@ def movers(qs):
     return 200, parse_movers_md()
 
 
+def watchlist(qs):
+    return 200, {"rows": watchlist_quotes()}
+
+
 def pine(qs):
     if _first(qs, "rebuild", "0") == "1":
         run_node_script("buildTradeMap.mjs")
@@ -91,6 +96,7 @@ GET_ROUTES = {
     "/api/analyze": analyze,
     "/api/scan": scan,
     "/api/movers": movers,
+    "/api/watchlist": watchlist,
     "/api/pine": pine,
     "/api/dashboard": dashboard,
 }
