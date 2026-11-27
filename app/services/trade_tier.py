@@ -16,9 +16,20 @@ def zone_veto(*, badge, direction):
     if not badge:
         return None
     blocked_side = "supply" if direction == "long" else "demand"
-    if badge.get("side") != blocked_side:
+    hit = badge.get("sides", {badge.get("side"): badge}).get(blocked_side)
+    if not hit:
         return None
-    return f"{badge['label']} ({badge['distPct']}% away)"
+    return f"{hit['label']} ({hit['distPct']}% away)"
+
+
+def watch_reasons(*, tier, locked):
+    """Why a fresh engine signal may only be watched; empty means it can be traded."""
+    reasons = []
+    if locked:
+        reasons.append("risk lock")
+    if tier["zoneVeto"]:
+        reasons.append(f"4H zone veto: {tier['zoneVeto']}")
+    return reasons
 
 
 def major_confirmation(*, direction, majors):

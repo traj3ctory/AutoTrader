@@ -3,11 +3,12 @@ import datetime as dt
 import json
 import threading
 
+import riskGuard
 from services.analysis_service import analyze_symbol
 from services.config import ROOT, SCRIPTS_DIR
 from services.history_service import load_json
 from services.movers_service import normalize_symbol, run_node_script
-from services.trade_tier import classify_signal
+from services.trade_tier import classify_signal, watch_reasons
 
 LEDGER_LOCK = threading.Lock()
 SCORECARD_LOCK = threading.Lock()
@@ -17,15 +18,15 @@ def _utc_now_iso():
     return dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
-def _build_ledger_record(sym, res, now_iso, existing=None):
+def _build_ledger_record(sym, res, now_iso, existing=None, locked=False):
     ticker = f"{sym}.P"
     prev = dict(existing) if isinstance(existing, dict) else {}
     sc_pos = res["scalp"].get("position") if res["scalp"]["tradeable"] else None
     in_pend = res["intraday"].get("pending") if res["intraday"]["tradeable"] else None
     active = sc_pos or in_pend
     tier = classify_signal(res=res, mode_data=res["scalp"] if sc_pos else res["intraday"], symbol=sym, majors={}) if active else None
-    vetoed = bool(tier and tier["zoneVeto"])
-    if vetoed:
+    blocked = watch_reasons(tier=tier, locked=locked) if tier else []
+    if blocked:
         active = None
     trade_type = "Scalp" if sc_pos else "Intraday" if in_pend else prev.get("trade_type", "Scalp")
 
@@ -48,9 +49,9 @@ def _build_ledger_record(sym, res, now_iso, existing=None):
         state = f"NO SIGNAL; 4H {res['structure4h'].upper()} / 1D {res['structure1d'].upper()}"
         proposed = "Proposed Wait / No Trade"
         action = "WAIT - no valid engine signal."
-        if vetoed:
-            state = f"WATCH ONLY; {tier['zoneVeto']}"
-            action = "WAIT - engine signal capped by the 4H zone veto."
+        if blocked:
+            state = f"WATCH ONLY; {'; '.join(blocked)}"
+            action = f"WAIT - engine signal capped by: {'; '.join(blocked)}."
 
     near_s = res["intraday"]["short"].get("nearestZone")
     near_l = res["intraday"]["long"].get("nearestZone")
@@ -94,7 +95,8 @@ def sync_symbol_to_ledger(raw_symbol):
     with LEDGER_LOCK:
         ledger = load_json(ledger_path, {"version": 1, "setups": {}, "journal": []})
         setups = ledger.setdefault("setups", {})
-        setups[ticker] = _build_ledger_record(sym, res, now_iso, setups.get(ticker))
+        setups[ticker] = _build_ledger_record(sym, res, now_iso, setups.get(ticker),
+                                              locked=riskGuard.status()["locked"])
         ledger["last_updated"] = now_iso
         ledger_path.write_text(json.dumps(ledger, indent=2) + "\n", encoding="utf-8")
     run_node_script(ROOT, SCRIPTS_DIR, "buildTradeMap.mjs")

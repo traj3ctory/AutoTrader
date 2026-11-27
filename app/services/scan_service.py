@@ -6,7 +6,7 @@ from services.analysis_service import analyze_symbol
 from services.config import ROOT, SIGNAL_HISTORY_PATH, SIGNAL_HISTORY_VIEW, TV_EXTRA_LIMIT
 from services.history_service import load_json, record_signal_history
 from services.movers_service import normalize_symbol
-from services.trade_tier import MAJOR_SYMBOLS, TREND_RANK, classify_signal
+from services.trade_tier import MAJOR_SYMBOLS, TREND_RANK, classify_signal, watch_reasons
 
 
 def is_fresh_active(mode_data):
@@ -14,17 +14,8 @@ def is_fresh_active(mode_data):
     return mode_data["verdictKind"] in ("VALID", "LATE_ENTRY")
 
 
-def _watch_reasons(*, tier, locked):
-    reasons = []
-    if locked:
-        reasons.append("risk lock")
-    if tier["zoneVeto"]:
-        reasons.append(f"4H zone veto: {tier['zoneVeto']}")
-    return reasons
-
-
 def _tradeable_entry(*, sym, mode, data, res, tier, locked):
-    reasons = _watch_reasons(tier=tier, locked=locked)
+    reasons = watch_reasons(tier=tier, locked=locked)
     return {
         "watchOnly": bool(reasons),
         "watchReasons": reasons,

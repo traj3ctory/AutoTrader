@@ -15,8 +15,7 @@ from services.price_format import round_price
 from services.zone_proximity import detect_4h_zone_proximity
 
 
-def _run_engines(symbol):
-    five = live.load_history(symbol)
+def _run_engines(symbol, five):
     frames = live.build_frames(five)
     span_days, replay_days = live.set_window(five)
     zone_state, scalp_state, intraday_state = {}, {}, {}
@@ -37,8 +36,10 @@ def _run_engines(symbol):
 def analyze_symbol(symbol, tf="15", include_candles=True):
     if tf not in VALID_TFS:
         tf = "15"
+    # Candles load outside the lock so one coin's download never stalls another request.
+    five = live.load_history(symbol)
     with ENGINE_LOCK:
-        run = _run_engines(symbol)
+        run = _run_engines(symbol, five)
 
     frames, replay_days = run["frames"], run["replay_days"]
     ctx = build_context(frames)
@@ -53,7 +54,7 @@ def analyze_symbol(symbol, tf="15", include_candles=True):
         "lastClosed15mUtc": last_closed_15m_label(frames),
         "structure4h": ctx["bias4h"],
         "structure1d": ctx["bias1d"],
-        "zone4hBadge": detect_4h_zone_proximity(frames["240"], price, atr_now),
+        "zone4hBadge": detect_4h_zone_proximity(frames["240"], price, atr_now, ctx["now_t"] + live.FIVE_MS),
         "atr4hPct": round((atr_now / price) * 100, 2) if atr_now and price else None,
         "vwap": round_price(ctx["vwap"]),
         "emaOrder": ctx["order"],
