@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ZONE_LABEL_HEIGHT_PX } from "../constants/analyzer";
 import type { ZoneBand } from "../types/chart";
 
 defineProps<{
@@ -16,7 +17,8 @@ defineProps<{
       :style="{ left: `${band.left}px`, top: `${band.top}px`, height: `${band.height}px`, backgroundColor: band.fill }"
     >
       <span
-        class="absolute -top-5 left-1 rounded px-1 text-xs font-medium"
+        class="absolute left-1 rounded px-1 text-xs font-medium"
+        :style="{ top: `${Math.max(-ZONE_LABEL_HEIGHT_PX, -band.top)}px` }"
         :class="band.kind === 'demand' ? 'text-accent-bull' : 'text-accent-bear'"
       >
         {{ band.label }}

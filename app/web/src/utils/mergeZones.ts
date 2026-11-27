@@ -1,4 +1,4 @@
-import { ZONE_TF_LABELS } from "../constants/analyzer";
+import { BADGE_ZONE_LABEL, ZONE_TF_LABELS } from "../constants/analyzer";
 import type { ZoneInfo } from "../types/analyzer";
 import type { ChartZone } from "../types/chart";
 
@@ -24,7 +24,10 @@ function combine({ into, next }: { into: ChartZone; next: ChartZone }): ChartZon
     consumed: into.consumed && next.consumed,
     isTarget: into.isTarget || next.isTarget,
     timeSec: bothTimed ? Math.min(into.timeSec as number, next.timeSec as number) : undefined,
-    tfLabels: [...new Set([...into.tfLabels, ...next.tfLabels])],
+    // The badge name goes last so it never splits the engine's timeframe names.
+    tfLabels: [...new Set([...into.tfLabels, ...next.tfLabels])].sort(
+      (a, b) => Number(a === BADGE_ZONE_LABEL) - Number(b === BADGE_ZONE_LABEL)
+    ),
   };
 }
 

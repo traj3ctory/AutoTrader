@@ -1,4 +1,4 @@
-import { MAX_SCALP_AGE_CANDLES } from "../constants/analyzer";
+import { BADGE_ZONE_TF, MAX_SCALP_AGE_CANDLES } from "../constants/analyzer";
 import type { AnalyzeResponse, ZoneInfo } from "../types/analyzer";
 import type { ActiveBoxSpec } from "../types/chart";
 import type { INullable } from "../types/common";
@@ -23,12 +23,18 @@ export function pickActiveBox({ analysis }: { analysis: AnalyzeResponse }): INul
   return null;
 }
 
+function pickBadgeZones({ badge }: { badge: AnalyzeResponse["zone4hBadge"] }): ZoneInfo[] {
+  const sides = badge?.sides ? Object.values(badge.sides) : badge ? [badge] : [];
+  return sides.flatMap((side) => (side.zone ? [{ ...side.zone, tf: BADGE_ZONE_TF }] : []));
+}
+
 /**
  * @function pickChartZones
- * @description Zones of the engine behind the active box, or both engines when there is none.
+ * @description Zones of the engine behind the active box (or both), plus the zone behind the 4H badge.
  */
 export function pickChartZones({ analysis, box }: { analysis: AnalyzeResponse; box: INullable<ActiveBoxSpec> }): ZoneInfo[] {
   const { scalp, intraday } = analysis.nearZones;
   const sets = box?.label === "Limit" ? [intraday] : box ? [scalp] : [scalp, intraday];
-  return sets.flatMap((set) => [...set.supply, ...set.demand]).filter((zone) => zone.isTarget || !zone.consumed);
+  const engineZones = sets.flatMap((set) => [...set.supply, ...set.demand]).filter((zone) => zone.isTarget || !zone.consumed);
+  return [...engineZones, ...pickBadgeZones({ badge: analysis.zone4hBadge })];
 }

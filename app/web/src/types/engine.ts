@@ -103,6 +103,7 @@ export interface Zone4hBadge {
   side: "supply" | "demand";
   distPct: number;
   zone: ZoneInfo | null;
+  sides?: Partial<Record<"supply" | "demand", Zone4hBadge>>;
 }
 
 export interface AnalyzeResponse {

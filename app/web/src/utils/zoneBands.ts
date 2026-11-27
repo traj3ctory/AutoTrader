@@ -61,5 +61,6 @@ export function buildZoneBands({
       fill: demand ? (used ? ZONE_FILL_USED_DEMAND : ZONE_FILL_DEMAND) : used ? ZONE_FILL_USED_SUPPLY : ZONE_FILL_SUPPLY,
     });
   });
-  return hideCrowdedLabels(bands);
+  // A band wholly above the chart gets no label, or it would be pulled into view.
+  return hideCrowdedLabels(bands.map((band) => (band.top + band.height <= 0 ? { ...band, label: "" } : band)));
 }

@@ -39,8 +39,13 @@ export const ZONE_FILL_USED_DEMAND = "rgba(34, 197, 94, 0.06)";
 export const ZONE_FILL_USED_SUPPLY = "rgba(239, 68, 68, 0.06)";
 export const MIN_ZONE_BAND_PX = 3;
 
+/** Marks the zone behind the 4H badge, which is computed separately from the engine zones. */
+export const BADGE_ZONE_TF = "badge4h";
+export const BADGE_ZONE_LABEL = "4H badge";
+
 // "base" names a box that no lower-timeframe zone narrowed; "refined" one that was.
 export const ZONE_TF_LABELS: Record<string, { base: string; refined: string }> = {
+  [BADGE_ZONE_TF]: { base: BADGE_ZONE_LABEL, refined: BADGE_ZONE_LABEL },
   "60->15": { base: "1H", refined: "1H - 15min" },
   "240->60": { base: "4H", refined: "4H - 1H" },
 };
@@ -48,6 +53,7 @@ export const ZONE_TF_LABELS: Record<string, { base: string; refined: string }> =
 export const INITIAL_VISIBLE_BARS = 200;
 export const ORIGIN_PADDING_BARS = 10;
 export const ZONE_LABEL_MIN_GAP_PX = 16;
+export const ZONE_LABEL_HEIGHT_PX = 20;
 
 export const PAST_TRADE_PADDING_BARS = 30;
 export const PAST_TRADE_MIN_BOX_PX = 130;
