@@ -1,0 +1,49 @@
+XRPUSDT done
+DOGEUSDT done
+ZECUSDT done
+AVAXUSDT done
+JTOUSDT done
+LITUSDT done
+HYPEUSDT done
+BEATUSDT done
+BTWUSDT done
+SOONUSDT done
+FARTCOINUSDT done
+KAITOUSDT done
+AKEUSDT done
+USUSDT done
+BNBUSDT done
+UNIUSDT done
+UAIUSDT done
+SOLUSDT done
+AAVEUSDT done
+ALGOUSDT done
+AEROUSDT done
+BROCCOLIUSDT done
+BCHUSDT done
+XPLUSDT done
+ZROUSDT done
+ARKUSDT done
+LYNUSDT done
+
+27 coins, 2026-08-01 to 11-15, cost 0.14%; halves split at 09-23
+
+== intraday
+never expires (current)                n=  70 win= 35.7% avgR=  0.061 totalR=    4.27 medianStop= 2.89% maxDD=  12.3R halves=   -5.4/    9.7
+expires after 4 candles                n=  47 win= 34.0% avgR=  0.004 totalR=    0.20 medianStop= 2.81% maxDD=  11.5R halves=   -8.8/    9.0
+expires after 8 candles                n=  55 win= 36.4% avgR=  0.099 totalR=    5.47 medianStop= 2.92% maxDD=  14.7R halves=  -10.0/   15.5
+expires after 16 candles               n=  62 win= 38.7% avgR=  0.155 totalR=    9.62 medianStop= 2.90% maxDD=  14.6R halves=   -7.3/   17.0
+expires after 96 candles               n=  67 win= 34.3% avgR=  0.019 totalR=    1.29 medianStop= 2.88% maxDD=  15.3R halves=  -10.4/   11.7
+
+== 90% range of avgR (resampling coins)
+never expires (current)      -0.165 to +0.300  above zero in 66%  total without best coin +0.2R
+expires after 4 candles      -0.284 to +0.312  above zero in 49%  total without best coin -3.8R
+expires after 8 candles      -0.175 to +0.399  above zero in 72%  total without best coin +1.4R
+expires after 16 candles     -0.090 to +0.426  above zero in 84%  total without best coin +5.6R
+expires after 96 candles     -0.185 to +0.243  above zero in 55%  total without best coin -2.6R
+
+== filled trades by wait from signal candle to fill candle (current rule)
+1-4      n= 43 totalR=  +1.54 avgR=+0.036
+5-16     n= 13 totalR=  +5.45 avgR=+0.419
+17-96    n=  5 totalR=  -5.33 avgR=-1.066
+over 96  n=  9 totalR=  +2.61 avgR=+0.291

@@ -521,7 +521,7 @@ def make_trade(strategy: str, symbol: str, direction: str, signal_t: int,
 
 
 def run_intraday(symbol: str, frames: dict[str, list[Candle]], cost_pct: float,
-                 state_out: Optional[dict] = None) -> list[Trade]:
+                 state_out: Optional[dict] = None, pending_expiry_candles: Optional[int] = None) -> list[Trade]:
     candles = frames["15"]
     zones = clone_zones(refined_zones(frames["240"], "240", frames["60"], "60"))
     zones.sort(key=lambda z: z.known_t)
@@ -580,7 +580,10 @@ def run_intraday(symbol: str, frames: dict[str, list[Candle]], cost_pct: float,
             zone = pending["zone"]
             invalid = candle.l <= pending["stop"] if pending["direction"] == "long" else candle.h >= pending["stop"]
             filled = candle.l <= pending["entry"] <= candle.h
-            if invalid:
+            # Backtest switch only: the live engine passes no expiry.
+            expired = (pending_expiry_candles is not None
+                       and candle.t - pending["signal_t"] > pending_expiry_candles * INTERVAL_MS["15"])
+            if invalid or expired:
                 pending = None
             elif filled:
                 position = {**pending, "entry_t": candle.t}
