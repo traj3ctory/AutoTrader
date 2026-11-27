@@ -5,12 +5,15 @@ import threading
 import time
 
 from services.history_outcome import (INTRADAY_MODE, LEVEL_KEYS, legacy_levels, levels_from_payload,
-                                      load_candles, mode_candles, signal_id, walk_signal, window_ms)
+                                      mode_candles, signal_id, walk_signal, window_ms)
 
 import apiAnalyze as live
 
 SIGNAL_LOCK = threading.Lock()
 MAX_SIGNAL_HISTORY = 100
+UNRESOLVED = "UNRESOLVED"
+# Young entries get time for the candles to catch up before they are written off.
+UNRESOLVED_AFTER_MS = 86_400_000
 MODE_RESULT_KEYS = {"Scalp Zone": "scalpZone", "Scalp EMA": "scalp", INTRADAY_MODE: "intraday"}
 
 
@@ -28,11 +31,18 @@ def load_signal_history(path):
 
 
 def _is_open(entry):
-    return isinstance(entry, dict) and entry.get("outcome") in (None, "OPEN")
+    if not isinstance(entry, dict):
+        return False
+    outcome = entry.get("outcome")
+    # An expiry with no exit time came from the earlier age rule, so it is walked again.
+    return outcome in (None, "OPEN") or (outcome == "EXPIRED" and not entry.get("closedAtUtc"))
 
 
 def _needs_candles(entry):
-    return _is_open(entry) or (isinstance(entry, dict) and any(key not in entry for key in LEVEL_KEYS))
+    if _is_open(entry):
+        return True
+    return (isinstance(entry, dict) and entry.get("outcome") != UNRESOLVED
+            and any(key not in entry for key in LEVEL_KEYS))
 
 
 def _fetch_candles(path, loader):
@@ -81,11 +91,19 @@ def _refresh_status(entry, *, live_item, res, result):
         entry["status"] = "ENGINE_IN_TRADE" if filled else "STALE_ORDER"
 
 
+def _age_ms(entry):
+    seen = dt.datetime.fromisoformat(entry["seenAtUtc"].replace("Z", "+00:00"))
+    return int((time.time() - seen.timestamp()) * 1000)
+
+
 def _update_open_entry(entry, *, live_item, res, five):
     result = _resolve(entry, five)
     if result and result["outcome"]:
         entry.update(outcome=result["outcome"], status=result["outcome"], netR=result["netR"],
                      closedAtUtc=f"{live.hhmm(result['exitMs'])} UTC")
+        return
+    if five and result is None and _age_ms(entry) > UNRESOLVED_AFTER_MS:
+        entry.update(outcome=UNRESOLVED, status=UNRESOLVED)
         return
     entry["outcome"] = "OPEN"
     _refresh_status(entry, live_item=live_item, res=res, result=result)
@@ -114,7 +132,7 @@ def _new_entry(item, sig_id, scanned_at_utc):
     }
 
 
-def record_signal_history(path, tradeable_items, scanned_at_utc, by_symbol, loader=load_candles):
+def record_signal_history(path, tradeable_items, scanned_at_utc, by_symbol, loader=live.load_history):
     candles = _fetch_candles(path, loader)
     items_by_id = {}
     for item in tradeable_items:

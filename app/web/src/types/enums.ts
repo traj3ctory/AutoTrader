@@ -19,6 +19,7 @@ export enum SignalOutcome {
   Loss = "LOSS",
   BreakEven = "BE",
   Expired = "EXPIRED",
+  Unresolved = "UNRESOLVED",
 }
 
 export enum RiskMode {

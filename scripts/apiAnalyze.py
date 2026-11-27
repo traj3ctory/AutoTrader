@@ -30,6 +30,14 @@ def hhmm(t_ms):
     return time.strftime("%m-%d %H:%M", time.gmtime(t_ms / 1000))
 
 
+def _cache_covers(marker_path, start_ms):
+    # A coin listed after the window start has a late first candle even though its cache is complete.
+    try:
+        return int(marker_path.read_text()) <= start_ms
+    except (OSError, ValueError):
+        return False
+
+
 def load_history(symbol):
     # Closed 5m candles for the last HISTORY_DAYS, cached on disk and topped up incrementally.
     now_ms = int(time.time() * 1000)
@@ -46,8 +54,10 @@ def load_history(symbol):
             # A truncated or corrupt cache (interrupted write) is rebuilt from Bybit.
             rows = {}
     # A cache that starts late was built with a shorter window, so refetch it in full.
-    if rows and min(rows) > start_ms + DAY_MS:
+    marker_path = CACHE_DIR / f"{symbol}_5m.window"
+    if rows and min(rows) > start_ms + DAY_MS and not _cache_covers(marker_path, start_ms):
         rows = {}
+    full_fetch = not rows
     stop_at = max(rows) if rows else start_ms
     cursor = now_ms
     while cursor >= stop_at:
@@ -81,6 +91,8 @@ def load_history(symbol):
         raise RuntimeError(f"{symbol}: no candles returned")
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     sb.write_gz_json_atomic(cache_path, [asdict(c) for c in candles])
+    if full_fetch:
+        marker_path.write_text(str(start_ms))
     return candles
 
 

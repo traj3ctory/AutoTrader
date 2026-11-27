@@ -2,7 +2,7 @@
 import datetime as dt
 import re
 
-from services.config import ENGINE_LOCK, INTRADAY_PENDING_VALID_CANDLES
+from services.config import INTRADAY_PENDING_VALID_CANDLES
 
 import apiAnalyze as live
 import strategyBacktest as sb
@@ -41,11 +41,6 @@ def levels_from_payload(payload):
         "target": payload["target"],
         "startMs": payload["entryTimeSec"] * 1000,
     }
-
-
-def load_candles(symbol):
-    with ENGINE_LOCK:
-        return live.load_history(symbol)
 
 
 def mode_candles(*, five, mode):

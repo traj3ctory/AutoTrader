@@ -1,6 +1,8 @@
 import type { SignalHistoryEntry } from "../types/analyzer";
 import { SignalOutcome } from "../types/enums";
 
+const UNRESOLVED_TEXT = "Could not be checked against candles; not counted.";
+
 function rewardRatio({ entry, stop, target }: { entry: number; stop: number; target: number }): string {
   return (Math.abs(target - entry) / Math.abs(entry - stop)).toFixed(2);
 }
@@ -18,6 +20,7 @@ export function historyExitPrice({ item }: { item: SignalHistoryEntry }): number
 function historyResult({ item }: { item: SignalHistoryEntry }): string {
   if (item.outcome === SignalOutcome.Win) return `Target hit at ${item.target}.`;
   if (item.outcome === SignalOutcome.Loss) return `Stop hit at ${item.stop}.`;
+  if (item.outcome === SignalOutcome.Unresolved) return UNRESOLVED_TEXT;
   if (item.outcome === SignalOutcome.BreakEven) return "Closed at breakeven.";
   if (item.outcome === SignalOutcome.Expired) {
     return item.closedAtUtc ? "Never filled: the stop traded first." : "Closed by the earlier rule with no exit recorded.";
@@ -33,7 +36,9 @@ function historyResult({ item }: { item: SignalHistoryEntry }): string {
  */
 export function historySummary({ item }: { item: SignalHistoryEntry }): string {
   const { direction, entry, stop, target } = item;
-  if (!direction || entry === undefined || stop === undefined || target === undefined) return item.summary;
+  if (!direction || entry === undefined || stop === undefined || target === undefined) {
+    return item.outcome === SignalOutcome.Unresolved ? `${item.summary} ${UNRESOLVED_TEXT}` : item.summary;
+  }
   const levels = `${direction.toUpperCase()} · entry ${entry} · SL ${stop} · TP ${target} · R:R ${rewardRatio({ entry, stop, target })}`;
   return `${levels}. ${historyResult({ item })}`;
 }
